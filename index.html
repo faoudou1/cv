@@ -1,105 +1,91 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>发欧豆 的个人简历</title>
-  <link rel="stylesheet" href="styles.css" />
+﻿<!doctype html>
+<html lang="zh-CN" data-page-node-id="HazpNPa6G0XqEq2XljCuXU">
+<head data-page-node-id="X1ws3GuevcBspEppuYv0yi">
+  <meta charset="utf-8" data-page-node-id="8GYyOWQrFxxmCOTF47UlAv" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" data-page-node-id="fAejCNtUZlxUn8PvYYk22b" />
+  <title>发欧豆 · 3D 交互简历</title>
+  <meta name="description" content="发欧豆 — 数字媒体艺术 / 艺术科技商业。3D 交互式个人简历。" data-page-node-id="vNk69k8FcsqbjIR4GoLnIi" />
+  <link rel="stylesheet" href="styles.css" data-page-node-id="zm1gDl4Na1jO91rA367Q3s" />
 </head>
-<body>
-  <header class="hero">
-    <div class="container header-grid">
-      <div class="profile">
-        <div class="avatar" aria-hidden="true">发</div>
-        <h1>发欧豆</h1>
-        <p class="subtitle">学历：工商硕士</p>
-        <p class="location">地点：中国</p>
-        <div class="contact">
-          <a href="mailto:faoudou@example.com" id="emailLink">faoudou@example.com</a>
-          <button id="copyEmail">复制邮箱</button>
-        </div>
-        <a class="btn" href="#" id="downloadResume">下载简历 (PDF)</a>
-      </div>
+<body data-page-node-id="HR4Hp4bBgOW8iC4UncHglg">
+  <!-- Three.js 3D 场景背景（CDN 加载失败时自动降级为静态渐变背景） -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+  <canvas id="bg3d" aria-hidden="true" data-page-node-id="k2w4z3cuGBaFUsyAe8rgSZ"></canvas>
 
-      <nav class="quick">
-        <a href="#about">关于</a>
-        <a href="#education">教育背景</a>
-        <a href="#experience">工作经历</a>
-        <a href="#projects">项目</a>
-        <a href="#skills">技能</a>
-        <a href="#contact">联系</a>
+  <div class="scene-light" aria-hidden="true" data-page-node-id="wnoAGdJgAqRoUg9EKE2XPE"></div>
+
+  <header class="top-bar" data-page-node-id="BgfDufB1QR6VC33CGYG6EI">
+    <div class="topbar-brand" data-page-node-id="jBY04lw2At5UVg5bozpfDR">
+      <span class="brand-mark" data-page-node-id="VsMu44zADHcevwM4mktKXh">DA</span>
+      <span class="brand-text" data-page-node-id="wkYdcBSVvUOzKfCwz3xcAi">Daily Aesthetic Atelier</span>
+    </div>
+    <div class="top-actions" data-page-node-id="sqZTb5ufWKcQ2ml2w1txUp">
+      <nav class="quick" aria-label="页面导航" data-page-node-id="v4fvMl09xKhqNx5wDdUjfw">
+        <a href="#about" data-nav="0" data-page-node-id="CRdOgCo6WeZIg6PiZGAI5x">关于</a>
+        <a href="#education" data-nav="1" data-page-node-id="DKRbYVP0BSP0ycCQguIufJ">教育</a>
+        <a href="#experience" data-nav="2" data-page-node-id="3pKZxbqTGByrwcjQTV35IZ">经历</a>
+        <a href="#projects" data-nav="3" data-page-node-id="pPIwpDlh2GgCfzh0mtGwg3">项目</a>
+        <a href="#skills" data-nav="4" data-page-node-id="NW3m26gw3aiAhCOEg6S5Ia">技能</a>
+        <a href="#contact" data-nav="5" data-page-node-id="x29yFFsYzSZUQorsleAjaJ">联系</a>
       </nav>
+      <div class="lang-switch" role="group" aria-label="语言切换" data-page-node-id="F9lepMNvsMt3lRXXEIdZjD">
+        <button class="lang-btn active" data-lang="zh" type="button" aria-pressed="true" data-page-node-id="lLNzbY6Mzs5c1xAWoCFlwj">中</button>
+        <button class="lang-btn" data-lang="en" type="button" aria-pressed="false" data-page-node-id="xQFaFMl9n5Bdm58QNpKWyo">EN</button>
+      </div>
+      <button class="btn" id="copyEmail" type="button" data-page-node-id="j6JY0f9No1s3Y1YRyEIlAn">复制邮箱</button>
     </div>
   </header>
 
-  <main class="container">
-    <section id="about" class="card">
-      <h2>关于我</h2>
-      <p>我是发欧豆，拥有工商管理硕士学位，擅长商业分析、项目管理与跨部门协作。性格积极，注重落地与结果，喜欢用数据和结构化的方法解决问题。</p>
+  <main class="content" data-page-node-id="p74XNl4gUPIKRm7VLVPhHT">
+    <!-- 首屏 Hero：大标题悬浮在 3D 场景之上 -->
+    <section class="hero" id="top" data-page-node-id="i1fzGJcS5Fpd8MjEB8dLqj">
+      <p class="eyebrow" id="heroEyebrow" data-page-node-id="ZXkXQ1HBq5ojelznQ1ESPy">个人简历 · 3D INTERACTIVE</p>
+      <h1 class="hero-name tilt-soft" data-tilt data-page-node-id="A1EIVCKW3uQ4fvIr25Dly7">
+        <span id="heroName" data-page-node-id="ksHUGdkdkjFTg6pG9QkiCB">发欧豆</span>
+      </h1>
+      <p class="hero-subtitle" data-page-node-id="j7ummsumfuJGGNEDV0jCMP"><span class="subtitle-label" id="heroDegreeLabel" data-page-node-id="Y0WeSG7Vh8Nyd7S8TPd48Z">学历</span><span id="heroDegree" data-page-node-id="A8CeOBcGSaTsjLYWlQ0gZb">数字媒体艺术 / 艺术科技商业 · 工商管理硕士</span></p>
+      <p class="hero-location" data-page-node-id="tGzxSJACUJua4sdFStWfne"><span class="subtitle-label" id="heroLocationLabel" data-page-node-id="DICawxg89t8GxnnGaBCU6I">地点</span><span id="heroLocation" data-page-node-id="0AIxmFrHZbxIGiFCHqJ1iB">中国 · 上海</span></p>
+      <div class="hero-hint" id="heroHint" data-page-node-id="ehTLFG9A8u9ZY5X9lJZOJk">拖动背景旋转 · 滚动探索 ↓</div>
+      <div class="scroll-cue" aria-hidden="true" data-page-node-id="6sgaA5NIG5WTJFJe7A8GxK"><span data-page-node-id="wnwDfp8OyeAqJwHetOSRK2"></span></div>
     </section>
 
-    <section id="education" class="card">
-      <h2>教育背景</h2>
-      <ul>
-        <li><strong>工商管理硕士 (MBA)</strong> — 某某大学 (2019 - 2021)</li>
-        <li><strong>本科专业</strong> — 某某学院 (2015 - 2019)</li>
-      </ul>
-    </section>
+    <div class="container" data-page-node-id="zwmILLPMaAWj9XanUeYaJB">
+      <section id="about" class="card tilt" data-tilt data-page-node-id="sWC5JZO1hhWTjq8NAu31RG">
+        <h2 id="t-about" data-page-node-id="APGgAlNtvqyIumUiB8tShF">关于我</h2>
+        <p class="summary-copy" id="aboutSummary" data-page-node-id="TctupTCNwDZEdDZgDi3Ji7"></p>
+        <div class="resume-highlights" id="aboutHighlights" data-page-node-id="LSdbGBhidqy5NpuGU2yR3v"></div>
+      </section>
 
-    <section id="experience" class="card">
-      <h2>工作经历</h2>
-      <article>
-        <h3>项目经理 — 某某公司</h3>
-        <p class="meta">2022.01 — 至今</p>
-        <ul>
-          <li>负责跨部门项目管理，推动产品从需求到上线的完整流程。</li>
-          <li>建立项目进度与风险跟踪机制，提升交付按期率。</li>
-        </ul>
-      </article>
+      <section id="education" class="card tilt" data-tilt data-page-node-id="j90uf2Z07lrGX6CXLY8OZr">
+        <h2 id="t-education" data-page-node-id="ICpDBGW1M2jPEnqExSwolB">教育背景</h2>
+        <div class="list" id="educationList" data-page-node-id="dBD4el1PwmX14bi4MV64lI"></div>
+      </section>
 
-      <article>
-        <h3>业务分析岗 — 另一家公司</h3>
-        <p class="meta">2020.06 — 2021.12</p>
-        <ul>
-          <li>进行市场与用户数据分析，支持产品决策。</li>
-          <li>设计并衡量关键业务指标 (KPI)，输出周/月度报告。</li>
-        </ul>
-      </article>
-    </section>
+      <section id="experience" class="card tilt" data-tilt data-page-node-id="dOXWhrDNsSyAMu83Ei93Fq">
+        <h2 id="t-experience" data-page-node-id="kqToJ7yNePHgZZ84vGWDbl">工作经历</h2>
+        <div class="list" id="experienceList" data-page-node-id="EWJ63aFNE05Df2fjtX7GOO"></div>
+      </section>
 
-    <section id="projects" class="card">
-      <h2>项目</h2>
-      <ul>
-        <li><strong>渠道拓展项目</strong> — 带领团队完成渠道优化，提升转化率 15%。</li>
-        <li><strong>自动化报表搭建</strong> — 使用脚本自动化生成周报，节省人力并提高准确性。</li>
-      </ul>
-    </section>
+      <section id="projects" class="card tilt" data-tilt data-page-node-id="qvGakqEPviXmSaXWeY4Ft4">
+        <h2 id="t-projects" data-page-node-id="mYdhI8Pg396tnUPAyg2HvZ">项目</h2>
+        <div class="list" id="projectsList" data-page-node-id="6IzKII1evZZY0D2IT05yVg"></div>
+      </section>
 
-    <section id="skills" class="card">
-      <h2>技能</h2>
-      <div class="skills-grid">
-        <span>项目管理</span>
-        <span>数据分析</span>
-        <span>商业策划</span>
-        <span>沟通与协调</span>
-        <span>Excel / PPT</span>
-        <span>SQL（基础）</span>
-      </div>
-    </section>
+      <section id="skills" class="card tilt" data-tilt data-page-node-id="fI1OEApU5Q7x9Ew89CoKrd">
+        <h2 id="t-skills" data-page-node-id="idIH4B7QL5OgEMxEa4TAV6">技能</h2>
+        <div class="skills-grid" id="skillsGrid" data-page-node-id="CrDSehPFfYCLBHP2GF2xKE"></div>
+      </section>
 
-    <section id="contact" class="card">
-      <h2>联系我</h2>
-      <p>邮箱：<a href="mailto:faoudou@example.com">faoudou@example.com</a></p>
-      <p>电话：+86 138 0000 0000</p>
-      <p>LinkedIn / 个人网站：可根据需要添加</p>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <p>© <span id="year"></span> 发欧豆 — 简历网站</p>
+      <section id="contact" class="card tilt" data-tilt data-page-node-id="X3ixiULpbpXNO8LZpfgrzR">
+        <h2 id="t-contact" data-page-node-id="Bi9jyzTJHbkVu9rZEURFLR">联系我</h2>
+        <div class="contact-grid" id="contactGrid" data-page-node-id="rEZoNtEreg8yY0St0DhvmH"></div>
+      </section>
     </div>
-  </footer>
+
+    <footer class="site-footer" data-page-node-id="oOFibFnPgpG1ehaTbhp9Fr">
+      <p data-page-node-id="VyDftIReLM474FOfgLuls8">© <span id="year" data-page-node-id="csaEGso85UcuTc34aphuLo"></span> 发欧豆 — 3D 交互式简历</p>
+    </footer>
+  </main>
 
   <script src="script.js"></script>
 </body>
