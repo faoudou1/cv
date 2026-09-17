@@ -100,7 +100,7 @@ const defaultResumeData = {
     links: [
       { label: '邮箱', value: 'xiaoshangzhu@ln.hk', href: 'mailto:xiaoshangzhu@ln.hk' },
       { label: '电话', value: '13925453279', href: 'tel:13925453279' },
-      { label: '现居住地', value: '广东省佛山市', href: null },
+      { label: '现居住地', value: '中国香港', href: null },
       { label: '毕业院校', value: '江西服装学院', href: null },
       { label: '出生年月', value: '2004 年 08 月', href: null },
       { label: '民族', value: '汉族', href: null },
@@ -196,7 +196,7 @@ const defaultResumeData = {
     links: [
       { label: 'Email', value: 'xiaoshangzhu@ln.hk', href: 'mailto:xiaoshangzhu@ln.hk' },
       { label: 'Phone', value: '13925453279', href: 'tel:13925453279' },
-      { label: 'Based in', value: 'Foshan, Guangdong, China', href: null },
+      { label: 'Based in', value: 'Hong Kong, China', href: null },
       { label: 'University', value: 'Jiangxi Institute of Fashion Technology (B.A.) / Lingnan University, Hong Kong, China (M.Sc.)', href: null },
       { label: 'Date of Birth', value: 'Aug 2004', href: null },
       { label: 'Ethnicity', value: 'Han', href: null },
