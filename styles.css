@@ -1,15 +1,17 @@
 ﻿:root {
-  --bg: #070b14;
-  --bg-2: #0d1424;
-  --card: rgba(255, 255, 255, 0.045);
-  --card-border: rgba(255, 255, 255, 0.09);
-  --text: #e8edf6;
-  --muted: rgba(232, 237, 246, 0.62);
-  --accent: #6ee7ff;
-  --accent-2: #a78bfa;
-  --accent-3: #f0abfc;
-  --line: rgba(255, 255, 255, 0.12);
-  --glow: 0 0 40px rgba(110, 231, 255, 0.12);
+  --bg: #F5F3EE;
+  --card: rgba(255, 255, 255, 0.56);
+  --card-border: rgba(28, 28, 26, 0.12);
+  --text: #1C1C1A;
+  --ink: #2F2C2A;
+  /* 正文色已加深至 AA 级（在 #F5F3EE 上约 5.2:1） */
+  --muted: #6E6459;
+  /* 小号强调文字用深陶土色（约 4.8:1）；--accent-2 仅用于装饰性渐变/边框 */
+  --accent: #85644F;
+  --accent-2: #A98D7C;
+  --accent-3: #DDB9A8;
+  --line: rgba(28, 28, 26, 0.12);
+  --glow: 0 0 40px rgba(166, 141, 124, 0.18);
 }
 
 * { box-sizing: border-box; }
@@ -20,7 +22,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: radial-gradient(1200px 800px at 70% -10%, #14203a 0%, var(--bg) 55%), var(--bg);
+  background: radial-gradient(1200px 800px at 70% -10%, #F1EDE7 0%, var(--bg) 52%), var(--bg);
   color: var(--text);
   overflow-x: hidden;
 }
@@ -37,6 +39,13 @@ body {
 
 #bg3d:active { cursor: grabbing; }
 
+/* 拖拽旋转 3D 场景时的全局反馈（拖拽逻辑见 script.js） */
+body.is-dragging,
+body.is-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
 /* 3D 加载失败时的柔和光斑兜底 */
 .scene-light {
   position: fixed;
@@ -44,8 +53,8 @@ body {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(600px 400px at 15% 20%, rgba(110, 231, 255, 0.07), transparent 60%),
-    radial-gradient(700px 500px at 85% 60%, rgba(167, 139, 250, 0.07), transparent 60%);
+    radial-gradient(600px 400px at 15% 20%, rgba(201, 174, 158, 0.22), transparent 60%),
+    radial-gradient(700px 500px at 85% 60%, rgba(174, 162, 149, 0.18), transparent 60%);
 }
 
 /* ============ 顶栏 ============ */
@@ -60,7 +69,7 @@ body {
   justify-content: space-between;
   gap: 14px;
   padding: 14px 22px;
-  background: rgba(7, 11, 20, 0.55);
+  background: rgba(245, 243, 238, 0.72);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--card-border);
@@ -78,8 +87,8 @@ body {
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #070b14;
+  background: linear-gradient(135deg, var(--accent-3), var(--accent-2));
+  color: var(--ink);
   font-weight: 800;
   box-shadow: var(--glow);
 }
@@ -117,7 +126,7 @@ body {
 .quick a:focus-visible {
   color: var(--text);
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .lang-switch {
@@ -126,7 +135,7 @@ body {
   padding: 3px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.34);
 }
 
 .lang-btn {
@@ -143,16 +152,16 @@ body {
 }
 
 .lang-btn.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #070b14;
+  background: linear-gradient(135deg, var(--accent-3), var(--accent-2));
+  color: var(--ink);
 }
 
 .btn {
   font: inherit;
   font-weight: 700;
   font-size: 0.85rem;
-  color: #070b14;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--ink);
+  background: linear-gradient(135deg, var(--accent-3), var(--accent-2));
   border: none;
   border-radius: 999px;
   padding: 9px 18px;
@@ -162,6 +171,143 @@ body {
 }
 
 .btn:hover { transform: translateY(-1px); }
+
+/* 次按钮：简历 PDF 入口（描边款，与主按钮区分） */
+.btn-ghost {
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--accent-2);
+  box-shadow: none;
+}
+
+.btn-ghost:hover {
+  background: var(--accent-3);
+  color: var(--ink);
+}
+
+/* ============ 简历 PDF 站内预览弹层 ============ */
+.pdf-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pdf-modal.open { display: flex; }
+
+.pdf-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(52, 44, 38, 0.42);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.pdf-modal-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(980px, 100%);
+  height: min(88vh, 100%);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(52, 44, 38, 0.28);
+  overflow: hidden;
+  animation: pdfPanelIn 0.22s ease;
+}
+
+@keyframes pdfPanelIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.pdf-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+  background: rgba(245, 243, 238, 0.92);
+}
+
+.pdf-modal-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.pdf-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-link {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.pdf-link:hover {
+  border-color: var(--accent-2);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.pdf-close {
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pdf-close:hover {
+  background: var(--accent-3);
+  border-color: var(--accent-2);
+}
+
+.pdf-close:focus-visible,
+.pdf-link:focus-visible,
+.pdf-trigger:focus-visible,
+.btn-ghost:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.pdf-modal-body {
+  flex: 1;
+  min-height: 0;
+  background: rgba(240, 237, 231, 0.85);
+}
+
+.pdf-modal-body iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.pdf-trigger { cursor: pointer; }
+
+body.is-pdf-open { overflow: hidden; }
 
 /* ============ 内容层 ============ */
 .content {
@@ -176,8 +322,9 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 120px 20px 60px;
+  padding: 120px 44px 60px;
   perspective: 900px;
+  cursor: grab;
 }
 
 .eyebrow {
@@ -186,27 +333,37 @@ body {
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--accent);
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .hero-name {
   margin: 0;
-  font-size: clamp(3rem, 9vw, 6.2rem);
-  line-height: 1.05;
-  font-weight: 800;
+  font-size: clamp(2.6rem, 6.8vw, 4.8rem);
+  line-height: 1;
+  font-weight: 700;
   letter-spacing: 0.02em;
-  background: linear-gradient(120deg, #ffffff 20%, var(--accent) 55%, var(--accent-3) 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--ink);
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   transform-style: preserve-3d;
   transition: transform 0.15s ease-out;
   will-change: transform;
+  text-shadow: none;
 }
 
 .hero-name span {
   display: inline-block;
+  color: var(--ink);
   animation: floaty 6s ease-in-out infinite;
+}
+
+body[data-lang="en"] .hero-name {
+  font-size: clamp(1.9rem, 4.2vw, 3.1rem);
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+body[data-lang="en"] .hero-name span {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 @keyframes floaty {
@@ -219,8 +376,9 @@ body {
   animation: pulse 0.4s ease;
 }
 
+/* 脉冲反馈改为与浅色主题一致的陶土色 */
 @keyframes pulse {
-  50% { box-shadow: 0 0 30px rgba(110, 231, 255, 0.25); border-color: rgba(110, 231, 255, 0.4); }
+  50% { box-shadow: 0 0 30px rgba(166, 141, 124, 0.35); border-color: rgba(166, 141, 124, 0.45); }
 }
 
 .hero-subtitle,
@@ -238,21 +396,21 @@ body {
   font-size: 0.74rem;
   letter-spacing: 0.1em;
   color: var(--accent);
-  border: 1px solid rgba(110, 231, 255, 0.3);
+  border: 1px solid rgba(133, 100, 79, 0.3);
 }
 
 .hero-hint {
   margin-top: 34px;
   font-size: 0.8rem;
   letter-spacing: 0.12em;
-  color: rgba(232, 237, 246, 0.4);
+  color: var(--muted);
 }
 
 .scroll-cue {
   margin-top: 14px;
   width: 22px;
   height: 36px;
-  border: 1px solid rgba(232, 237, 246, 0.3);
+  border: 1px solid rgba(28, 28, 26, 0.2);
   border-radius: 999px;
   display: flex;
   justify-content: center;
@@ -282,13 +440,13 @@ body {
 
 /* ============ 3D 倾斜玻璃卡片 ============ */
 .card {
-  background: var(--card);
+  background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(231,226,218,0.82));
   border: 1px solid var(--card-border);
   border-radius: 22px;
   padding: 26px 28px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 18px 48px rgba(28, 28, 26, 0.08);
   transform-style: preserve-3d;
   transition: transform 0.18s ease-out, border-color 0.25s ease, box-shadow 0.25s ease;
   will-change: transform;
@@ -303,15 +461,15 @@ body {
 }
 
 .card:hover {
-  border-color: rgba(110, 231, 255, 0.35);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45), 0 0 60px rgba(110, 231, 255, 0.08);
+  border-color: rgba(166, 141, 124, 0.28);
+  box-shadow: 0 22px 62px rgba(28, 28, 26, 0.12), 0 0 40px rgba(201, 174, 158, 0.12);
 }
 
 .card h2 {
   margin: 0 0 16px;
   font-size: 1.3rem;
   font-weight: 800;
-  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  background: linear-gradient(120deg, var(--text), var(--muted));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -339,8 +497,8 @@ body {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--accent);
-  background: rgba(110, 231, 255, 0.07);
-  border: 1px solid rgba(110, 231, 255, 0.25);
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(166, 141, 124, 0.24);
 }
 
 .list { display: grid; gap: 12px; }
@@ -349,7 +507,7 @@ body {
 .article {
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.24);
   padding: 14px 16px;
   transform: translateZ(12px);
 }
@@ -430,14 +588,14 @@ body {
   font-weight: 700;
   text-align: center;
   color: var(--text);
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(110, 231, 255, 0.1));
-  border: 1px solid rgba(167, 139, 250, 0.28);
+  background: linear-gradient(135deg, rgba(201, 174, 158, 0.22), rgba(255, 255, 255, 0.28));
+  border: 1px solid rgba(166, 141, 124, 0.22);
   transition: all 0.2s ease;
 }
 
 .skill-pill:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 24px rgba(110, 231, 255, 0.25);
+  border-color: var(--accent-2);
+  box-shadow: 0 0 24px rgba(201, 174, 158, 0.18);
   transform: translateY(-2px);
 }
 
@@ -446,7 +604,7 @@ body {
 .contact-item {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.22);
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
@@ -473,7 +631,7 @@ body {
   z-index: 5;
   text-align: center;
   padding: 26px 0 40px;
-  color: rgba(232, 237, 246, 0.4);
+  color: var(--muted);
   font-size: 0.85rem;
 }
 
@@ -488,6 +646,9 @@ body {
 @media (max-width: 560px) {
   .card { padding: 20px 18px; }
   .skills-grid { grid-template-columns: 1fr; }
+  .pdf-modal { padding: 0; }
+  .pdf-modal-panel { width: 100%; height: 100%; border-radius: 0; }
+  .pdf-modal-head { flex-wrap: wrap; }
 }
 
 /* 减少动效偏好 */
@@ -500,7 +661,7 @@ body {
 
 /* 打印：只留内容 */
 @media print {
-  #bg3d, .scene-light, .top-bar, .hero-hint, .scroll-cue { display: none !important; }
+  #bg3d, .scene-light, .top-bar, .hero-hint, .scroll-cue, .pdf-modal { display: none !important; }
   body { background: #fff; color: #111; }
   .card { opacity: 1 !important; translate: 0 0 !important; background: #fff; border-color: #ddd; box-shadow: none; }
   .card h2 { color: #111; -webkit-text-fill-color: #111; }
