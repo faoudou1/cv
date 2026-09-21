@@ -10,6 +10,10 @@
 <body data-page-node-id="HR4Hp4bBgOW8iC4UncHglg">
   <!-- Three.js 3D 场景背景（CDN 加载失败时自动降级为静态渐变背景） -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+  <script>
+    /* CDN 兜底：jsdelivr 不可用时加载本地 three.min.js，保证 3D 场景始终可用 */
+    window.THREE || document.write('<script src="three.min.js"><\/script>');
+  </script>
   <canvas id="bg3d" aria-hidden="true" data-page-node-id="k2w4z3cuGBaFUsyAe8rgSZ"></canvas>
 
   <div class="scene-light" aria-hidden="true" data-page-node-id="wnoAGdJgAqRoUg9EKE2XPE"></div>
@@ -90,7 +94,10 @@
         <h2 id="t-cube">AIGC Cube</h2>
         <p class="scene-hint" id="cubeHint"></p>
         <div class="scene-stage cube-stage" id="cubeStage">
-          <canvas id="cubeCanvas" aria-label="3D AIGC 立方体，可拖动旋转，六个面对应六个创作方向"></canvas>
+          <canvas id="cubeCanvas" aria-label="3D AIGC 立方体，可进入沉浸视角，六个面对应六个创作方向"></canvas>
+          <button class="scene-enter" id="cubeEnter" type="button"></button>
+          <button class="scene-exit" id="cubeExit" type="button" hidden></button>
+          <p class="scene-immersive-hint" id="cubeImmersiveHint" hidden></p>
           <div class="scene-fallback" id="cubeFallback" hidden></div>
         </div>
       </section>
@@ -132,6 +139,6 @@
   <!-- 3D 场景悬停标签（工作台设备 / Cube 面，内容由 script.js 控制） -->
   <div class="scene-tooltip" id="sceneTooltip" role="status" aria-hidden="true"></div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=20260922a"></script>
 </body>
 </html>

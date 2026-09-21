@@ -41,11 +41,13 @@ const defaultResumeData = {
       skills: '个人技能',
       contact: '联系我'
     },
-    workspaceHint: '点击画面进入 3D 工作台 · 悬停查看设备标签',
+    workspaceHint: '点击画面进入 3D 工作台 · 拖动 360° 环视 · 滚轮缩放',
     enterWorkspace: '进入 3D 工作台',
     exitWorkspace: '退出 ✕',
-    immersiveHint: '移动鼠标环视 · 悬停查看设备 · 点击设备跳转对应板块 · ESC 退出',
-    cubeHint: '拖动旋转 · 悬停放大当前面 · 点击前往相关板块',
+    immersiveHint: '拖动 360° 环视 · 滚轮缩放 · 点击屏幕关键词或设备跳转板块 · ESC 退出',
+    cubeHint: '点击画面进入 · 拖动旋转 · 悬停放大当前面 · 点击面跳转板块',
+    enterCube: '进入 AIGC Cube',
+    cubeImmersiveHint: '拖动旋转 · 滚轮缩放 · 点击立方体面跳转对应板块 · ESC 退出',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · 能力矩阵',
@@ -163,11 +165,13 @@ const defaultResumeData = {
       skills: 'Skills',
       contact: 'Contact Me'
     },
-    workspaceHint: 'Click the scene to enter the 3D workspace · hover devices for labels',
+    workspaceHint: 'Click the scene to enter the 3D workspace · drag for a 360° view · scroll to zoom',
     enterWorkspace: 'Enter 3D Workspace',
     exitWorkspace: 'Exit ✕',
-    immersiveHint: 'Move mouse to look around · hover devices for labels · click a device to jump to its section · ESC to exit',
-    cubeHint: 'Drag to rotate · hover to zoom a face · click to jump to a related section',
+    immersiveHint: 'Drag for 360° view · scroll to zoom · click screen keywords or devices to jump · ESC to exit',
+    cubeHint: 'Click the scene to enter · drag to rotate · hover to zoom a face · click a face to jump',
+    enterCube: 'Enter AIGC Cube',
+    cubeImmersiveHint: 'Drag to rotate · scroll to zoom · click a cube face to jump to its section · ESC to exit',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · Capability Matrix',
@@ -299,9 +303,15 @@ function renderResume() {
   const wsEnter = document.getElementById('workspaceEnter');
   const wsExit = document.getElementById('workspaceExit');
   const wsImmHint = document.getElementById('workspaceImmersiveHint');
+  const cubeEnter = document.getElementById('cubeEnter');
+  const cubeExit = document.getElementById('cubeExit');
+  const cubeImmHint = document.getElementById('cubeImmersiveHint');
   if (wsEnter) wsEnter.textContent = text.enterWorkspace;
   if (wsExit) wsExit.textContent = text.exitWorkspace;
   if (wsImmHint) wsImmHint.textContent = text.immersiveHint;
+  if (cubeEnter) cubeEnter.textContent = text.enterCube;
+  if (cubeExit) cubeExit.textContent = text.exitWorkspace;
+  if (cubeImmHint) cubeImmHint.textContent = text.cubeImmersiveHint;
 
   Object.entries(text.sectionTitles).forEach(([key, value]) => {
     const heading = document.getElementById('t-' + key);
@@ -1307,6 +1317,17 @@ function initWorkspaceScene() {
     pos: new THREE.Vector3(0.9, 2.4, 5.6),
     look: new THREE.Vector3(-0.3, 0.9, -0.2)
   };
+  // 360° 环视轨道：拖拽自由旋转（偏航无限、俯仰限位）+ 滚轮缩放 + 惯性
+  const orbit = { yaw: 0, pitch: 0, zoom: 1, active: false, lastX: 0, lastY: 0, velYaw: 0, velPitch: 0 };
+  // 显示器屏幕关键词 → 板块（屏幕内简单操作：悬停看词，点击行直接跳转）
+  const SCREEN_LINKS = [
+    { word: 'DIGITAL MEDIA', target: '#about' },
+    { word: 'INTERACTIVE', target: '#workspace' },
+    { word: 'DESIGN', target: '#projects' },
+    { word: 'AIGC', target: '#cube' },
+    { word: 'MOTION', target: '#experience' },
+    { word: 'VISUAL', target: '#skills' }
+  ];
   const enterBtn = document.getElementById('workspaceEnter');
   const exitBtn = document.getElementById('workspaceExit');
   const immHint = document.getElementById('workspaceImmersiveHint');
@@ -1329,6 +1350,7 @@ function initWorkspaceScene() {
     if (enterBtn) enterBtn.hidden = true;
     if (exitBtn) exitBtn.hidden = false;
     if (immHint) immHint.hidden = false;
+    canvas.style.cursor = 'grab';
     resize();
   }
 
@@ -1341,6 +1363,7 @@ function initWorkspaceScene() {
     if (enterBtn) enterBtn.hidden = false;
     if (exitBtn) exitBtn.hidden = true;
     if (immHint) immHint.hidden = true;
+    canvas.style.cursor = 'default';
     hideTooltip();
     resize();
   }
@@ -1366,20 +1389,29 @@ function initWorkspaceScene() {
   const raycaster = new THREE.Raycaster();
   let hoveredKey = null;
 
+  /* 屏幕命中 → 关键词行（UV 映射到 6 行文案） */
+  function screenRowAt(hit) {
+    if (!hit || hit.object !== screenMesh || !hit.uv) return -1;
+    return Math.min(SCREEN_LINKS.length - 1, Math.max(0, Math.floor((1 - hit.uv.y) * SCREEN_LINKS.length)));
+  }
+
   canvas.addEventListener('pointermove', (event) => {
+    if (orbit.active) { hoveredKey = null; hideTooltip(); return; }
     raycaster.setFromCamera(toNDC(event, canvas), camera);
     const hits = raycaster.intersectObjects(pickables, false);
+    const screenRow = hits.length ? screenRowAt(hits[0]) : -1;
     const key = hits.length ? hits[0].object.userData.deviceKey : null;
-    if (key !== hoveredKey) {
-      hoveredKey = key;
-      canvas.style.cursor = key ? 'pointer' : 'default';
-      if (key) {
-        showTooltip(event.clientX, event.clientY, getText().deviceLabels[key] || key.toUpperCase());
-      } else {
-        hideTooltip();
-      }
-    } else if (key) {
-      showTooltip(event.clientX, event.clientY, getText().deviceLabels[key] || key.toUpperCase());
+    const label = screenRow >= 0
+      ? SCREEN_LINKS[screenRow].word
+      : (key ? (getText().deviceLabels[key] || key.toUpperCase()) : null);
+    const effectiveKey = screenRow >= 0 ? 'screen' : key;
+    if (effectiveKey !== hoveredKey) {
+      hoveredKey = effectiveKey;
+      canvas.style.cursor = effectiveKey ? 'pointer' : 'default';
+      if (label) showTooltip(event.clientX, event.clientY, label);
+      else hideTooltip();
+    } else if (label) {
+      showTooltip(event.clientX, event.clientY, label);
     }
   });
 
@@ -1389,14 +1421,60 @@ function initWorkspaceScene() {
     hideTooltip();
   });
 
+  // ---- 360° 环视拖拽（仅沉浸模式）+ 滚轮缩放 ----
+  canvas.addEventListener('pointerdown', (event) => {
+    if (!immersive) return;
+    orbit.active = true;
+    orbit.lastX = event.clientX;
+    orbit.lastY = event.clientY;
+    canvas.style.cursor = 'grabbing';
+    if (event.cancelable) event.preventDefault();
+  });
+
+  window.addEventListener('pointermove', (event) => {
+    if (!orbit.active) return;
+    const dx = event.clientX - orbit.lastX;
+    const dy = event.clientY - orbit.lastY;
+    orbit.yaw -= dx * 0.005;
+    orbit.pitch -= dy * 0.004;
+    orbit.pitch = Math.max(-0.55, Math.min(0.5, orbit.pitch));
+    orbit.velYaw = -dx * 0.005 * 0.4;
+    orbit.velPitch = -dy * 0.004 * 0.4;
+    orbit.lastX = event.clientX;
+    orbit.lastY = event.clientY;
+  }, { passive: true });
+
+  const endOrbit = () => {
+    if (!orbit.active) return;
+    orbit.active = false;
+    canvas.style.cursor = 'grab';
+  };
+  window.addEventListener('pointerup', endOrbit);
+  window.addEventListener('pointercancel', endOrbit);
+
+  canvas.addEventListener('wheel', (event) => {
+    if (!immersive) return;
+    event.preventDefault();
+    orbit.zoom = Math.max(0.7, Math.min(1.5, orbit.zoom * (1 + event.deltaY * 0.0011)));
+  }, { passive: false });
+
   canvas.addEventListener('click', (event) => {
     raycaster.setFromCamera(toNDC(event, canvas), camera);
     const hits = raycaster.intersectObjects(pickables, false);
     if (!hits.length) return;
-    const device = deviceMap.find((d) => d.key === hits[0].object.userData.deviceKey);
-    if (!device) return;
-    const target = document.querySelector(device.target);
-    const destName = getText().sectionTitles[device.target.slice(1)] || device.target;
+    // 显示器屏幕：UV 定位关键词行，点击直接跳转（屏幕内简单操作）
+    const row = screenRowAt(hits[0]);
+    let device = null;
+    let destSelector = null;
+    if (row >= 0) {
+      destSelector = SCREEN_LINKS[row].target;
+    } else {
+      device = deviceMap.find((d) => d.key === hits[0].object.userData.deviceKey);
+      if (!device) return;
+      destSelector = device.target;
+    }
+    const target = document.querySelector(destSelector);
+    const destName = getText().sectionTitles[destSelector.slice(1)] || destSelector;
     showTooltip(event.clientX, event.clientY, '→ ' + destName);
     setTimeout(hideTooltip, 1200);
     if (immersive) {
@@ -1460,19 +1538,27 @@ function initWorkspaceScene() {
       screen.texture.needsUpdate = true;
     }
 
-    // 相机：常规视角 ↔ 沉浸视角平滑过渡，鼠标环视
+    // 相机：常规视角 ↔ 沉浸视角平滑过渡；拖拽 360° 环视 + 鼠标微视差 + 缩放
     immT += ((immersive ? 1 : 0) - immT) * 0.055;
     parallax.x += (parallax.tx - parallax.x) * 0.05;
     parallax.y += (parallax.ty - parallax.y) * 0.05;
+    // 惯性衰减
+    if (!orbit.active) {
+      orbit.yaw += orbit.velYaw;
+      orbit.pitch = Math.max(-0.55, Math.min(0.5, orbit.pitch + orbit.velPitch));
+      orbit.velYaw *= 0.93;
+      orbit.velPitch *= 0.93;
+    }
     const look = camBase.look.clone().lerp(camImm.look, immT);
     const desiredPos = camBase.pos.clone().lerp(camImm.pos, immT);
-    // 鼠标环视：常规模式轻微视差，沉浸模式绕注视点较大幅度环绕
-    const yaw = parallax.x * (0.06 + immT * 0.85);
-    const pitch = parallax.y * (0.025 + immT * 0.3);
+    const yaw = orbit.yaw * immT + parallax.x * (0.06 + immT * 0.2);
+    const pitch = orbit.pitch * immT + parallax.y * (0.025 + immT * 0.1);
     const offset = desiredPos.clone().sub(look);
     offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
     const rightAxis = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), offset).normalize();
     offset.applyAxisAngle(rightAxis, pitch);
+    // 滚轮缩放（仅沉浸时有意义，immT 保证平滑回位）
+    offset.setLength(offset.length() * (1 + (orbit.zoom - 1) * immT));
     camera.position.copy(look.clone().add(offset));
     camera.lookAt(look);
     // 沉浸模式视野稍广
@@ -1531,6 +1617,59 @@ function initCubeScene() {
   }
 
   observeSceneActive('cube', 'cube');
+
+  // ---- 沉浸模式（点击进入 AIGC Cube 空间） ----
+  let immersive = false;
+  let immT = 0;
+  let zoom = 1;
+  const camBase = { pos: new THREE.Vector3(0, 0.4, 7.6), look: new THREE.Vector3(0, 0, 0) };
+  const camImm = { pos: new THREE.Vector3(0, 0.55, 5.2), look: new THREE.Vector3(0, 0, 0) };
+  const enterBtn = document.getElementById('cubeEnter');
+  const exitBtn = document.getElementById('cubeExit');
+  const immHint = document.getElementById('cubeImmersiveHint');
+  if (enterBtn && !enterBtn.textContent) enterBtn.textContent = getText().enterCube;
+  if (exitBtn && !exitBtn.textContent) exitBtn.textContent = getText().exitWorkspace;
+  if (immHint && !immHint.textContent) immHint.textContent = getText().cubeImmersiveHint;
+  const stageParent = stage.parentElement;
+  const stageNext = stage.nextElementSibling;
+
+  function enterImmersive() {
+    if (immersive) return;
+    immersive = true;
+    // 祖先的 backdrop-filter / perspective 会劫持 fixed 定位——挂到 body 下
+    document.body.appendChild(stage);
+    stage.classList.add('immersive');
+    document.body.classList.add('cube-immersive');
+    if (enterBtn) enterBtn.hidden = true;
+    if (exitBtn) exitBtn.hidden = false;
+    if (immHint) immHint.hidden = false;
+    resize();
+  }
+
+  function exitImmersive() {
+    if (!immersive) return;
+    immersive = false;
+    stage.classList.remove('immersive');
+    document.body.classList.remove('cube-immersive');
+    if (stageParent) stageParent.insertBefore(stage, stageNext);
+    if (enterBtn) enterBtn.hidden = false;
+    if (exitBtn) exitBtn.hidden = true;
+    if (immHint) immHint.hidden = true;
+    hideTooltip();
+    resize();
+  }
+
+  if (enterBtn) enterBtn.addEventListener('click', enterImmersive);
+  if (exitBtn) exitBtn.addEventListener('click', exitImmersive);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && immersive) exitImmersive();
+  });
+
+  canvas.addEventListener('wheel', (event) => {
+    if (!immersive) return;
+    event.preventDefault();
+    zoom = Math.max(0.72, Math.min(1.45, zoom * (1 + event.deltaY * 0.0011)));
+  }, { passive: false });
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
@@ -1736,6 +1875,14 @@ function initCubeScene() {
     }
     showTooltip(event.clientX, event.clientY, '→ ' + (getText().sectionTitles[sectionKey] || label));
     setTimeout(hideTooltip, 1600);
+    if (immersive) {
+      // 沉浸模式：先退出全屏，再平滑滚动到目标板块
+      setTimeout(() => {
+        exitImmersive();
+        setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 380);
+      }, 420);
+      return;
+    }
     setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
   });
 
@@ -1757,6 +1904,14 @@ function initCubeScene() {
     requestAnimationFrame(animate);
     if (!SCENE_ACTIVE.cube) return;
     const t = clock.getElapsedTime();
+
+    // 相机：常规 ↔ 沉浸视角平滑过渡 + 滚轮缩放
+    immT += ((immersive ? 1 : 0) - immT) * 0.06;
+    const camLook = camBase.look.clone().lerp(camImm.look, immT);
+    const camPos = camBase.pos.clone().lerp(camImm.pos, immT);
+    camPos.setLength(camPos.length() * (1 + (zoom - 1) * immT));
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
 
     // 未拖动时：极缓慢自转 + 惯性衰减
     if (!drag.active) {
@@ -1789,6 +1944,108 @@ function initCubeScene() {
 }
 
 /* ============================================================
+ * 全屏翻页：滚轮/键盘逐页切换 + 激活转场动画
+ * - 桌面精确指针：wheel 驱动整页翻动（带锁），高内容页先内部滚动
+ * - 触屏 / reduced-motion：原生滚动 + CSS snap，不劫持
+ * - 沉浸模式 / PDF 弹窗打开时自动禁用
+ * ============================================================ */
+function initPageFlow() {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const hero = document.querySelector('section.hero');
+  const cards = Array.from(document.querySelectorAll('.container > section.card'));
+  const pages = hero ? [hero].concat(cards) : cards;
+  if (pages.length < 2) return;
+
+  let current = -1;
+  let locked = false;
+  let lockTimer = 0;
+
+  function blocked() {
+    return document.body.classList.contains('ws-immersive') ||
+      document.body.classList.contains('cube-immersive') ||
+      document.body.classList.contains('is-pdf-open');
+  }
+
+  function pageTop(i) {
+    return pages[i].getBoundingClientRect().top + window.scrollY - 10;
+  }
+
+  function currentPageIndex() {
+    const center = window.scrollY + window.innerHeight * 0.5;
+    let best = 0;
+    let bestDist = Infinity;
+    pages.forEach((sec, i) => {
+      const top = sec.getBoundingClientRect().top + window.scrollY;
+      const dist = Math.abs(top + sec.offsetHeight * 0.5 - center);
+      if (dist < bestDist) { bestDist = dist; best = i; }
+    });
+    return best;
+  }
+
+  function goToPage(i) {
+    i = Math.max(0, Math.min(pages.length - 1, i));
+    locked = true;
+    clearTimeout(lockTimer);
+    lockTimer = setTimeout(() => { locked = false; }, 1000);
+    window.scrollTo({ top: pageTop(i), behavior: 'smooth' });
+    applyActive(i);
+  }
+
+  /* 右侧页码指示点（桌面端） */
+  let dotBtns = [];
+  if (finePointer && !reduced) {
+    const dotsNav = document.createElement('nav');
+    dotsNav.className = 'page-dots';
+    dotsNav.setAttribute('aria-label', '页面导航');
+    dotBtns = pages.map((sec, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      const h2 = sec.querySelector('h2, h1');
+      b.setAttribute('aria-label', h2 ? h2.textContent : 'Page ' + (i + 1));
+      b.addEventListener('click', () => goToPage(i));
+      dotsNav.appendChild(b);
+      return b;
+    });
+    document.body.appendChild(dotsNav);
+  }
+
+  function applyActive(i) {
+    if (i === current) return;
+    current = i;
+    pages.forEach((sec, j) => sec.classList.toggle('page-active', j === i));
+    dotBtns.forEach((d, j) => d.classList.toggle('active', j === i));
+  }
+
+  /* 滚动位置 → 激活页（rAF 节流） */
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { ticking = false; applyActive(currentPageIndex()); });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* 滚轮：只劫持「首页 → 下一页」这一次翻页转场，其余保持原生滚动 */
+  window.addEventListener('wheel', (event) => {
+    if (reduced || !finePointer || blocked()) return;
+    if (locked) { event.preventDefault(); return; }
+    if (event.deltaY <= 24) return;
+    if (currentPageIndex() !== 0) return;
+    // 已在首页底部（用户可能想先看完整 Hero）→ 翻页进入下一屏
+    if (window.scrollY > 40) return;
+    event.preventDefault();
+    goToPage(1);
+  }, { passive: false });
+
+  window.addEventListener('resize', onScroll);
+  applyActive(0);
+  pages[0].classList.add('page-active');
+  current = 0;
+  if (dotBtns[0]) dotBtns[0].classList.add('active');
+}
+
+/* ============================================================
  * 启动
  * ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1801,6 +2058,7 @@ document.addEventListener('DOMContentLoaded', () => {
   init3DScene();
   initWorkspaceScene();
   initCubeScene();
+  initPageFlow();
   // 滚动时收起 3D 悬停标签，避免残留
   window.addEventListener('scroll', hideTooltip, { passive: true });
 });
