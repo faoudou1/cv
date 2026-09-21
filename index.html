@@ -4,7 +4,7 @@
   <meta charset="utf-8" data-page-node-id="8GYyOWQrFxxmCOTF47UlAv" />
   <meta name="viewport" content="width=device-width,initial-scale=1" data-page-node-id="fAejCNtUZlxUn8PvYYk22b" />
   <title>朱肖尚 · 3D 交互简历</title>
-  <meta name="description" content="朱肖尚 — 岭南大学（中国香港）艺术科技与商业硕士，本科数字媒体艺术。求职方向：运营岗 / 设计岗。3D 交互式个人简历。" data-page-node-id="vNk69k8FcsqbjIR4GoLnIi" />
+  <meta name="description" content="朱肖尚 — 岭南大学（中国香港）艺术科技与商业硕士，本科数字媒体艺术。Digital Media / Interactive Design / AIGC 方向 3D 互动 Portfolio。" data-page-node-id="vNk69k8FcsqbjIR4GoLnIi" />
   <link rel="stylesheet" href="styles.css" data-page-node-id="zm1gDl4Na1jO91rA367Q3s" />
 </head>
 <body data-page-node-id="HR4Hp4bBgOW8iC4UncHglg">
@@ -57,6 +57,16 @@
         <div class="resume-highlights" id="aboutHighlights" data-page-node-id="LSdbGBhidqy5NpuGU2yR3v"></div>
       </section>
 
+      <!-- Digital Creative Workspace：3D 数字创作工作台（About 区域旁） -->
+      <section id="workspace" class="card scene-card" aria-labelledby="t-workspace">
+        <h2 id="t-workspace">Digital Creative Workspace</h2>
+        <p class="scene-hint" id="workspaceHint"></p>
+        <div class="scene-stage" id="workspaceStage">
+          <canvas id="wsCanvas" aria-label="3D 数字创作工作台，可悬停查看设备标签"></canvas>
+          <div class="scene-fallback" id="workspaceFallback" hidden></div>
+        </div>
+      </section>
+
       <section id="education" class="card tilt" data-tilt data-page-node-id="j90uf2Z07lrGX6CXLY8OZr">
         <h2 id="t-education" data-page-node-id="ICpDBGW1M2jPEnqExSwolB">教育背景</h2>
         <div class="list" id="educationList" data-page-node-id="dBD4el1PwmX14bi4MV64lI"></div>
@@ -70,6 +80,16 @@
       <section id="projects" class="card tilt" data-tilt data-page-node-id="qvGakqEPviXmSaXWeY4Ft4">
         <h2 id="t-projects" data-page-node-id="mYdhI8Pg396tnUPAyg2HvZ">校园经历</h2>
         <div class="list" id="projectsList" data-page-node-id="6IzKII1evZZY0D2IT05yVg"></div>
+      </section>
+
+      <!-- AIGC Cube：透明玻璃 3D 能力立方体（Portfolio 区域） -->
+      <section id="cube" class="card scene-card" aria-labelledby="t-cube">
+        <h2 id="t-cube">AIGC Cube</h2>
+        <p class="scene-hint" id="cubeHint"></p>
+        <div class="scene-stage cube-stage" id="cubeStage">
+          <canvas id="cubeCanvas" aria-label="3D AIGC 立方体，可拖动旋转，六个面对应六个创作方向"></canvas>
+          <div class="scene-fallback" id="cubeFallback" hidden></div>
+        </div>
       </section>
 
       <section id="skills" class="card tilt" data-tilt data-page-node-id="fI1OEApU5Q7x9Ew89CoKrd">
@@ -105,6 +125,9 @@
       </div>
     </div>
   </div>
+
+  <!-- 3D 场景悬停标签（工作台设备 / Cube 面，内容由 script.js 控制） -->
+  <div class="scene-tooltip" id="sceneTooltip" role="status" aria-hidden="true"></div>
 
   <script src="script.js"></script>
 </body>

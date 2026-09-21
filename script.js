@@ -1,6 +1,12 @@
 /**
- * 3D 交互式简历 — 数据 + 渲染 + Three.js 场景（浅色主题版）
- * 依赖：three.min.js (CDN)。若加载失败，自动降级为无 3D 背景的静态版。
+ * Digital Creative Portfolio — 数据 + 渲染 + Three.js 场景（深色主题版）
+ * 依赖：three.min.js (CDN)。若加载失败，自动降级为静态版。
+ *
+ * 三个 3D 场景：
+ *  1. Hero 个人数字身份装置（背景层，含首字母 / 玻璃主体 / 金属环 / 粒子）
+ *  2. Digital Creative Workspace（About 区域旁的 3D 工作台）
+ *  3. AIGC Cube（Portfolio 区域的透明能力立方体）
+ * 每个场景都有静态 fallback；离屏场景自动暂停渲染以节省性能。
  */
 
 const defaultResumeData = {
@@ -9,14 +15,14 @@ const defaultResumeData = {
     heroTitle: '艺术科技与商业硕士 · 岭南大学（中国香港）',
     location: '中国 · 香港',
     email: 'xiaoshangzhu@ln.hk',
-    heroEyebrow: '求职意向 · 运营岗 / 设计岗',
+    heroEyebrow: 'Digital Media · Interactive Design · AIGC',
     heroHint: '拖动背景旋转 · 滚动探索 ↓',
     degreeLabel: '学历',
     locationLabel: '现居',
     copy: '复制邮箱',
     copied: '已复制',
     copyFailed: '复制失败，请手动复制邮箱：',
-    footerTag: '3D 交互式简历',
+    footerTag: 'Digital Creative Portfolio',
     pdfLabel: '简历 PDF',
     pdfTitle: '中文简历 PDF',
     pdfOpen: '新标签页打开',
@@ -27,15 +33,29 @@ const defaultResumeData = {
     nav: ['关于', '教育', '实习', '校园', '技能', '联系'],
     sectionTitles: {
       about: '关于我',
+      workspace: 'Digital Creative Workspace',
       education: '教育背景',
       experience: '实习经历',
       projects: '校园经历',
+      cube: 'AIGC Cube',
       skills: '个人技能',
       contact: '联系我'
     },
-    summary: '具备扎实的专业知识与相关经验，学习与适应能力强，能快速响应工作需求。做事条理清晰、目标导向，善于分析并解决问题，注重细节与效率，能高效推动任务完成。拥有良好的团队协作精神与沟通能力，责任心强，渴望在岗位上创造实际价值，为团队目标与公司发展贡献积极力量。',
+    workspaceHint: '移动鼠标查看设备标签 · 点击设备跳转对应板块',
+    cubeHint: '拖动旋转 · 悬停放大当前面 · 点击查看对应项目',
+    comingSoon: 'COMING SOON',
+    fallbackWorkspace: 'Digital Creative Workspace',
+    fallbackCube: 'AIGC Cube · 能力矩阵',
+    deviceLabels: {
+      monitor: 'DIGITAL MEDIA',
+      camera: 'VIDEO / MEDIA',
+      tablet: 'VISUAL DESIGN',
+      phone: 'INTERACTIVE',
+      ai: 'AIGC'
+    },
+    summary: '数字媒体艺术背景，正在岭南大学攻读艺术科技与商业硕士。关注 AIGC、互动设计与视觉叙事，习惯用 3D、影像与代码把想法做成可交互的体验。做事条理清晰、目标导向，善于分析并解决问题，注重细节与效率，能高效推动任务完成。',
     highlights: [
-      '求职意向：运营岗 / 设计岗',
+      'Digital Media / Interactive Design / AIGC',
       '硕士：艺术科技与商业 · 岭南大学（中国香港）',
       '本科：数字媒体艺术 · 2026 届',
       '3D 建模：3ds Max / Blender / C4D',
@@ -112,14 +132,14 @@ const defaultResumeData = {
     heroTitle: 'M.Sc. in Arts Technology and Business · Lingnan University, Hong Kong, China',
     location: 'Hong Kong, China',
     email: 'xiaoshangzhu@ln.hk',
-    heroEyebrow: 'TARGET ROLES · OPERATIONS / DESIGN',
+    heroEyebrow: 'DIGITAL MEDIA · INTERACTIVE DESIGN · AIGC',
     heroHint: 'Drag the background to rotate · Scroll to explore ↓',
     degreeLabel: 'Degree',
     locationLabel: 'Based in',
     copy: 'Copy Email',
     copied: 'Copied',
     copyFailed: 'Copy failed. Please copy the email manually: ',
-    footerTag: '3D Interactive Resume',
+    footerTag: 'Digital Creative Portfolio',
     pdfLabel: 'Resume PDF',
     pdfTitle: 'English Resume PDF',
     pdfOpen: 'Open in new tab',
@@ -130,20 +150,41 @@ const defaultResumeData = {
     nav: ['About', 'Education', 'Internships', 'Campus', 'Skills', 'Contact'],
     sectionTitles: {
       about: 'About Me',
+      workspace: 'Digital Creative Workspace',
       education: 'Education',
       experience: 'Internships',
       projects: 'Campus Experience',
+      cube: 'AIGC Cube',
       skills: 'Skills',
       contact: 'Contact Me'
     },
-    summary: 'With solid professional knowledge and hands-on experience, I learn and adapt quickly and respond to work demands efficiently. I work in an organized, goal-oriented way, am good at analysing and solving problems, and focus on detail and efficiency so tasks move forward fast. I am a strong team player with good communication skills and a strong sense of responsibility, eager to create real value in my role and contribute to team and company goals.',
+    workspaceHint: 'Move the mouse over devices to see labels · click a device to jump to its section',
+    cubeHint: 'Drag to rotate · hover to zoom a face · click to view the project',
+    comingSoon: 'COMING SOON',
+    fallbackWorkspace: 'Digital Creative Workspace',
+    fallbackCube: 'AIGC Cube · Capability Matrix',
+    deviceLabels: {
+      monitor: 'DIGITAL MEDIA',
+      camera: 'VIDEO / MEDIA',
+      tablet: 'VISUAL DESIGN',
+      phone: 'INTERACTIVE',
+      ai: 'AIGC'
+    },
+    summary: 'Digital media art background, now pursuing an M.Sc. in Arts Technology and Business at Lingnan University. I care about AIGC, interactive design and visual storytelling, and I like turning ideas into interactive experiences with 3D, video and code. I work in an organized, goal-oriented way, am good at analysing and solving problems, and focus on detail and efficiency so tasks move forward fast.',
     highlights: [
-      'Target roles: Operations / Design',
+      'Digital Media / Interactive Design / AIGC',
+      'M.Sc. Arts Technology and Business · Lingnan University (in progress)',
       'B.A. Digital Media Art · Class of 2026',
       '3D modeling: 3ds Max / Blender / C4D',
       'Post-production: Pr / AE / PS / CapCut'
     ],
     education: [
+      {
+        degree: 'M.Sc. in Arts Technology and Business',
+        school: 'Lingnan University, Hong Kong, China',
+        period: '2026.09 — 2027.08',
+        note: 'In progress · School of Business. Core courses: Chinese & Western Art History, Art-Tech Integration, Design Thinking & Innovation, Accounting & Finance for Arts, Art Finance & Technology, Interactive Art & Technology, Art & Technology: from AI to NFT, and more'
+      },
       {
         degree: 'B.A. Digital Media Art',
         school: 'Jiangxi Institute of Fashion Technology',
@@ -243,6 +284,8 @@ function renderResume() {
   document.getElementById('copyEmail').textContent = text.copy;
   document.getElementById('pdfBtn').textContent = text.pdfLabel;
   document.getElementById('aboutSummary').textContent = text.summary;
+  document.getElementById('workspaceHint').textContent = text.workspaceHint;
+  document.getElementById('cubeHint').textContent = text.cubeHint;
 
   Object.entries(text.sectionTitles).forEach(([key, value]) => {
     const heading = document.getElementById('t-' + key);
@@ -332,7 +375,7 @@ function renderResume() {
   document.getElementById('year').textContent = new Date().getFullYear();
   document.getElementById('footerName').textContent = text.name;
   document.getElementById('footerTag').textContent = text.footerTag;
-  document.title = text.name + (state.language === 'zh' ? ' · 3D 交互简历' : ' · 3D Interactive Resume');
+  document.title = text.name + (state.language === 'zh' ? ' · Digital Creative Portfolio' : ' · Digital Creative Portfolio');
 }
 
 /* 折叠切换时的轻微脉冲反馈 */
@@ -350,6 +393,7 @@ function bindLanguageToggle() {
     button.addEventListener('click', () => {
       state.language = button.dataset.lang;
       document.body.dataset.lang = state.language;
+      document.documentElement.lang = state.language === 'zh' ? 'zh-CN' : 'en';
       document.querySelectorAll('.lang-btn').forEach((b) => {
         const isActive = b === button;
         b.classList.toggle('active', isActive);
@@ -359,6 +403,7 @@ function bindLanguageToggle() {
     });
   });
   document.body.dataset.lang = state.language;
+  document.documentElement.lang = 'zh-CN';
 }
 
 function bindCopyEmail() {
@@ -395,7 +440,6 @@ function fallbackCopy(text, button, done) {
 
 /* ============================================================
  * 简历 PDF：站内预览弹层
- * 中文版指向 assets/resume-zh.pdf，英文版指向 assets/resume-en.pdf
  * ============================================================ */
 let pdfPrevFocus = null;
 
@@ -438,7 +482,6 @@ function closeResumePdf() {
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('is-pdf-open');
 
-  // 关闭时卸载 iframe，停止后台继续渲染 PDF
   const frame = document.getElementById('pdfFrame');
   frame.src = 'about:blank';
   delete frame.dataset.src;
@@ -499,13 +542,136 @@ function bindReveal() {
 }
 
 /* ============================================================
- * Three.js 3D 背景（浅色主题配色）
- * 暖调微粒 + 陶土色线框几何体 + 鼠标视差 + 拖拽旋转 + 滚动视差
+ * 3D 场景公共工具
+ * ============================================================ */
+const SCENE_ACTIVE = { bg: true, workspace: false, cube: false };
+
+function supports3D() {
+  return typeof THREE !== 'undefined' &&
+    (function () {
+      try {
+        const probe = document.createElement('canvas');
+        return !!(probe.getContext('webgl') || probe.getContext('experimental-webgl'));
+      } catch (error) {
+        return false;
+      }
+    })();
+}
+
+/* 静态 fallback：显示可点击的关键词芯片 */
+function showSceneFallback(containerId, fallbackId, title, chips, onClickChip) {
+  const stage = document.getElementById(containerId);
+  const fallback = document.getElementById(fallbackId);
+  if (!stage || !fallback) return;
+
+  const canvas = stage.querySelector('canvas');
+  if (canvas) canvas.style.display = 'none';
+  fallback.hidden = false;
+  fallback.innerHTML = '';
+
+  const titleNode = el('p', 'fallback-title', title);
+  const chipsWrap = el('div', 'fallback-chips');
+  chips.forEach((chip) => {
+    const node = el('button', 'fallback-chip', chip);
+    node.type = 'button';
+    node.addEventListener('click', () => onClickChip(chip));
+    chipsWrap.appendChild(node);
+  });
+  fallback.appendChild(titleNode);
+  fallback.appendChild(chipsWrap);
+}
+
+/* 全局悬停标签 */
+const tooltipEl = () => document.getElementById('sceneTooltip');
+
+function showTooltip(clientX, clientY, label) {
+  const tip = tooltipEl();
+  if (!tip) return;
+  tip.textContent = label;
+  tip.style.left = clientX + 'px';
+  tip.style.top = clientY + 'px';
+  tip.classList.add('visible');
+  tip.setAttribute('aria-hidden', 'false');
+}
+
+function hideTooltip() {
+  const tip = tooltipEl();
+  if (!tip) return;
+  tip.classList.remove('visible');
+  tip.setAttribute('aria-hidden', 'true');
+}
+
+/* 把 canvas 指针事件换算为 NDC 坐标 */
+function toNDC(event, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  return new THREE.Vector2(
+    ((event.clientX - rect.left) / rect.width) * 2 - 1,
+    -((event.clientY - rect.top) / rect.height) * 2 + 1
+  );
+}
+
+/* 离屏自动暂停渲染 */
+function observeSceneActive(elementId, key) {
+  const target = document.getElementById(elementId);
+  if (!target || !('IntersectionObserver' in window)) {
+    SCENE_ACTIVE[key] = true;
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      SCENE_ACTIVE[key] = entry.isIntersecting;
+    });
+  }, { rootMargin: '120px' });
+  observer.observe(target);
+}
+
+/* 冷色调 Canvas 文字纹理 */
+function makeTextTexture(lines, options) {
+  const opts = Object.assign({ width: 512, height: 288, accent: '#7FD6F2', muted: '#8FA3B8', bg: '#0D1119' }, options || {});
+  const canvas = document.createElement('canvas');
+  canvas.width = opts.width;
+  canvas.height = opts.height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = opts.bg;
+  ctx.fillRect(0, 0, opts.width, opts.height);
+
+  // 细网格，增加"数字工作台"质感
+  ctx.strokeStyle = 'rgba(127, 214, 242, 0.08)';
+  ctx.lineWidth = 1;
+  for (let x = 32; x < opts.width; x += 32) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, opts.height); ctx.stroke();
+  }
+  for (let y = 32; y < opts.height; y += 32) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(opts.width, y); ctx.stroke();
+  }
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const step = opts.height / (lines.length + 1);
+  lines.forEach((line, i) => {
+    const isAccent = i === 0;
+    ctx.fillStyle = isAccent ? opts.accent : 'rgba(242, 244, 246, 0.85)';
+    ctx.font = (isAccent ? '700 ' : '500 ') + (isAccent ? Math.round(step * 0.52) : Math.round(step * 0.4)) + 'px "Segoe UI", "PingFang SC", sans-serif';
+    ctx.shadowColor = isAccent ? 'rgba(127, 214, 242, 0.55)' : 'transparent';
+    ctx.shadowBlur = isAccent ? 18 : 0;
+    ctx.fillText(line, opts.width / 2, step * (i + 1));
+  });
+  ctx.shadowBlur = 0;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return { texture, canvas, ctx, opts };
+}
+
+/* ============================================================
+ * 场景 1：Hero 个人数字身份装置（全屏背景层）
+ * 抽象几何主体 + 首字母 + 玻璃卫星体 + 金属环 + 粒子 + 微光
  * ============================================================ */
 function init3DScene() {
   const canvas = document.getElementById('bg3d');
 
-  if (typeof THREE === 'undefined' || !canvas) {
+  if (!supports3D() || !canvas) {
     canvas.style.display = 'none'; // 降级：显示 CSS 光斑背景
     return;
   }
@@ -513,32 +679,36 @@ function init3DScene() {
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   const scene = new THREE.Scene();
-  // 雾色与页面底色一致，远景几何体自然融进米杏背景
-  scene.fog = new THREE.FogExp2(0xF5F3EE, 0.02);
+  scene.fog = new THREE.FogExp2(0x0B0C0F, 0.02);
 
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, 14);
 
-  // ---- 灯光（浅底：暖白环境光 + 陶土 / 雾蓝点光塑形） ----
-  scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+  // ---- 灯光：冷白环境光 + 冷青主光 + 淡蓝辅光 ----
+  scene.add(new THREE.AmbientLight(0xBFD4E2, 0.7));
 
-  const warmLight = new THREE.PointLight(0xE7C9AE, 1.6, 70);
-  warmLight.position.set(8, 6, 10);
-  scene.add(warmLight);
+  const keyLight = new THREE.PointLight(0x7FD6F2, 1.5, 80);
+  keyLight.position.set(9, 7, 12);
+  scene.add(keyLight);
 
-  const coolLight = new THREE.PointLight(0xAFC0CF, 1.1, 70);
-  coolLight.position.set(-10, -4, 8);
-  scene.add(coolLight);
+  const fillLight = new THREE.PointLight(0x5B79A8, 0.8, 80);
+  fillLight.position.set(-11, -4, 9);
+  scene.add(fillLight);
 
-  // ---- 微粒（浅底改用正常混合 + 半透明，避免加色混合被冲白） ----
-  const particleCount = 1400;
+  // 身份装置中心的呼吸微光（悬停时增强）
+  const identityGlow = new THREE.PointLight(0x7FD6F2, 0.9, 24);
+  identityGlow.position.set(0, 0.4, -1.5);
+  scene.add(identityGlow);
+
+  // ---- 微粒：冷色低透明度，安静漂浮 ----
+  const particleCount = 1200;
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
-  const palette = [new THREE.Color(0xA98D7C), new THREE.Color(0xC6A99A), new THREE.Color(0x8C8377), new THREE.Color(0x9FB0BD)];
+  const palette = [new THREE.Color(0x6FA8C9), new THREE.Color(0x7FD6F2), new THREE.Color(0x43536B), new THREE.Color(0xC9D6E3)];
 
   for (let i = 0; i < particleCount; i++) {
     positions[i * 3] = (Math.random() - 0.5) * 60;
@@ -555,67 +725,133 @@ function init3DScene() {
   particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({
-    size: 0.11,
+    size: 0.09,
     vertexColors: true,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.4,
     depthWrite: false,
     blending: THREE.NormalBlending
   }));
   scene.add(particles);
 
-  // ---- 漂浮几何体（陶土色调） ----
+  // ---- 远景几何体（深空冷色线框，弱化装饰感） ----
   const shapes = [];
   const wireMat = (color, opacity) => new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity });
-  const glassMat = (color) => new THREE.MeshPhongMaterial({ color, transparent: true, opacity: 0.42, shininess: 60, flatShading: true });
+  const glassMat = (color, opacity) => new THREE.MeshPhongMaterial({ color, transparent: true, opacity: opacity || 0.28, shininess: 70, flatShading: true });
 
-  function addShape(geo, material, position, speed, scale) {
+  function addShape(geo, material, position, speed) {
     const mesh = new THREE.Mesh(geo, material);
     mesh.position.set(position[0], position[1], position[2]);
-    mesh.scale.setScalar(scale);
     mesh.userData.speed = speed;
     shapes.push(mesh);
     scene.add(mesh);
     return mesh;
   }
 
-  addShape(new THREE.IcosahedronGeometry(2.2, 0), wireMat(0xA98D7C, 0.5), [-9, 3, -6], 0.0035, 1);
-  addShape(new THREE.TorusKnotGeometry(1.5, 0.42, 90, 14), glassMat(0xDCC6B4), [10, -3, -8], 0.005, 1);
-  addShape(new THREE.OctahedronGeometry(1.7, 0), wireMat(0x8C8377, 0.45), [7, 5, -12], 0.0045, 1);
-  addShape(new THREE.TorusGeometry(1.9, 0.32, 12, 60), wireMat(0x9FB0BD, 0.42), [-11, -5, -10], 0.006, 1);
-  addShape(new THREE.DodecahedronGeometry(1.4, 0), glassMat(0xC6A99A), [0, -7, -9], 0.004, 1);
-  addShape(new THREE.ConeGeometry(1.3, 2.6, 5), wireMat(0xB9A99B, 0.35), [-4, 8, -14], 0.0055, 1);
+  addShape(new THREE.IcosahedronGeometry(2.2, 0), wireMat(0x43536B, 0.35), [-11, 4, -8], 0.0032);
+  addShape(new THREE.TorusKnotGeometry(1.5, 0.4, 80, 12), glassMat(0x2C3A4C, 0.32), [11, -4, -9], 0.0045);
+  addShape(new THREE.OctahedronGeometry(1.7, 0), wireMat(0x5FA8C7, 0.30), [8, 6, -13], 0.004);
+  addShape(new THREE.TorusGeometry(1.9, 0.3, 10, 48), wireMat(0x4E7E9B, 0.30), [-12, -6, -11], 0.0055);
+  addShape(new THREE.DodecahedronGeometry(1.4, 0), glassMat(0x33465C, 0.3), [1, -8, -10], 0.0038);
+  addShape(new THREE.ConeGeometry(1.3, 2.6, 5), wireMat(0x43536B, 0.26), [-5, 9, -15], 0.005);
 
-  // 核心球体（奶油陶土质感，位于标题后方，浅底上保持淡淡的存在感）
-  const coreSphere = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(3.2, 1),
-    new THREE.MeshPhongMaterial({ color: 0xE6D6C6, transparent: true, opacity: 0.5, shininess: 50, flatShading: true })
+  // ============================================================
+  // 个人数字身份装置：Personal Identity Object
+  // ============================================================
+  const identity = new THREE.Group();
+  identity.position.set(0, 0.4, -4);
+  scene.add(identity);
+
+  // 渐显动画（0 → 1，页面进入时约 1.8s）
+  const fadeIn = { value: 0 };
+
+  // 抽象几何主体：深空玻璃二十面体 + 冷色线框
+  const mainGlass = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(2.6, 1),
+    new THREE.MeshPhongMaterial({ color: 0x16202E, transparent: true, opacity: 0, shininess: 90, flatShading: true })
   );
-  coreSphere.position.set(0, 0.5, -4);
-  scene.add(coreSphere);
+  identity.add(mainGlass);
 
-  const coreWire = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(3.35, 1),
-    wireMat(0x9C8878, 0.3)
+  const mainWire = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(2.74, 1),
+    wireMat(0x7FD6F2, 0)
   );
-  coreWire.position.copy(coreSphere.position);
-  scene.add(coreWire);
+  identity.add(mainWire);
 
-  // ---- 交互状态 ----
+  // 内核：小型发光体
+  const core = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.9, 0),
+    new THREE.MeshBasicMaterial({ color: 0x7FD6F2, transparent: true, opacity: 0 })
+  );
+  identity.add(core);
+
+  // 姓名首字母（取自英文姓名 Zhu Xiaoshang → Z）
+  const initial = (defaultResumeData.en.name || 'Z').trim().charAt(0).toUpperCase();
+  const letterCanvas = document.createElement('canvas');
+  letterCanvas.width = 256;
+  letterCanvas.height = 256;
+  const letterCtx = letterCanvas.getContext('2d');
+  letterCtx.clearRect(0, 0, 256, 256);
+  letterCtx.textAlign = 'center';
+  letterCtx.textBaseline = 'middle';
+  letterCtx.font = '700 170px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  letterCtx.fillStyle = '#FFFFFF';
+  letterCtx.shadowColor = 'rgba(127, 214, 242, 0.9)';
+  letterCtx.shadowBlur = 28;
+  letterCtx.fillText(initial, 128, 138);
+  const letterTexture = new THREE.CanvasTexture(letterCanvas);
+  const letterPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.8, 1.8),
+    new THREE.MeshBasicMaterial({ map: letterTexture, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
+  );
+  letterPlane.position.set(0, 0.05, 2.68); // 贴在主体前方
+  identity.add(letterPlane);
+
+  // 金属环 × 2（高光银灰，缓慢反向运动）
+  const metalMat = new THREE.MeshPhongMaterial({ color: 0xC9CFD8, shininess: 120, specular: 0xE8EEF5, transparent: true, opacity: 0 });
+  const ringA = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.045, 16, 96), metalMat.clone());
+  ringA.rotation.set(1.15, 0.3, 0);
+  identity.add(ringA);
+
+  const ringB = new THREE.Mesh(new THREE.TorusGeometry(4.05, 0.028, 16, 96), metalMat.clone());
+  ringB.rotation.set(1.6, -0.5, 0.4);
+  identity.add(ringB);
+
+  // 环上的小型玻璃卫星体
+  const satellites = [];
+  for (let i = 0; i < 3; i++) {
+    const sat = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), glassMat(0x9FD8EF, 0));
+    sat.userData.orbit = {
+      radius: i === 0 ? 3.5 : 4.05,
+      speed: 0.22 + i * 0.08,
+      phase: (i / 3) * Math.PI * 2,
+      ring: i === 0 ? ringA : ringB
+    };
+    satellites.push(sat);
+    identity.add(sat);
+  }
+
+  // 交互状态
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
   const drag = { active: false, lastX: 0, lastY: 0, rotY: 0, rotX: 0 };
   let scrollProgress = 0;
+  let identityHover = 0;
 
   window.addEventListener('mousemove', (event) => {
     pointer.tx = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.ty = (event.clientY / window.innerHeight) * 2 - 1;
+
+    // 悬停检测：指针靠近屏幕中心的装置区域 → 轻微发光
+    const dx = event.clientX - window.innerWidth / 2;
+    const dy = event.clientY - window.innerHeight / 2;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const hovered = distance < Math.min(window.innerWidth, window.innerHeight) * 0.28;
+    identityHover += ((hovered ? 1 : 0) - identityHover) * 0.08;
   }, { passive: true });
 
-  // 内容层在 canvas 之上，所以拖拽监听放在 window 上：
-  // 命中链接/按钮/折叠面板/卡片/顶栏时不触发旋转，其余空白区域（Hero、卡片间隙）都可拖动。
   function isInteractiveTarget(target) {
     return !!(target && target.closest &&
-      target.closest('a, button, summary, details, input, textarea, select, .card, .top-bar, .pdf-modal'));
+      target.closest('a, button, summary, details, input, textarea, select, .card, .top-bar, .pdf-modal, canvas#wsCanvas, canvas#cubeCanvas'));
   }
 
   window.addEventListener('pointerdown', (event) => {
@@ -662,6 +898,19 @@ function init3DScene() {
     requestAnimationFrame(animate);
     const t = clock.getElapsedTime();
 
+    // 页面进入渐显（约 1.8s，克制）
+    if (fadeIn.value < 1) {
+      fadeIn.value = Math.min(1, fadeIn.value + 0.012);
+      const f = fadeIn.value;
+      mainGlass.material.opacity = 0.42 * f;
+      mainWire.material.opacity = 0.35 * f;
+      core.material.opacity = 0.85 * f;
+      letterPlane.material.opacity = f;
+      ringA.material.opacity = 0.9 * f;
+      ringB.material.opacity = 0.9 * f;
+      satellites.forEach((sat) => { sat.material.opacity = 0.8 * f; });
+    }
+
     // 指针平滑跟随（视差）
     pointer.x += (pointer.tx - pointer.x) * 0.04;
     pointer.y += (pointer.ty - pointer.y) * 0.04;
@@ -671,42 +920,684 @@ function init3DScene() {
     camera.position.y = -pointer.y * 1.1 - scrollProgress * 3.5;
     camera.position.z = 14 - scrollProgress * 3;
 
-    if (!prefersReduced) {
-      camera.lookAt(pointer.x * 0.6, -pointer.y * 0.4 - scrollProgress * 3, 0);
-    } else {
-      camera.lookAt(0, 0, 0);
-    }
+    camera.lookAt(pointer.x * 0.6, -pointer.y * 0.4 - scrollProgress * 3, 0);
 
     // 拖拽旋转整个场景内容
     scene.rotation.y = drag.rotY;
     scene.rotation.x = drag.rotX;
 
-    // 粒子缓慢漂移
     if (!prefersReduced) {
-      particles.rotation.y = t * 0.02;
+      // 粒子缓慢漂移
+      particles.rotation.y = t * 0.018;
       particles.rotation.x = Math.sin(t * 0.1) * 0.03;
-    }
 
-    // 几何体自转 + 上下浮动
-    if (!prefersReduced) {
+      // 远景几何体自转 + 浮动
       shapes.forEach((mesh, i) => {
         mesh.rotation.x += mesh.userData.speed;
-        mesh.rotation.y += mesh.userData.speed * 1.4;
+        mesh.rotation.y += mesh.userData.speed * 1.3;
         mesh.position.y += Math.sin(t * 0.6 + i * 1.7) * 0.004;
       });
-      coreSphere.rotation.y = t * 0.08;
-      coreWire.rotation.y = -t * 0.06;
-      coreWire.rotation.x = t * 0.04;
 
-      // 核心球随滚动后退，制造纵深感
-      const depth = Math.sin(Math.min(scrollProgress * 2, Math.PI)) * 6;
-      coreSphere.position.z = -4 - depth;
-      coreWire.position.z = coreSphere.position.z;
+      // 装置：非常缓慢的自转 + 呼吸
+      identity.rotation.y = t * 0.06;
+      identity.rotation.x = Math.sin(t * 0.12) * 0.05;
+      const breathe = 1 + Math.sin(t * 0.7) * 0.015;
+      core.scale.setScalar(breathe);
+      letterPlane.position.y = 0.05 + Math.sin(t * 0.8) * 0.05;
+    } else {
+      identity.rotation.y = 0.4;
     }
 
-    // 灯光呼吸
-    warmLight.intensity = 1.6 + Math.sin(t * 0.8) * 0.25;
-    coolLight.intensity = 1.1 + Math.sin(t * 0.6 + 2) * 0.2;
+    // 金属环：极缓慢反向运动
+    if (!prefersReduced) {
+      ringA.rotation.z += 0.0012;
+      ringB.rotation.z -= 0.0008;
+      ringA.rotation.x += 0.0004;
+      ringB.rotation.x -= 0.0003;
+    }
+
+    // 玻璃卫星沿各自的环缓慢公转
+    if (!prefersReduced) {
+      satellites.forEach((sat) => {
+        const o = sat.userData.orbit;
+        const angle = t * o.speed + o.phase;
+        const rr = o.radius;
+        sat.position.set(
+          Math.cos(angle) * rr,
+          Math.sin(angle) * rr * Math.sin(o.ring.rotation.x),
+          Math.sin(angle) * rr * Math.cos(o.ring.rotation.x)
+        );
+        sat.rotation.y += 0.01;
+      });
+    }
+
+    // 悬停发光 + 呼吸微光
+    const hoverBoost = identityHover * 1.1;
+    identityGlow.intensity = (0.8 + Math.sin(t * 0.9) * 0.15) * fadeIn.value + hoverBoost;
+    keyLight.intensity = 1.5 + Math.sin(t * 0.8) * 0.15;
+    fillLight.intensity = 0.8 + Math.sin(t * 0.6 + 2) * 0.12;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+}
+
+/* ============================================================
+ * 场景 2：Digital Creative Workspace（About 区域旁）
+ * 低多边形极简工作台：显示器 / 键盘 / 鼠标 / 手机 / 数位板 /
+ * 摄像机 / 耳机 / 硬盘 / 文件夹 / 台灯 / AI 悬浮体
+ * 悬停设备 → 标签；点击设备 → 滚动到对应板块
+ * ============================================================ */
+function initWorkspaceScene() {
+  const stage = document.getElementById('workspaceStage');
+  const canvas = document.getElementById('wsCanvas');
+  if (!stage || !canvas || !supports3D()) {
+    const text = getText();
+    const map = {
+      'DIGITAL MEDIA': '#about',
+      'VIDEO / MEDIA': '#experience',
+      'VISUAL DESIGN': '#projects',
+      'INTERACTIVE': '#skills',
+      'AIGC': '#skills'
+    };
+    showSceneFallback('workspaceStage', 'workspaceFallback', text.fallbackWorkspace,
+      Object.keys(map),
+      (chip) => { const target = document.querySelector(map[chip]); if (target) target.scrollIntoView({ behavior: 'smooth' }); });
+    return;
+  }
+
+  observeSceneActive('workspace', 'workspace');
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 2, 0.1, 60);
+  camera.position.set(0, 3.1, 9.2);
+  camera.lookAt(0, 0.7, 0);
+
+  scene.add(new THREE.AmbientLight(0xBFD4E2, 0.55));
+  const keyLight = new THREE.PointLight(0x7FD6F2, 1.1, 40);
+  keyLight.position.set(4, 6, 7);
+  scene.add(keyLight);
+  const fillLight = new THREE.PointLight(0x5B79A8, 0.5, 40);
+  fillLight.position.set(-6, 2, 5);
+  scene.add(fillLight);
+
+  const world = new THREE.Group();
+  scene.add(world);
+
+  // 材质库：极简深色 + 玻璃 + 少量金属
+  const darkMat = new THREE.MeshPhongMaterial({ color: 0x1A1F29, shininess: 30, flatShading: true });
+  const darkerMat = new THREE.MeshPhongMaterial({ color: 0x11151D, shininess: 20, flatShading: true });
+  const metalMat = new THREE.MeshPhongMaterial({ color: 0x9AA6B5, shininess: 110, specular: 0xD6DEE8 });
+  const glassMat = new THREE.MeshPhongMaterial({ color: 0x2C3A4C, transparent: true, opacity: 0.3, shininess: 80, flatShading: true });
+  const accentMat = new THREE.MeshBasicMaterial({ color: 0x7FD6F2, transparent: true, opacity: 0.9 });
+
+  function box(w, h, d, mat, x, y, z, ry) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    mesh.position.set(x, y, z);
+    if (ry) mesh.rotation.y = ry;
+    world.add(mesh);
+    return mesh;
+  }
+
+  // ---- 桌面 ----
+  const desk = box(9, 0.22, 3.6, darkMat, 0, 0, 0);
+  desk.receiveShadow = false;
+  // 桌腿（简化，只做暗示）
+  box(0.18, 1.4, 0.18, darkerMat, -4.1, -0.8, -1.4);
+  box(0.18, 1.4, 0.18, darkerMat, 4.1, -0.8, -1.4);
+
+  // ---- 显示器（屏幕内容：品牌关键词轮播） ----
+  const monitorGroup = new THREE.Group();
+  monitorGroup.position.set(-0.8, 0, -0.5);
+  world.add(monitorGroup);
+  const monBase = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.62, 0.06, 24), darkerMat);
+  monBase.position.set(0, 0.14, 0.2);
+  monitorGroup.add(monBase);
+  const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.9, 0.1), darkMat);
+  stand.position.set(0, 0.6, 0.2);
+  monitorGroup.add(stand);
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.05, 0.12), darkMat);
+  shell.position.set(0, 1.55, 0.1);
+  monitorGroup.add(shell);
+  const monitorWords = ['DIGITAL MEDIA', 'INTERACTIVE', 'DESIGN', 'AIGC', 'MOTION', 'VISUAL'];
+  const screen = makeTextTexture(monitorWords, { width: 512, height: 288 });
+  const screenMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.36, 1.86),
+    new THREE.MeshBasicMaterial({ map: screen.texture })
+  );
+  screenMesh.position.set(0, 1.55, 0.17);
+  monitorGroup.add(screenMesh);
+
+  // ---- 键盘 ----
+  const kbGroup = new THREE.Group();
+  kbGroup.position.set(-0.8, 0.13, 1.0);
+  kbGroup.rotation.y = -0.04;
+  world.add(kbGroup);
+  const kbBase = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.07, 0.64), darkerMat);
+  kbGroup.add(kbBase);
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 10; c++) {
+      const key = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.03, 0.13), darkMat);
+      key.position.set(-0.8 + c * 0.165, 0.05, -0.2 + r * 0.19);
+      kbGroup.add(key);
+    }
+  }
+
+  // ---- 鼠标 ----
+  const mouseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 18, 14), darkMat);
+  mouseMesh.scale.set(1, 0.55, 1.45);
+  mouseMesh.position.set(0.55, 0.16, 1.05);
+  world.add(mouseMesh);
+
+  // ---- 手机 ----
+  const phoneGroup = new THREE.Group();
+  phoneGroup.position.set(1.35, 0.12, 0.55);
+  phoneGroup.rotation.y = -0.5;
+  world.add(phoneGroup);
+  const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.035, 0.66), darkerMat);
+  phoneGroup.add(phoneBody);
+  const phoneScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.6), accentMat.clone());
+  phoneScreen.material.opacity = 0.5;
+  phoneScreen.rotation.x = -Math.PI / 2;
+  phoneScreen.position.y = 0.02;
+  phoneGroup.add(phoneScreen);
+
+  // ---- 数位板（含小型屏幕） ----
+  const tabletGroup = new THREE.Group();
+  tabletGroup.position.set(-3.0, 0.13, 0.7);
+  tabletGroup.rotation.y = 0.35;
+  world.add(tabletGroup);
+  const tabletBody = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.05, 0.8), darkMat);
+  tabletGroup.add(tabletBody);
+  const tabletTex = makeTextTexture(['VISUAL', 'DESIGN'], { width: 256, height: 160 });
+  const tabletScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.98, 0.62),
+    new THREE.MeshBasicMaterial({ map: tabletTex.texture })
+  );
+  tabletScreen.rotation.x = -Math.PI / 2;
+  tabletScreen.position.y = 0.03;
+  tabletGroup.add(tabletScreen);
+
+  // ---- 摄像机（机身 + 镜头） ----
+  const cameraGroup = new THREE.Group();
+  cameraGroup.position.set(2.55, 0.32, 0.35);
+  cameraGroup.rotation.y = -0.4;
+  world.add(cameraGroup);
+  const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.42, 0.34), darkerMat);
+  cameraGroup.add(camBody);
+  const lensOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.22, 20), darkMat);
+  lensOuter.rotation.x = Math.PI / 2;
+  lensOuter.position.set(0, 0.02, 0.26);
+  cameraGroup.add(lensOuter);
+  const lensGlass = new THREE.Mesh(new THREE.CircleGeometry(0.11, 20), glassMat);
+  lensGlass.position.set(0, 0.02, 0.38);
+  cameraGroup.add(lensGlass);
+  const recDot = new THREE.Mesh(new THREE.CircleGeometry(0.025, 10), accentMat.clone());
+  recDot.position.set(0.28, 0.16, 0.18);
+  cameraGroup.add(recDot);
+
+  // ---- 耳机（头梁 + 双耳罩，平放） ----
+  const hpGroup = new THREE.Group();
+  hpGroup.position.set(3.3, 0.1, -0.9);
+  hpGroup.rotation.y = 0.6;
+  world.add(hpGroup);
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.045, 12, 32, Math.PI), darkMat);
+  band.rotation.z = 0;
+  band.rotation.x = Math.PI / 2;
+  hpGroup.add(band);
+  const cupL = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 20), darkMat);
+  cupL.position.set(-0.34, 0.03, 0);
+  cupL.rotation.z = Math.PI / 2;
+  hpGroup.add(cupL);
+  const cupR = cupL.clone();
+  cupR.position.x = 0.34;
+  hpGroup.add(cupR);
+
+  // ---- 小型硬盘 ----
+  const hdd = box(0.6, 0.1, 0.42, darkerMat, 0.75, 0.11, -0.75, 0.3);
+  const hddLed = new THREE.Mesh(new THREE.CircleGeometry(0.025, 10), accentMat.clone());
+  hddLed.rotation.x = -Math.PI / 2;
+  hddLed.position.set(0.9, 0.165, -0.66);
+  world.add(hddLed);
+  void hdd;
+
+  // ---- 文件夹（两片薄板） ----
+  const folderA = box(0.72, 0.035, 0.52, darkMat, -1.85, 0.09, -1.0, -0.25);
+  const folderB = box(0.68, 0.03, 0.48, new THREE.MeshPhongMaterial({ color: 0x223042, shininess: 24, flatShading: true }), -1.85, 0.12, -1.0, -0.25);
+  folderB.rotation.z = 0.02;
+  void folderA;
+
+  // ---- 台灯（底座 + 双臂 + 灯头 + 灯光） ----
+  const lampGroup = new THREE.Group();
+  lampGroup.position.set(-3.6, 0, -1.1);
+  world.add(lampGroup);
+  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.05, 24), darkerMat);
+  lampBase.position.set(0, 0.05, 0);
+  lampGroup.add(lampBase);
+  const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.0, 10), metalMat);
+  arm1.position.set(0.12, 0.55, 0);
+  arm1.rotation.z = 0.25;
+  lampGroup.add(arm1);
+  const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.8, 10), metalMat);
+  arm2.position.set(0.38, 1.12, 0);
+  arm2.rotation.z = 1.15;
+  lampGroup.add(arm2);
+  const lampHead = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.26, 20), darkMat);
+  lampHead.position.set(0.72, 1.18, 0);
+  lampHead.rotation.z = -1.9;
+  lampGroup.add(lampHead);
+  const lampBulb = new THREE.Mesh(new THREE.CircleGeometry(0.1, 16), accentMat.clone());
+  lampBulb.material.opacity = 0.75;
+  lampBulb.position.set(0.82, 1.14, 0);
+  lampBulb.rotation.z = -2.1;
+  lampGroup.add(lampBulb);
+  const lampLight = new THREE.PointLight(0x9FD8EF, 0.9, 6);
+  lampLight.position.set(0.85, 1.1, 0.2);
+  lampGroup.add(lampLight);
+
+  // ---- AI 悬浮体（AIGC 标识：小型发光十二面体） ----
+  function wireLike(color, opacity) {
+    return new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity });
+  }
+  const aiGroup = new THREE.Group();
+  aiGroup.position.set(0.4, 2.6, -0.2);
+  world.add(aiGroup);
+  const aiWire = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3, 0), wireLike(0x7FD6F2, 0.6));
+  aiGroup.add(aiWire);
+  const aiCore = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), accentMat.clone());
+  aiGroup.add(aiCore);
+  const aiLight = new THREE.PointLight(0x7FD6F2, 0.7, 4);
+  aiGroup.add(aiLight);
+
+  // ---- 可点击设备注册表（group → 标签 + 跳转目标） ----
+  const deviceMap = [
+    { key: 'monitor', group: monitorGroup, target: '#about' },
+    { key: 'camera', group: cameraGroup, target: '#experience' },
+    { key: 'tablet', group: tabletGroup, target: '#projects' },
+    { key: 'phone', group: phoneGroup, target: '#skills' },
+    { key: 'ai', group: aiGroup, target: '#skills' }
+  ];
+  const pickables = [];
+  deviceMap.forEach((d) => {
+    d.group.traverse((node) => { if (node.isMesh) { node.userData.deviceKey = d.key; pickables.push(node); } });
+  });
+
+  // ---- 尺寸 ----
+  function resize() {
+    const w = stage.clientWidth;
+    const h = stage.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ---- 悬停 / 点击 ----
+  const raycaster = new THREE.Raycaster();
+  let hoveredKey = null;
+
+  canvas.addEventListener('pointermove', (event) => {
+    raycaster.setFromCamera(toNDC(event, canvas), camera);
+    const hits = raycaster.intersectObjects(pickables, false);
+    const key = hits.length ? hits[0].object.userData.deviceKey : null;
+    if (key !== hoveredKey) {
+      hoveredKey = key;
+      if (key) {
+        showTooltip(event.clientX, event.clientY, getText().deviceLabels[key] || key.toUpperCase());
+      } else {
+        hideTooltip();
+      }
+    } else if (key) {
+      showTooltip(event.clientX, event.clientY, getText().deviceLabels[key] || key.toUpperCase());
+    }
+  });
+
+  canvas.addEventListener('pointerleave', () => {
+    hoveredKey = null;
+    hideTooltip();
+  });
+
+  canvas.addEventListener('click', (event) => {
+    raycaster.setFromCamera(toNDC(event, canvas), camera);
+    const hits = raycaster.intersectObjects(pickables, false);
+    if (!hits.length) return;
+    const device = deviceMap.find((d) => d.key === hits[0].object.userData.deviceKey);
+    if (!device) return;
+    const target = document.querySelector(device.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // ---- 动画循环（离屏自动暂停） ----
+  const clock = new THREE.Clock();
+  const parallax = { x: 0, y: 0, tx: 0, ty: 0 };
+  window.addEventListener('mousemove', (event) => {
+    parallax.tx = (event.clientX / window.innerWidth) * 2 - 1;
+    parallax.ty = (event.clientY / window.innerHeight) * 2 - 1;
+  }, { passive: true });
+  let wordIndex = 0;
+  let lastWordSwap = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (!SCENE_ACTIVE.workspace) return;
+    const t = clock.getElapsedTime();
+
+    // 显示器文字轮播（每 2.4s，重绘 canvas 纹理）
+    if (t - lastWordSwap > 2.4) {
+      lastWordSwap = t;
+      wordIndex = (wordIndex + 1) % monitorWords.length;
+      const ordered = monitorWords.slice(wordIndex).concat(monitorWords.slice(0, wordIndex));
+      const ctx = screen.ctx;
+      const opts = screen.opts;
+      ctx.fillStyle = opts.bg;
+      ctx.fillRect(0, 0, opts.width, opts.height);
+      ctx.strokeStyle = 'rgba(127, 214, 242, 0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 32; x < opts.width; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, opts.height); ctx.stroke(); }
+      for (let y = 32; y < opts.height; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(opts.width, y); ctx.stroke(); }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const step = opts.height / (ordered.length + 1);
+      ordered.forEach((line, i) => {
+        const isAccent = i === 0;
+        ctx.fillStyle = isAccent ? opts.accent : 'rgba(242, 244, 246, 0.85)';
+        ctx.font = (isAccent ? '700 ' : '500 ') + (isAccent ? Math.round(step * 0.52) : Math.round(step * 0.4)) + 'px "Segoe UI", "PingFang SC", sans-serif';
+        ctx.shadowColor = isAccent ? 'rgba(127, 214, 242, 0.55)' : 'transparent';
+        ctx.shadowBlur = isAccent ? 18 : 0;
+        ctx.fillText(line, opts.width / 2, step * (i + 1));
+      });
+      ctx.shadowBlur = 0;
+      screen.texture.needsUpdate = true;
+    }
+
+    // 极轻微的整体视角变化（鼠标视差）
+    parallax.x += (parallax.tx - parallax.x) * 0.05;
+    parallax.y += (parallax.ty - parallax.y) * 0.05;
+    world.rotation.y = parallax.x * 0.045;
+    world.rotation.x = parallax.y * 0.02;
+
+    // AI 悬浮体：缓慢自转 + 浮动 + 呼吸灯
+    aiGroup.rotation.y = t * 0.4;
+    aiGroup.position.y = 2.6 + Math.sin(t * 0.9) * 0.12;
+    aiCore.material.opacity = 0.6 + Math.sin(t * 2.2) * 0.25;
+    aiLight.intensity = 0.6 + Math.sin(t * 2.2) * 0.2;
+
+    // 手机屏幕 / 硬盘指示灯呼吸
+    phoneScreen.material.opacity = 0.4 + Math.sin(t * 1.4) * 0.12;
+
+    // 台灯微闪（模拟真实灯泡，非常轻微）
+    lampLight.intensity = 0.85 + Math.sin(t * 7.3) * 0.03;
+
+    // 录制红点（此处为冷色）闪烁
+    recDot.material.opacity = 0.5 + Math.sin(t * 3) * 0.4;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+}
+
+/* ============================================================
+ * 场景 3：AIGC Cube（Portfolio 区域）
+ * 玻璃 + 半透明 + 金属边框立方体，六面标签
+ * 拖动旋转 / 悬停放大 / 点击 → COMING SOON（暂无对应项目）
+ * ============================================================ */
+function initCubeScene() {
+  const stage = document.getElementById('cubeStage');
+  const canvas = document.getElementById('cubeCanvas');
+  if (!stage || !canvas || !supports3D()) {
+    const faces = ['VISUAL', 'MOTION', 'AIGC', 'INTERACTIVE', 'VIDEO', 'DESIGN'];
+    showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faces, () => {
+      showComingSoon();
+    });
+    return;
+  }
+
+  observeSceneActive('cube', 'cube');
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 2, 0.1, 50);
+  camera.position.set(0, 0.4, 7.6);
+  camera.lookAt(0, 0, 0);
+
+  scene.add(new THREE.AmbientLight(0xBFD4E2, 0.6));
+  const keyLight = new THREE.PointLight(0x7FD6F2, 1.2, 40);
+  keyLight.position.set(4, 5, 6);
+  scene.add(keyLight);
+  const rimLight = new THREE.PointLight(0x5B79A8, 0.7, 40);
+  rimLight.position.set(-5, -3, -4);
+  scene.add(rimLight);
+  const centerGlow = new THREE.PointLight(0x7FD6F2, 0.5, 10);
+  centerGlow.position.set(0, 0, 0);
+  scene.add(centerGlow);
+
+  const cubeGroup = new THREE.Group();
+  scene.add(cubeGroup);
+
+  // 玻璃立方体本体
+  const size = 2.5;
+  const glass = new THREE.Mesh(
+    new THREE.BoxGeometry(size, size, size),
+    new THREE.MeshPhongMaterial({
+      color: 0x1B2836,
+      transparent: true,
+      opacity: 0.16,
+      shininess: 90,
+      specular: 0x9FD8EF,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    })
+  );
+  cubeGroup.add(glass);
+
+  // 金属边框（12 条棱）
+  const edges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(size, size, size)),
+    new THREE.LineBasicMaterial({ color: 0xC9D6E3, transparent: true, opacity: 0.85 })
+  );
+  cubeGroup.add(edges);
+
+  // 角落金属节点
+  const cornerMat = new THREE.MeshPhongMaterial({ color: 0x9AA6B5, shininess: 110, specular: 0xD6DEE8 });
+  const cornerGeo = new THREE.SphereGeometry(0.07, 12, 10);
+  const hs = size / 2;
+  [[-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1], [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]].forEach((s) => {
+    const node = new THREE.Mesh(cornerGeo, cornerMat);
+    node.position.set(s[0] * hs, s[1] * hs, s[2] * hs);
+    cubeGroup.add(node);
+  });
+
+  // 六面标签（略浮于玻璃表面，双层文字：大字 + 小字方向词）
+  const faceDefs = [
+    { label: 'VISUAL', dir: [0, 0, 1] },
+    { label: 'AIGC', dir: [0, 0, -1] },
+    { label: 'INTERACTIVE', dir: [0, 1, 0] },
+    { label: 'VIDEO', dir: [0, -1, 0] },
+    { label: 'MOTION', dir: [1, 0, 0] },
+    { label: 'DESIGN', dir: [-1, 0, 0] }
+  ];
+  const faceMeshes = [];
+  const off = hs + 0.02;
+
+  faceDefs.forEach((def) => {
+    const tex = makeFaceTexture(def.label);
+    const plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(size * 0.82, size * 0.82),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.92, depthWrite: false })
+    );
+    plane.position.set(def.dir[0] * off, def.dir[1] * off, def.dir[2] * off);
+    if (def.dir[2] === -1) plane.rotation.y = Math.PI;
+    if (def.dir[1] === 1) plane.rotation.x = -Math.PI / 2;
+    if (def.dir[1] === -1) plane.rotation.x = Math.PI / 2;
+    if (def.dir[0] === 1) plane.rotation.y = Math.PI / 2;
+    if (def.dir[0] === -1) plane.rotation.y = -Math.PI / 2;
+    plane.userData.baseScale = 1;
+    cubeGroup.add(plane);
+    faceMeshes.push(plane);
+  });
+
+  function makeFaceTexture(label) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 256, 256);
+    // 角标记
+    ctx.strokeStyle = 'rgba(127, 214, 242, 0.35)';
+    ctx.lineWidth = 3;
+    const m = 18, l = 26;
+    ctx.beginPath();
+    ctx.moveTo(m, m + l); ctx.lineTo(m, m); ctx.lineTo(m + l, m);
+    ctx.moveTo(256 - m - l, m); ctx.lineTo(256 - m, m); ctx.lineTo(256 - m, m + l);
+    ctx.moveTo(m, 256 - m - l); ctx.lineTo(m, 256 - m); ctx.lineTo(m + l, 256 - m);
+    ctx.moveTo(256 - m - l, 256 - m); ctx.lineTo(256 - m, 256 - m); ctx.lineTo(256 - m, 256 - m - l);
+    ctx.stroke();
+    // 文字
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = 'rgba(127, 214, 242, 0.7)';
+    ctx.shadowBlur = 16;
+    let fontSize = 46;
+    ctx.font = '700 ' + fontSize + 'px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+    while (ctx.measureText(label).width > 200 && fontSize > 20) {
+      fontSize -= 3;
+      ctx.font = '700 ' + fontSize + 'px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+    }
+    ctx.fillText(label, 128, 128);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(127, 214, 242, 0.7)';
+    ctx.font = '500 15px "Segoe UI", sans-serif';
+    ctx.fillText('0' + (faceDefs.indexOf(label) === -1 ? faceMeshes.length + 1 : faceDefs.indexOf(label) + 1), 128, 176);
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+  }
+
+  // ---- 拖动旋转 ----
+  const drag = { active: false, lastX: 0, lastY: 0, velX: 0.0035, velY: 0.0012 };
+  const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
+
+  canvas.addEventListener('pointerdown', (event) => {
+    drag.active = true;
+    drag.lastX = event.clientX;
+    drag.lastY = event.clientY;
+    canvas.style.cursor = 'grabbing';
+    if (event.cancelable) event.preventDefault();
+  });
+
+  window.addEventListener('pointermove', (event) => {
+    pointer.tx = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.ty = (event.clientY / window.innerHeight) * 2 - 1;
+    if (!drag.active) return;
+    const dx = event.clientX - drag.lastX;
+    const dy = event.clientY - drag.lastY;
+    cubeGroup.rotation.y += dx * 0.006;
+    cubeGroup.rotation.x += dy * 0.005;
+    cubeGroup.rotation.x = Math.max(-1.2, Math.min(1.2, cubeGroup.rotation.x));
+    drag.velY = dx * 0.006;
+    drag.velX = dy * 0.005;
+    drag.lastX = event.clientX;
+    drag.lastY = event.clientY;
+  }, { passive: true });
+
+  window.addEventListener('pointerup', () => {
+    drag.active = false;
+    canvas.style.cursor = 'grab';
+  });
+
+  // ---- 悬停放大 + 点击 ----
+  const raycaster = new THREE.Raycaster();
+  let hoveredFace = null;
+
+  canvas.addEventListener('pointermove', (event) => {
+    if (drag.active) { hoveredFace = null; return; }
+    raycaster.setFromCamera(toNDC(event, canvas), camera);
+    const hits = raycaster.intersectObjects(faceMeshes, false);
+    const face = hits.length ? hits[0].object : null;
+    if (face !== hoveredFace) {
+      hoveredFace = face;
+      if (face) {
+        showTooltip(event.clientX, event.clientY, faceDefs[faceMeshes.indexOf(face)].label);
+      } else {
+        hideTooltip();
+      }
+    } else if (face) {
+      showTooltip(event.clientX, event.clientY, faceDefs[faceMeshes.indexOf(face)].label);
+    }
+  });
+
+  canvas.addEventListener('pointerleave', () => {
+    hoveredFace = null;
+    hideTooltip();
+  });
+
+  function showComingSoon(x, y) {
+    showTooltip(
+      typeof x === 'number' ? x : window.innerWidth / 2,
+      typeof y === 'number' ? y : window.innerHeight / 2,
+      getText().comingSoon
+    );
+    setTimeout(hideTooltip, 1800);
+  }
+
+  canvas.addEventListener('click', (event) => {
+    if (drag.active) return;
+    raycaster.setFromCamera(toNDC(event, canvas), camera);
+    const hits = raycaster.intersectObjects(faceMeshes, false);
+    // 当前网站暂无对应 Portfolio 项目 → 显示 COMING SOON（不生成虚假内容）
+    if (hits.length) showComingSoon(event.clientX, event.clientY);
+  });
+
+  // ---- 尺寸 ----
+  function resize() {
+    const w = stage.clientWidth;
+    const h = stage.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ---- 动画循环 ----
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (!SCENE_ACTIVE.cube) return;
+    const t = clock.getElapsedTime();
+
+    // 未拖动时：极缓慢自转 + 惯性衰减
+    if (!drag.active) {
+      cubeGroup.rotation.y += drag.velY;
+      cubeGroup.rotation.x += drag.velX;
+      cubeGroup.rotation.x = Math.max(-1.2, Math.min(1.2, cubeGroup.rotation.x));
+      drag.velX += (0.0011 - drag.velX) * 0.02;
+      drag.velY += (0.0032 - drag.velY) * 0.02;
+    }
+
+    // 悬停面放大（缓动）
+    faceMeshes.forEach((face) => {
+      const target = face === hoveredFace ? 1.14 : 1;
+      face.scale.x += (target - face.scale.x) * 0.12;
+      face.scale.y += (target - face.scale.y) * 0.12;
+    });
+
+    // 悬停时边框与中心光增强
+    const hoverBoost = hoveredFace ? 0.5 : 0;
+    centerGlow.intensity = 0.45 + Math.sin(t * 1.1) * 0.1 + hoverBoost;
+    edges.material.opacity = 0.75 + Math.sin(t * 1.4) * 0.08 + hoverBoost * 0.2;
+
+    // 轻微呼吸浮动
+    cubeGroup.position.y = Math.sin(t * 0.8) * 0.08;
 
     renderer.render(scene, camera);
   }
@@ -725,4 +1616,8 @@ document.addEventListener('DOMContentLoaded', () => {
   bindTilt();
   bindReveal();
   init3DScene();
+  initWorkspaceScene();
+  initCubeScene();
+  // 滚动时收起 3D 悬停标签，避免残留
+  window.addEventListener('scroll', hideTooltip, { passive: true });
 });
