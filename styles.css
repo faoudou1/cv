@@ -17,6 +17,11 @@
 
 * { box-sizing: border-box; }
 
+/* 关键修复：author 的 display 规则会覆盖 UA 的 [hidden]{display:none}，
+   导致 .scene-fallback 等元素带着 hidden 属性仍以透明层盖住 3D 画布、
+   吞掉全部鼠标事件。此规则强制 hidden 生效。 */
+[hidden] { display: none !important; }
+
 /* scroll-padding：让 scrollIntoView/锚点跳转的目标停在固定顶栏下方，不被遮挡 */
 html {
   scroll-behavior: smooth;
