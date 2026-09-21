@@ -17,7 +17,11 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+/* scroll-padding：让 scrollIntoView/锚点跳转的目标停在固定顶栏下方，不被遮挡 */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
 
 body {
   margin: 0;
@@ -457,7 +461,8 @@ body[data-lang="en"] .hero-name span {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
   transform-style: preserve-3d;
   transition: transform 0.18s ease-out, border-color 0.25s ease, box-shadow 0.25s ease;
-  will-change: transform;
+  /* 不设常驻 will-change：所有卡片常驻合成层 + backdrop-filter 会明显拖慢滚动，
+     倾斜交互时由 script.js 动态开关 */
   opacity: 0;
   translate: 0 36px;
 }
@@ -823,6 +828,9 @@ body[data-lang="en"] .hero-name span {
   border: none;
   background: radial-gradient(120% 90% at 50% 10%, #10151E 0%, #05070B 62%);
 }
+
+/* 沉浸模式：画布完全接管手势（拖拽环视），不再让浏览器拿去滚页面 */
+.scene-stage.immersive canvas { touch-action: none; }
 
 body.ws-immersive,
 body.cube-immersive { overflow: hidden; }

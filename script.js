@@ -171,7 +171,7 @@ const defaultResumeData = {
     immersiveHint: 'Drag for 360° view · scroll to zoom · click screen keywords or devices to jump · ESC to exit',
     cubeHint: 'Click the scene to enter · drag to rotate · hover to zoom a face · click a face to jump',
     enterCube: 'Enter AIGC Cube',
-    cubeImmersiveHint: 'Drag to rotate · scroll to zoom · click a cube face to jump to its section · ESC to exit',
+    cubeImmersiveHint: 'Drag for 360° view around the cube · scroll to zoom · click a face to jump · ESC to exit',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · Capability Matrix',
@@ -540,6 +540,8 @@ function bindTilt() {
   document.querySelectorAll('[data-tilt]').forEach((node) => {
     const maxTilt = node.classList.contains('hero-name') ? 8 : 5;
 
+    // will-change 只在倾斜交互期间启用，避免所有卡片常驻合成层拖慢滚动
+    node.addEventListener('mouseenter', () => { node.style.willChange = 'transform'; });
     node.addEventListener('mousemove', (event) => {
       const rect = node.getBoundingClientRect();
       const x = (event.clientX - rect.left) / rect.width - 0.5;
@@ -549,6 +551,7 @@ function bindTilt() {
 
     node.addEventListener('mouseleave', () => {
       node.style.transform = 'rotateY(0deg) rotateX(0deg) translateZ(0)';
+      node.style.willChange = 'auto';
     });
   });
 }
@@ -1643,6 +1646,7 @@ function initCubeScene() {
     if (enterBtn) enterBtn.hidden = true;
     if (exitBtn) exitBtn.hidden = false;
     if (immHint) immHint.hidden = false;
+    canvas.style.cursor = 'grab';
     resize();
   }
 
@@ -1655,6 +1659,7 @@ function initCubeScene() {
     if (enterBtn) enterBtn.hidden = false;
     if (exitBtn) exitBtn.hidden = true;
     if (immHint) immHint.hidden = true;
+    canvas.style.cursor = 'default';
     hideTooltip();
     resize();
   }
@@ -1795,8 +1800,19 @@ function initCubeScene() {
   // ---- 拖动旋转 ----
   const drag = { active: false, lastX: 0, lastY: 0, velX: 0.0035, velY: 0.0012 };
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
+  // 沉浸模式专属：相机绕立方体 360° 环视轨道（偏航无限 + 俯仰限位 + 惯性）
+  const orbit = { yaw: 0, pitch: 0, active: false, lastX: 0, lastY: 0, velYaw: 0, velPitch: 0 };
 
   canvas.addEventListener('pointerdown', (event) => {
+    if (immersive) {
+      // 沉浸模式：拖拽 = 环绕立方体环视（相机移动，立方体不动）
+      orbit.active = true;
+      orbit.lastX = event.clientX;
+      orbit.lastY = event.clientY;
+      canvas.style.cursor = 'grabbing';
+      if (event.cancelable) event.preventDefault();
+      return;
+    }
     drag.active = true;
     drag.lastX = event.clientX;
     drag.lastY = event.clientY;
@@ -1807,6 +1823,18 @@ function initCubeScene() {
   window.addEventListener('pointermove', (event) => {
     pointer.tx = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.ty = (event.clientY / window.innerHeight) * 2 - 1;
+    if (orbit.active) {
+      const dx = event.clientX - orbit.lastX;
+      const dy = event.clientY - orbit.lastY;
+      orbit.yaw -= dx * 0.005;
+      orbit.pitch -= dy * 0.004;
+      orbit.pitch = Math.max(-1.1, Math.min(1.1, orbit.pitch));
+      orbit.velYaw = -dx * 0.005 * 0.4;
+      orbit.velPitch = -dy * 0.004 * 0.4;
+      orbit.lastX = event.clientX;
+      orbit.lastY = event.clientY;
+      return;
+    }
     if (!drag.active) return;
     const dx = event.clientX - drag.lastX;
     const dy = event.clientY - drag.lastY;
@@ -1821,7 +1849,8 @@ function initCubeScene() {
 
   window.addEventListener('pointerup', () => {
     drag.active = false;
-    canvas.style.cursor = 'grab';
+    orbit.active = false;
+    canvas.style.cursor = immersive ? 'grab' : 'grab';
   });
 
   // ---- 悬停放大 + 点击 ----
@@ -1829,7 +1858,7 @@ function initCubeScene() {
   let hoveredFace = null;
 
   canvas.addEventListener('pointermove', (event) => {
-    if (drag.active) { hoveredFace = null; return; }
+    if (drag.active || orbit.active) { hoveredFace = null; hideTooltip(); return; }
     raycaster.setFromCamera(toNDC(event, canvas), camera);
     const hits = raycaster.intersectObjects(faceMeshes, false);
     const face = hits.length ? hits[0].object : null;
@@ -1905,12 +1934,25 @@ function initCubeScene() {
     if (!SCENE_ACTIVE.cube) return;
     const t = clock.getElapsedTime();
 
-    // 相机：常规 ↔ 沉浸视角平滑过渡 + 滚轮缩放
+    // 相机：常规 ↔ 沉浸视角平滑过渡 + 滚轮缩放 + 沉浸 360° 环视轨道
     immT += ((immersive ? 1 : 0) - immT) * 0.06;
+    // 环视惯性衰减
+    if (!orbit.active) {
+      orbit.yaw += orbit.velYaw;
+      orbit.pitch = Math.max(-1.1, Math.min(1.1, orbit.pitch + orbit.velPitch));
+      orbit.velYaw *= 0.93;
+      orbit.velPitch *= 0.93;
+    }
     const camLook = camBase.look.clone().lerp(camImm.look, immT);
     const camPos = camBase.pos.clone().lerp(camImm.pos, immT);
     camPos.setLength(camPos.length() * (1 + (zoom - 1) * immT));
-    camera.position.copy(camPos);
+    const camOffset = camPos.clone().sub(camLook);
+    if (immT > 0.001 && (orbit.yaw !== 0 || orbit.pitch !== 0)) {
+      camOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), orbit.yaw * immT);
+      const rightAxis = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), camOffset).normalize();
+      camOffset.applyAxisAngle(rightAxis, orbit.pitch * immT);
+    }
+    camera.position.copy(camLook.clone().add(camOffset));
     camera.lookAt(camLook);
 
     // 未拖动时：极缓慢自转 + 惯性衰减
