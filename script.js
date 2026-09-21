@@ -42,7 +42,7 @@ const defaultResumeData = {
       contact: '联系我'
     },
     workspaceHint: '移动鼠标查看设备标签 · 点击设备跳转对应板块',
-    cubeHint: '拖动旋转 · 悬停放大当前面 · 点击查看对应项目',
+    cubeHint: '拖动旋转 · 悬停放大当前面 · 点击前往相关板块',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · 能力矩阵',
@@ -159,7 +159,7 @@ const defaultResumeData = {
       contact: 'Contact Me'
     },
     workspaceHint: 'Move the mouse over devices to see labels · click a device to jump to its section',
-    cubeHint: 'Drag to rotate · hover to zoom a face · click to view the project',
+    cubeHint: 'Drag to rotate · hover to zoom a face · click to jump to a related section',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · Capability Matrix',
@@ -833,9 +833,18 @@ function init3DScene() {
 
   // 交互状态
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
-  const drag = { active: false, lastX: 0, lastY: 0, rotY: 0, rotX: 0 };
+  const drag = { active: false, lastX: 0, lastY: 0, rotY: 0, rotX: 0, moved: 0 };
   let scrollProgress = 0;
   let identityHover = 0;
+  let pulsePower = 0; // 点击装置触发的"重组脉冲"能量，随时间衰减
+
+  // 字母 Z 面向相机的补偿计算所用临时对象（避免每帧分配内存）
+  const Z_AXIS = new THREE.Vector3(0, 0, 1);
+  const tmpDevicePos = new THREE.Vector3();
+  const tmpDir = new THREE.Vector3();
+  const tmpLetterPos = new THREE.Vector3();
+  const tmpQParent = new THREE.Quaternion();
+  const tmpQTarget = new THREE.Quaternion();
 
   window.addEventListener('mousemove', (event) => {
     pointer.tx = (event.clientX / window.innerWidth) * 2 - 1;
@@ -860,19 +869,27 @@ function init3DScene() {
     drag.active = true;
     drag.lastX = event.clientX;
     drag.lastY = event.clientY;
+    drag.moved = 0;
     document.body.classList.add('is-dragging');
   });
 
   window.addEventListener('pointermove', (event) => {
     if (!drag.active) return;
-    drag.rotY += (event.clientX - drag.lastX) * 0.004;
-    drag.rotX += (event.clientY - drag.lastY) * 0.003;
+    const dx = event.clientX - drag.lastX;
+    const dy = event.clientY - drag.lastY;
+    drag.rotY += dx * 0.004;
+    drag.rotX += dy * 0.003;
     drag.rotX = Math.max(-0.6, Math.min(0.6, drag.rotX));
+    drag.moved += Math.abs(dx) + Math.abs(dy);
     drag.lastX = event.clientX;
     drag.lastY = event.clientY;
   }, { passive: true });
 
   const endDrag = () => {
+    if (drag.active && drag.moved < 6) {
+      // 点击空白处（非拖动）→ 触发身份装置的重组脉冲
+      pulsePower = 1;
+    }
     drag.active = false;
     document.body.classList.remove('is-dragging');
   };
@@ -941,39 +958,68 @@ function init3DScene() {
       // 装置：非常缓慢的自转 + 呼吸
       identity.rotation.y = t * 0.06;
       identity.rotation.x = Math.sin(t * 0.12) * 0.05;
-      const breathe = 1 + Math.sin(t * 0.7) * 0.015;
-      core.scale.setScalar(breathe);
-      letterPlane.position.y = 0.05 + Math.sin(t * 0.8) * 0.05;
     } else {
       identity.rotation.y = 0.4;
     }
 
-    // 金属环：极缓慢反向运动
-    if (!prefersReduced) {
-      ringA.rotation.z += 0.0012;
-      ringB.rotation.z -= 0.0008;
-      ringA.rotation.x += 0.0004;
-      ringB.rotation.x -= 0.0003;
+    // 脉冲能量衰减（点击装置后触发）
+    if (pulsePower > 0.001) {
+      pulsePower *= 0.965;
+    } else {
+      pulsePower = 0;
     }
 
-    // 玻璃卫星沿各自的环缓慢公转
+    // 呼吸 + 脉冲闪光
+    const breathe = 1 + Math.sin(t * 0.7) * 0.015 + pulsePower * 0.25;
+    core.scale.setScalar(breathe);
+
+    // ============================================================
+    // 字母 Z：无论场景/装置如何旋转，始终缓慢转向相机正面
+    // 做法：每帧把字母的世界朝向对齐"装置中心 → 相机"方向，
+    // 再用 slerp 平滑补偿（缓慢回正），位置同步贴在装置前缘。
+    // ============================================================
+    identity.updateWorldMatrix(true, false);
+    identity.getWorldQuaternion(tmpQParent);
+    identity.getWorldPosition(tmpDevicePos);
+    tmpDir.subVectors(camera.position, tmpDevicePos).normalize();
+    tmpQTarget.setFromUnitVectors(Z_AXIS, tmpDir);
+    tmpQTarget.premultiply(tmpQParent.invert());
+    letterPlane.quaternion.slerp(tmpQTarget, 0.06);
+    // 位置：装置中心 + 指向相机方向 × 半径（世界空间），再转回装置本地坐标
+    tmpLetterPos.copy(tmpDevicePos).addScaledVector(tmpDir, 2.78);
+    tmpLetterPos.y += Math.sin(t * 0.8) * 0.06;
+    identity.worldToLocal(tmpLetterPos);
+    letterPlane.position.copy(tmpLetterPos);
+
+    // 金属环：极缓慢反向运动（脉冲时短暂加速，模拟重组）
     if (!prefersReduced) {
+      const spinBoost = pulsePower * 0.05;
+      ringA.rotation.z += 0.0012 + spinBoost;
+      ringB.rotation.z -= 0.0008 + spinBoost * 0.7;
+      ringA.rotation.x += 0.0004 + spinBoost * 0.5;
+      ringB.rotation.x -= 0.0003 + spinBoost * 0.5;
+    }
+
+    // 玻璃卫星沿各自的环公转：悬停时被轻微"磁吸"（半径收缩、提速），脉冲时环绕加速
+    if (!prefersReduced) {
+      const speedMul = 1 + identityHover * 0.6 + pulsePower * 2.5;
+      const radiusMul = 1 - identityHover * 0.12 - pulsePower * 0.06;
       satellites.forEach((sat) => {
         const o = sat.userData.orbit;
-        const angle = t * o.speed + o.phase;
-        const rr = o.radius;
+        const angle = t * o.speed * speedMul + o.phase;
+        const rr = o.radius * radiusMul;
         sat.position.set(
           Math.cos(angle) * rr,
           Math.sin(angle) * rr * Math.sin(o.ring.rotation.x),
           Math.sin(angle) * rr * Math.cos(o.ring.rotation.x)
         );
-        sat.rotation.y += 0.01;
+        sat.rotation.y += 0.01 + pulsePower * 0.1;
       });
     }
 
-    // 悬停发光 + 呼吸微光
+    // 悬停发光 + 呼吸微光 + 脉冲闪光
     const hoverBoost = identityHover * 1.1;
-    identityGlow.intensity = (0.8 + Math.sin(t * 0.9) * 0.15) * fadeIn.value + hoverBoost;
+    identityGlow.intensity = (0.8 + Math.sin(t * 0.9) * 0.15) * fadeIn.value + hoverBoost + pulsePower * 2.2;
     keyLight.intensity = 1.5 + Math.sin(t * 0.8) * 0.15;
     fillLight.intensity = 0.8 + Math.sin(t * 0.6 + 2) * 0.12;
 
@@ -1247,6 +1293,7 @@ function initWorkspaceScene() {
     const key = hits.length ? hits[0].object.userData.deviceKey : null;
     if (key !== hoveredKey) {
       hoveredKey = key;
+      canvas.style.cursor = key ? 'pointer' : 'default';
       if (key) {
         showTooltip(event.clientX, event.clientY, getText().deviceLabels[key] || key.toUpperCase());
       } else {
@@ -1259,6 +1306,7 @@ function initWorkspaceScene() {
 
   canvas.addEventListener('pointerleave', () => {
     hoveredKey = null;
+    canvas.style.cursor = 'default';
     hideTooltip();
   });
 
@@ -1286,6 +1334,13 @@ function initWorkspaceScene() {
     requestAnimationFrame(animate);
     if (!SCENE_ACTIVE.workspace) return;
     const t = clock.getElapsedTime();
+
+    // 悬停设备轻微放大（缓动），增强"可点击"反馈
+    deviceMap.forEach((d) => {
+      const target = d.key === hoveredKey ? 1.06 : 1;
+      const s = d.group.scale.x + (target - d.group.scale.x) * 0.12;
+      d.group.scale.setScalar(s);
+    });
 
     // 显示器文字轮播（每 2.4s，重绘 canvas 纹理）
     if (t - lastWordSwap > 2.4) {
@@ -1348,12 +1403,23 @@ function initWorkspaceScene() {
  * 拖动旋转 / 悬停放大 / 点击 → COMING SOON（暂无对应项目）
  * ============================================================ */
 function initCubeScene() {
+  // 六个面 → 站内最相关板块（当前暂无独立 Portfolio 项目，跳到最相关内容）
+  const CUBE_FACE_SECTION = {
+    VISUAL: 'projects',
+    DESIGN: 'projects',
+    MOTION: 'experience',
+    VIDEO: 'experience',
+    AIGC: 'skills',
+    INTERACTIVE: 'workspace'
+  };
+
   const stage = document.getElementById('cubeStage');
   const canvas = document.getElementById('cubeCanvas');
   if (!stage || !canvas || !supports3D()) {
-    const faces = ['VISUAL', 'MOTION', 'AIGC', 'INTERACTIVE', 'VIDEO', 'DESIGN'];
-    showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faces, () => {
-      showComingSoon();
+    const faces = Object.keys(CUBE_FACE_SECTION);
+    showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faces, (chip) => {
+      const target = document.getElementById(CUBE_FACE_SECTION[chip]);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     return;
   }
@@ -1552,8 +1618,19 @@ function initCubeScene() {
     if (drag.active) return;
     raycaster.setFromCamera(toNDC(event, canvas), camera);
     const hits = raycaster.intersectObjects(faceMeshes, false);
-    // 当前网站暂无对应 Portfolio 项目 → 显示 COMING SOON（不生成虚假内容）
-    if (hits.length) showComingSoon(event.clientX, event.clientY);
+    if (!hits.length) return;
+    // 点击面 → 前往站内最相关板块（悬停标签已显示面名称，这里提示去向）
+    const faceIndex = faceMeshes.indexOf(hits[0].object);
+    const label = faceDefs[faceIndex].label;
+    const sectionKey = CUBE_FACE_SECTION[label];
+    const target = document.getElementById(sectionKey);
+    if (!target) {
+      showComingSoon(event.clientX, event.clientY);
+      return;
+    }
+    showTooltip(event.clientX, event.clientY, '→ ' + (getText().sectionTitles[sectionKey] || label));
+    setTimeout(hideTooltip, 1600);
+    setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
   });
 
   // ---- 尺寸 ----
