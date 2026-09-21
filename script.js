@@ -41,15 +41,20 @@ const defaultResumeData = {
       skills: '个人技能',
       contact: '联系我'
     },
-    workspaceHint: '移动鼠标查看设备标签 · 点击设备跳转对应板块',
+    workspaceHint: '点击画面进入 3D 工作台 · 悬停查看设备标签',
+    enterWorkspace: '进入 3D 工作台',
+    exitWorkspace: '退出 ✕',
+    immersiveHint: '移动鼠标环视 · 悬停查看设备 · 点击设备跳转对应板块 · ESC 退出',
     cubeHint: '拖动旋转 · 悬停放大当前面 · 点击前往相关板块',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · 能力矩阵',
     deviceLabels: {
+      desk: 'DIGITAL WORKSPACE',
       monitor: 'DIGITAL MEDIA',
       camera: 'VIDEO / MEDIA',
       tablet: 'VISUAL DESIGN',
+      keyboard: 'CREATIVE TOOLS',
       phone: 'INTERACTIVE',
       ai: 'AIGC'
     },
@@ -158,15 +163,20 @@ const defaultResumeData = {
       skills: 'Skills',
       contact: 'Contact Me'
     },
-    workspaceHint: 'Move the mouse over devices to see labels · click a device to jump to its section',
+    workspaceHint: 'Click the scene to enter the 3D workspace · hover devices for labels',
+    enterWorkspace: 'Enter 3D Workspace',
+    exitWorkspace: 'Exit ✕',
+    immersiveHint: 'Move mouse to look around · hover devices for labels · click a device to jump to its section · ESC to exit',
     cubeHint: 'Drag to rotate · hover to zoom a face · click to jump to a related section',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · Capability Matrix',
     deviceLabels: {
+      desk: 'DIGITAL WORKSPACE',
       monitor: 'DIGITAL MEDIA',
       camera: 'VIDEO / MEDIA',
       tablet: 'VISUAL DESIGN',
+      keyboard: 'CREATIVE TOOLS',
       phone: 'INTERACTIVE',
       ai: 'AIGC'
     },
@@ -286,6 +296,12 @@ function renderResume() {
   document.getElementById('aboutSummary').textContent = text.summary;
   document.getElementById('workspaceHint').textContent = text.workspaceHint;
   document.getElementById('cubeHint').textContent = text.cubeHint;
+  const wsEnter = document.getElementById('workspaceEnter');
+  const wsExit = document.getElementById('workspaceExit');
+  const wsImmHint = document.getElementById('workspaceImmersiveHint');
+  if (wsEnter) wsEnter.textContent = text.enterWorkspace;
+  if (wsExit) wsExit.textContent = text.exitWorkspace;
+  if (wsImmHint) wsImmHint.textContent = text.immersiveHint;
 
   Object.entries(text.sectionTitles).forEach(([key, value]) => {
     const heading = document.getElementById('t-' + key);
@@ -1089,12 +1105,18 @@ function initWorkspaceScene() {
     return mesh;
   }
 
-  // ---- 桌面 ----
-  const desk = box(9, 0.22, 3.6, darkMat, 0, 0, 0);
-  desk.receiveShadow = false;
+  // ---- 桌面（含桌腿，可整体点击） ----
+  const deskGroup = new THREE.Group();
+  world.add(deskGroup);
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(9, 0.22, 3.6), darkMat);
+  deskGroup.add(desk);
   // 桌腿（简化，只做暗示）
-  box(0.18, 1.4, 0.18, darkerMat, -4.1, -0.8, -1.4);
-  box(0.18, 1.4, 0.18, darkerMat, 4.1, -0.8, -1.4);
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), darkerMat);
+  legL.position.set(-4.1, -0.8, -1.4);
+  deskGroup.add(legL);
+  const legR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), darkerMat);
+  legR.position.set(4.1, -0.8, -1.4);
+  deskGroup.add(legR);
 
   // ---- 显示器（屏幕内容：品牌关键词轮播） ----
   const monitorGroup = new THREE.Group();
@@ -1261,15 +1283,72 @@ function initWorkspaceScene() {
 
   // ---- 可点击设备注册表（group → 标签 + 跳转目标） ----
   const deviceMap = [
-    { key: 'monitor', group: monitorGroup, target: '#about' },
+    { key: 'desk', group: deskGroup, target: '#about' },
+    { key: 'monitor', group: monitorGroup, target: '#cube' },
     { key: 'camera', group: cameraGroup, target: '#experience' },
     { key: 'tablet', group: tabletGroup, target: '#projects' },
-    { key: 'phone', group: phoneGroup, target: '#skills' },
+    { key: 'keyboard', group: kbGroup, target: '#skills' },
+    { key: 'phone', group: phoneGroup, target: '#contact' },
     { key: 'ai', group: aiGroup, target: '#skills' }
   ];
   const pickables = [];
   deviceMap.forEach((d) => {
     d.group.traverse((node) => { if (node.isMesh) { node.userData.deviceKey = d.key; pickables.push(node); } });
+  });
+
+  // ---- 沉浸模式（点击进入 3D 工作台空间） ----
+  let immersive = false;
+  let immT = 0; // 0 = 常规视角, 1 = 沉浸视角（缓动过渡）
+  const camBase = {
+    pos: new THREE.Vector3(0, 3.1, 9.2),
+    look: new THREE.Vector3(0, 0.7, 0)
+  };
+  const camImm = {
+    pos: new THREE.Vector3(0.9, 2.4, 5.6),
+    look: new THREE.Vector3(-0.3, 0.9, -0.2)
+  };
+  const enterBtn = document.getElementById('workspaceEnter');
+  const exitBtn = document.getElementById('workspaceExit');
+  const immHint = document.getElementById('workspaceImmersiveHint');
+  // 兜底：renderResume 之外也保证按钮有文案
+  if (enterBtn && !enterBtn.textContent) enterBtn.textContent = getText().enterWorkspace;
+  if (exitBtn && !exitBtn.textContent) exitBtn.textContent = getText().exitWorkspace;
+  if (immHint && !immHint.textContent) immHint.textContent = getText().immersiveHint;
+
+  const stageParent = stage.parentElement;
+  const stageNext = stage.nextElementSibling;
+
+  function enterImmersive() {
+    if (immersive) return;
+    immersive = true;
+    // 卡片的 backdrop-filter / 容器的 perspective 会让 fixed 相对卡片定位——
+    // 进入沉浸时把舞台挂到 body 下，彻底脱离这些祖先的影响
+    document.body.appendChild(stage);
+    stage.classList.add('immersive');
+    document.body.classList.add('ws-immersive');
+    if (enterBtn) enterBtn.hidden = true;
+    if (exitBtn) exitBtn.hidden = false;
+    if (immHint) immHint.hidden = false;
+    resize();
+  }
+
+  function exitImmersive() {
+    if (!immersive) return;
+    immersive = false;
+    stage.classList.remove('immersive');
+    document.body.classList.remove('ws-immersive');
+    if (stageParent) stageParent.insertBefore(stage, stageNext);
+    if (enterBtn) enterBtn.hidden = false;
+    if (exitBtn) exitBtn.hidden = true;
+    if (immHint) immHint.hidden = true;
+    hideTooltip();
+    resize();
+  }
+
+  if (enterBtn) enterBtn.addEventListener('click', enterImmersive);
+  if (exitBtn) exitBtn.addEventListener('click', exitImmersive);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && immersive) exitImmersive();
   });
 
   // ---- 尺寸 ----
@@ -1317,7 +1396,18 @@ function initWorkspaceScene() {
     const device = deviceMap.find((d) => d.key === hits[0].object.userData.deviceKey);
     if (!device) return;
     const target = document.querySelector(device.target);
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const destName = getText().sectionTitles[device.target.slice(1)] || device.target;
+    showTooltip(event.clientX, event.clientY, '→ ' + destName);
+    setTimeout(hideTooltip, 1200);
+    if (immersive) {
+      // 沉浸模式：先退出全屏视角，再平滑滚动到目标板块
+      setTimeout(() => {
+        exitImmersive();
+        setTimeout(() => { if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 380);
+      }, 420);
+    } else if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 
   // ---- 动画循环（离屏自动暂停） ----
@@ -1370,11 +1460,27 @@ function initWorkspaceScene() {
       screen.texture.needsUpdate = true;
     }
 
-    // 极轻微的整体视角变化（鼠标视差）
+    // 相机：常规视角 ↔ 沉浸视角平滑过渡，鼠标环视
+    immT += ((immersive ? 1 : 0) - immT) * 0.055;
     parallax.x += (parallax.tx - parallax.x) * 0.05;
     parallax.y += (parallax.ty - parallax.y) * 0.05;
-    world.rotation.y = parallax.x * 0.045;
-    world.rotation.x = parallax.y * 0.02;
+    const look = camBase.look.clone().lerp(camImm.look, immT);
+    const desiredPos = camBase.pos.clone().lerp(camImm.pos, immT);
+    // 鼠标环视：常规模式轻微视差，沉浸模式绕注视点较大幅度环绕
+    const yaw = parallax.x * (0.06 + immT * 0.85);
+    const pitch = parallax.y * (0.025 + immT * 0.3);
+    const offset = desiredPos.clone().sub(look);
+    offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    const rightAxis = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), offset).normalize();
+    offset.applyAxisAngle(rightAxis, pitch);
+    camera.position.copy(look.clone().add(offset));
+    camera.lookAt(look);
+    // 沉浸模式视野稍广
+    const targetFov = 42 + immT * 6;
+    if (Math.abs(camera.fov - targetFov) > 0.05) {
+      camera.fov = targetFov;
+      camera.updateProjectionMatrix();
+    }
 
     // AI 悬浮体：缓慢自转 + 浮动 + 呼吸灯
     aiGroup.rotation.y = t * 0.4;

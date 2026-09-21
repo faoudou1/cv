@@ -62,7 +62,10 @@
         <h2 id="t-workspace">Digital Creative Workspace</h2>
         <p class="scene-hint" id="workspaceHint"></p>
         <div class="scene-stage" id="workspaceStage">
-          <canvas id="wsCanvas" aria-label="3D 数字创作工作台，可悬停查看设备标签"></canvas>
+          <canvas id="wsCanvas" aria-label="3D 数字创作工作台，可进入沉浸视角查看设备"></canvas>
+          <button class="scene-enter" id="workspaceEnter" type="button"></button>
+          <button class="scene-exit" id="workspaceExit" type="button" hidden></button>
+          <p class="scene-immersive-hint" id="workspaceImmersiveHint" hidden></p>
           <div class="scene-fallback" id="workspaceFallback" hidden></div>
         </div>
       </section>

@@ -720,7 +720,7 @@ body[data-lang="en"] .hero-name span {
 /* 3D 场景悬停标签 */
 .scene-tooltip {
   position: fixed;
-  z-index: 60;
+  z-index: 1300;
   pointer-events: none;
   padding: 7px 14px;
   border-radius: 999px;
@@ -738,6 +738,96 @@ body[data-lang="en"] .hero-name span {
 }
 
 .scene-tooltip.visible { opacity: 1; }
+
+/* ============ 工作台沉浸模式 ============ */
+.scene-enter {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  padding: 11px 26px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #EAF6FC;
+  background: rgba(10, 14, 20, 0.72);
+  border: 1px solid rgba(127, 214, 242, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  z-index: 5;
+}
+
+.scene-enter:hover,
+.scene-enter:focus-visible {
+  border-color: rgba(127, 214, 242, 0.85);
+  box-shadow: 0 0 28px rgba(127, 214, 242, 0.25);
+  color: #FFFFFF;
+}
+
+.scene-exit {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #EAF6FC;
+  background: rgba(10, 14, 20, 0.72);
+  border: 1px solid rgba(127, 214, 242, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  z-index: 5;
+}
+
+.scene-exit:hover,
+.scene-exit:focus-visible {
+  border-color: rgba(127, 214, 242, 0.85);
+  box-shadow: 0 0 24px rgba(127, 214, 242, 0.22);
+}
+
+.scene-immersive-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  background: rgba(10, 14, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  padding: 8px 18px;
+  white-space: nowrap;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.scene-stage.immersive {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  height: 100vh;
+  height: 100dvh;
+  border-radius: 0;
+  border: none;
+  background: radial-gradient(120% 90% at 50% 10%, #10151E 0%, #05070B 62%);
+}
+
+body.ws-immersive { overflow: hidden; }
+
+/* will-change: transform 会让 fixed 子元素相对卡片定位——沉浸时必须解除 */
+body.ws-immersive #workspace { will-change: auto; }
 
 /* ============ 响应式 ============ */
 @media (max-width: 860px) {
