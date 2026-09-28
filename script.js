@@ -28,7 +28,7 @@ const defaultResumeData = {
     pdfOpen: '新标签页打开',
     pdfDownload: '下载',
     pdfClose: '关闭',
-    pdfFile: 'assets/resume-zh.pdf',
+    pdfFile: 'assets/resume-zh.pdf?v=20260929',
     pdfDownloadName: '朱肖尚简历.pdf',
     nav: ['关于', '教育', '实习', '校园', '技能', '联系'],
     sectionTitles: {
@@ -152,7 +152,7 @@ const defaultResumeData = {
     pdfOpen: 'Open in new tab',
     pdfDownload: 'Download',
     pdfClose: 'Close',
-    pdfFile: 'assets/resume-en.pdf',
+    pdfFile: 'assets/resume-en.pdf?v=20260929',
     pdfDownloadName: 'Zhu_Xiaoshang_Resume_EN.pdf',
     nav: ['About', 'Education', 'Internships', 'Campus', 'Skills', 'Contact'],
     sectionTitles: {
