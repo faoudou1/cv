@@ -321,6 +321,213 @@ body.is-dragging * {
   border: 0;
 }
 
+/* ============ 作品集板块 ============ */
+.work-feature {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) 1.3fr;
+  gap: 20px;
+  align-items: stretch;
+  transform: translateZ(14px);
+}
+
+.work-cover {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 200px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  cursor: pointer;
+  overflow: hidden;
+  color: var(--ink);
+  font: inherit;
+  background:
+    radial-gradient(120% 120% at 20% 10%, rgba(127, 214, 242, 0.18), transparent 60%),
+    linear-gradient(160deg, rgba(95, 122, 168, 0.30), rgba(11, 12, 15, 0.65));
+  transition: transform 0.2s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.work-cover:hover {
+  border-color: rgba(127, 214, 242, 0.45);
+  box-shadow: 0 0 40px rgba(127, 214, 242, 0.12);
+  transform: translateY(-2px);
+}
+
+.work-cover:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.work-cover-emoji {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.work-cover-cta {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid rgba(127, 214, 242, 0.4);
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(127, 214, 242, 0.08);
+}
+
+.work-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.work-tag {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  border: 1px solid rgba(127, 214, 242, 0.3);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.work-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.work-desc {
+  margin: 0;
+  line-height: 1.8;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.work-enter-btn { margin-top: 6px; }
+
+/* ============ 作品集浮层（iframe 内嵌外部作品） ============ */
+.pf-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pf-modal.open { display: flex; }
+
+.pf-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 5, 8, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.pf-modal-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1100px, 100%);
+  height: min(92vh, 100%);
+  background: rgba(16, 18, 24, 0.97);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: pdfPanelIn 0.22s ease;
+}
+
+.pf-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pf-modal-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.pf-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-link {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.pf-link:hover {
+  border-color: rgba(127, 214, 242, 0.45);
+  background: rgba(127, 214, 242, 0.08);
+}
+
+.pf-close {
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pf-close:hover { color: var(--accent); border-color: rgba(127, 214, 242, 0.45); }
+
+.pf-close:focus-visible,
+.pf-link:focus-visible,
+.work-enter-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.pf-modal-body {
+  flex: 1;
+  min-height: 0;
+  background: #0b0c0f;
+}
+
+.pf-modal-body iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .work-feature { grid-template-columns: 1fr; }
+  .work-cover { min-height: 160px; }
+  .pf-modal { padding: 0; }
+  .pf-modal-panel { width: 100%; height: 100%; border-radius: 0; }
+}
+
 .pdf-trigger { cursor: pointer; }
 
 body.is-pdf-open { overflow: hidden; }

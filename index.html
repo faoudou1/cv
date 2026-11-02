@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" data-page-node-id="fAejCNtUZlxUn8PvYYk22b" />
   <title>朱肖尚 · 3D 交互简历</title>
   <meta name="description" content="朱肖尚 — 岭南大学（中国香港）艺术科技与商业硕士，本科数字媒体艺术。Digital Media / Interactive Design / AIGC 方向 3D 互动 Portfolio。" data-page-node-id="vNk69k8FcsqbjIR4GoLnIi" />
-  <link rel="stylesheet" href="styles.css?v=20260921b" data-page-node-id="zm1gDl4Na1jO91rA367Q3s" />
+  <link rel="stylesheet" href="styles.css?v=20261102" data-page-node-id="zm1gDl4Na1jO91rA367Q3s" />
 </head>
 <body data-page-node-id="HR4Hp4bBgOW8iC4UncHglg">
   <!-- Three.js 3D 场景背景（CDN 加载失败时自动降级为静态渐变背景） -->
@@ -29,8 +29,9 @@
         <a href="#education" data-nav="1" data-page-node-id="DKRbYVP0BSP0ycCQguIufJ">教育</a>
         <a href="#experience" data-nav="2" data-page-node-id="3pKZxbqTGByrwcjQTV35IZ">实习</a>
         <a href="#projects" data-nav="3" data-page-node-id="pPIwpDlh2GgCfzh0mtGwg3">校园</a>
-        <a href="#skills" data-nav="4" data-page-node-id="NW3m26gw3aiAhCOEg6S5Ia">技能</a>
-        <a href="#contact" data-nav="5" data-page-node-id="x29yFFsYzSZUQorsleAjaJ">联系</a>
+        <a href="#works" data-nav="4">作品</a>
+        <a href="#skills" data-nav="5" data-page-node-id="NW3m26gw3aiAhCOEg6S5Ia">技能</a>
+        <a href="#contact" data-nav="6" data-page-node-id="x29yFFsYzSZUQorsleAjaJ">联系</a>
       </nav>
       <div class="lang-switch" role="group" aria-label="语言切换" data-page-node-id="F9lepMNvsMt3lRXXEIdZjD">
         <button class="lang-btn active" data-lang="zh" type="button" aria-pressed="true" data-page-node-id="lLNzbY6Mzs5c1xAWoCFlwj">中</button>
@@ -89,6 +90,23 @@
         <div class="list" id="projectsList" data-page-node-id="6IzKII1evZZY0D2IT05yVg"></div>
       </section>
 
+      <!-- 作品集：帝女花互动叙事游戏 -->
+      <section id="works" class="card tilt" data-tilt data-page-node-id="wrks01">
+        <h2 id="t-works">作品集</h2>
+        <div class="work-feature">
+          <button class="work-cover" id="workCover" type="button" aria-label="打开帝女花互动叙事作品集">
+            <span class="work-cover-emoji" aria-hidden="true">❀</span>
+            <span class="work-cover-cta" id="workEnterCover">进入作品 →</span>
+          </button>
+          <div class="work-info">
+            <span class="work-tag" id="workTag"></span>
+            <h3 class="work-title" id="workTitle"></h3>
+            <p class="work-desc" id="workDesc"></p>
+            <button class="btn work-enter-btn" id="workEnter" type="button"></button>
+          </div>
+        </div>
+      </section>
+
       <!-- AIGC Cube：透明玻璃 3D 能力立方体（Portfolio 区域） -->
       <section id="cube" class="card scene-card" aria-labelledby="t-cube">
         <h2 id="t-cube">AIGC Cube</h2>
@@ -136,9 +154,26 @@
     </div>
   </div>
 
+  <!-- 作品集浮层：iframe 内嵌帝女花互动叙事作品（内容由 script.js 注入地址） -->
+  <div class="pf-modal" id="pfModal" role="dialog" aria-modal="true" aria-labelledby="pfModalTitle" aria-hidden="true">
+    <div class="pf-modal-backdrop" data-pf-close></div>
+    <div class="pf-modal-panel">
+      <div class="pf-modal-head">
+        <h3 id="pfModalTitle">帝女花 · 互动叙事作品集</h3>
+        <div class="pf-modal-actions">
+          <a class="pf-link" id="pfOpenTab" href="https://dinuhua.app.workbuddy.host/?sharecode=QEYALK4J46" target="_blank" rel="noopener">新标签页打开</a>
+          <button class="pf-close" id="pfClose" type="button" aria-label="关闭">×</button>
+        </div>
+      </div>
+      <div class="pf-modal-body">
+        <iframe id="pfFrame" title="帝女花互动叙事作品" referrerpolicy="no-referrer" allow="fullscreen; autoplay; encrypted-media" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+
   <!-- 3D 场景悬停标签（工作台设备 / Cube 面，内容由 script.js 控制） -->
   <div class="scene-tooltip" id="sceneTooltip" role="status" aria-hidden="true"></div>
 
-  <script src="script.js?v=20260929"></script>
+  <script src="script.js?v=20261102"></script>
 </body>
 </html>

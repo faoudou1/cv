@@ -9,6 +9,8 @@
  * 每个场景都有静态 fallback；离屏场景自动暂停渲染以节省性能。
  */
 
+const PORTFOLIO_URL = 'https://dinuhua.app.workbuddy.host/?sharecode=QEYALK4J46';
+
 const defaultResumeData = {
   zh: {
     name: '朱肖尚',
@@ -30,13 +32,14 @@ const defaultResumeData = {
     pdfClose: '关闭',
     pdfFile: 'assets/resume-zh.pdf?v=20260929',
     pdfDownloadName: '朱肖尚简历.pdf',
-    nav: ['关于', '教育', '实习', '校园', '技能', '联系'],
+    nav: ['关于', '教育', '实习', '校园', '作品', '技能', '联系'],
     sectionTitles: {
       about: '关于我',
       workspace: 'Digital Creative Workspace',
       education: '教育背景',
       experience: '实习经历',
       projects: '校园经历',
+      works: '作品集',
       cube: 'AIGC Cube',
       skills: '个人技能',
       contact: '联系我'
@@ -132,7 +135,14 @@ const defaultResumeData = {
       { label: '出生年月', value: '2004 年 08 月', href: null },
       { label: '民族', value: '汉族', href: null },
       { label: '简历 PDF', value: '点击在页面内预览中文简历', href: 'assets/resume-zh.pdf', pdf: true }
-    ]
+    ],
+    works: {
+      tag: '交互叙事 · 毕业设计',
+      title: '帝女花',
+      desc: '情景式互动叙事游戏：玩家以抉择推动粤剧《帝女花》剧情走向，融合分支叙事、影像演出与 AI 生成的视听语言。',
+      enter: '进入作品 →',
+      modalTitle: '帝女花 · 互动叙事作品集'
+    }
   },
   en: {
     name: 'Zhu Xiaoshang',
@@ -154,13 +164,14 @@ const defaultResumeData = {
     pdfClose: 'Close',
     pdfFile: 'assets/resume-en.pdf?v=20260929',
     pdfDownloadName: 'Zhu_Xiaoshang_Resume_EN.pdf',
-    nav: ['About', 'Education', 'Internships', 'Campus', 'Skills', 'Contact'],
+    nav: ['About', 'Education', 'Internships', 'Campus', 'Works', 'Skills', 'Contact'],
     sectionTitles: {
       about: 'About Me',
       workspace: 'Digital Creative Workspace',
       education: 'Education',
       experience: 'Internships',
       projects: 'Campus Experience',
+      works: 'Featured Works',
       cube: 'AIGC Cube',
       skills: 'Skills',
       contact: 'Contact Me'
@@ -256,7 +267,14 @@ const defaultResumeData = {
       { label: 'Date of Birth', value: 'Aug 2004', href: null },
       { label: 'Ethnicity', value: 'Han', href: null },
       { label: 'Resume PDF', value: 'Preview the English resume in this page', href: 'assets/resume-en.pdf', pdf: true }
-    ]
+    ],
+    works: {
+      tag: 'Interactive Narrative · Capstone',
+      title: 'The Flower Princess',
+      desc: 'A branching interactive narrative game built on the Cantonese opera "The Flower Princess": your choices steer the story, blending narrative design, cinematic staging and AI-generated audiovisuals.',
+      enter: 'Enter work →',
+      modalTitle: 'The Flower Princess · Interactive Narrative'
+    }
   }
 };
 
@@ -398,6 +416,22 @@ function renderResume() {
     contactGrid.appendChild(item);
   });
 
+  // 作品集
+  const workTag = document.getElementById('workTag');
+  const workTitle = document.getElementById('workTitle');
+  const workDesc = document.getElementById('workDesc');
+  const workEnter = document.getElementById('workEnter');
+  const workEnterCover = document.getElementById('workEnterCover');
+  if (workTag) workTag.textContent = text.works.tag;
+  if (workTitle) workTitle.textContent = text.works.title;
+  if (workDesc) workDesc.textContent = text.works.desc;
+  if (workEnter) workEnter.textContent = text.works.enter;
+  if (workEnterCover) workEnterCover.textContent = text.works.enter;
+  const pfTitle = document.getElementById('pfModalTitle');
+  if (pfTitle) pfTitle.textContent = text.works.modalTitle;
+  const pfOpenTab = document.getElementById('pfOpenTab');
+  if (pfOpenTab) pfOpenTab.href = PORTFOLIO_URL;
+
   document.getElementById('year').textContent = new Date().getFullYear();
   document.getElementById('footerName').textContent = text.name;
   document.getElementById('footerTag').textContent = text.footerTag;
@@ -527,6 +561,55 @@ function bindPdfModal() {
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeResumePdf();
+  });
+}
+
+/* ============================================================
+ * 作品集浮层：iframe 内嵌帝女花互动叙事作品
+ * ============================================================ */
+let pfPrevFocus = null;
+
+function openPortfolio() {
+  const modal = document.getElementById('pfModal');
+  if (!modal) return;
+  const frame = document.getElementById('pfFrame');
+  if (frame.dataset.src !== '1') {
+    frame.src = PORTFOLIO_URL;
+    frame.dataset.src = '1';
+  }
+  pfPrevFocus = document.activeElement;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('is-pf-open');
+  const closeBtn = document.getElementById('pfClose');
+  if (closeBtn) closeBtn.focus();
+}
+
+function closePortfolio() {
+  const modal = document.getElementById('pfModal');
+  if (!modal || !modal.classList.contains('open')) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('is-pf-open');
+  const frame = document.getElementById('pfFrame');
+  frame.src = 'about:blank';
+  delete frame.dataset.src;
+  if (pfPrevFocus && typeof pfPrevFocus.focus === 'function') pfPrevFocus.focus();
+}
+
+function bindPortfolioModal() {
+  const modal = document.getElementById('pfModal');
+  if (!modal) return;
+  const cover = document.getElementById('workCover');
+  const enter = document.getElementById('workEnter');
+  if (cover) cover.addEventListener('click', openPortfolio);
+  if (enter) enter.addEventListener('click', openPortfolio);
+  document.getElementById('pfClose').addEventListener('click', closePortfolio);
+  modal.querySelectorAll('[data-pf-close]').forEach((node) => {
+    node.addEventListener('click', closePortfolio);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closePortfolio();
   });
 }
 
@@ -1613,6 +1696,7 @@ function initCubeScene() {
   if (!stage || !canvas || !supports3D()) {
     const faces = Object.keys(CUBE_FACE_SECTION);
     showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faces, (chip) => {
+      if (chip === 'INTERACTIVE') { openPortfolio(); return; }
       const target = document.getElementById(CUBE_FACE_SECTION[chip]);
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -1896,6 +1980,17 @@ function initCubeScene() {
     // 点击面 → 前往站内最相关板块（悬停标签已显示面名称，这里提示去向）
     const faceIndex = faceMeshes.indexOf(hits[0].object);
     const label = faceDefs[faceIndex].label;
+    // 互动叙事面 → 打开帝女花作品集（沉浸模式下先退出，再打开浮层）
+    if (label === 'INTERACTIVE') {
+      if (immersive) {
+        setTimeout(() => { exitImmersive(); setTimeout(openPortfolio, 380); }, 180);
+        return;
+      }
+      showTooltip(event.clientX, event.clientY, getText().works.title);
+      setTimeout(hideTooltip, 1400);
+      setTimeout(openPortfolio, 220);
+      return;
+    }
     const sectionKey = CUBE_FACE_SECTION[label];
     const target = document.getElementById(sectionKey);
     if (!target) {
@@ -2095,6 +2190,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindLanguageToggle();
   bindCopyEmail();
   bindPdfModal();
+  bindPortfolioModal();
   bindTilt();
   bindReveal();
   init3DScene();
