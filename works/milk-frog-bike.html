@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>牛奶蛙破風日記 | Amazon Milk Frog Road Cycling</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@600;700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-main: 'Noto Sans TC', 'Fredoka', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body {
+      font-family: var(--font-main);
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: hidden;
+    }
+    .font-mono-num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    /* Custom button tactile styles */
+    .action-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 0 rgba(15, 23, 42, 0.18), 0 10px 20px -5px rgba(15, 23, 42, 0.15);
+    }
+    .action-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 9px 0 rgba(15, 23, 42, 0.2), 0 15px 25px -5px rgba(15, 23, 42, 0.2);
+    }
+    .action-btn:active, .action-btn.active-state {
+      transform: translateY(4px) scale(0.98);
+      box-shadow: 0 2px 0 rgba(15, 23, 42, 0.2), 0 4px 10px -3px rgba(15, 23, 42, 0.15);
+    }
+    /* Wet skin shimmer animation for rain mode */
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.55)); }
+      50% { filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.95)); }
+    }
+    .wet-frog-glow {
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+    /* LCD screen subtle scanline */
+    .lcd-screen {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.15);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-800 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 md:p-6">
+
+  <!-- Main Container Card -->
+  <div class="w-full max-w-5xl bg-slate-100 rounded-3xl shadow-2xl border-4 border-slate-800 overflow-hidden flex flex-col">
+    
+    <!-- Top Header & Cycling Computer Dashboard (自行車碼表儀表板) -->
+    <header class="bg-slate-800 text-white px-4 py-3 sm:px-6 sm:py-4 flex flex-col lg:flex-row items-center justify-between gap-4 border-b-4 border-slate-900">
+      <!-- Title & Character Badge -->
+      <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-300 to-yellow-500 p-0.5 shadow-lg flex items-center justify-center border-2 border-white/80">
+            <!-- Mini Yellow Pear Milk Frog Avatar SVG (還原照片呆萌大肚黃蛙頭像) -->
+            <svg viewBox="0 0 60 60" class="w-11 h-11">
+              <defs>
+                <radialGradient id="avatarYellow" cx="0.35" cy="0.3" r="0.7">
+                  <stop offset="0%" stop-color="#FFF078" />
+                  <stop offset="55%" stop-color="#FFD026" />
+                  <stop offset="100%" stop-color="#E09600" />
+                </radialGradient>
+              </defs>
+              <!-- Pear-shaped head & belly -->
+              <path d="M 12 56 C 10 38, 17 12, 31 12 C 45 12, 52 38, 50 56 Z" fill="url(#avatarYellow)" stroke="#5C4008" stroke-width="2" />
+              <!-- Cream belly patch -->
+              <ellipse cx="27" cy="48" rx="12" ry="10" fill="#F3DC92" />
+              <!-- Far eye -->
+              <circle cx="19" cy="24" r="4.5" fill="#8FC4A0" stroke="#4A3B1C" stroke-width="1.2" />
+              <circle cx="18" cy="24" r="2.8" fill="#141414" />
+              <!-- Near Mint-Green rimmed eye -->
+              <circle cx="33" cy="24" r="6.5" fill="#8FC4A0" stroke="#4A3B1C" stroke-width="1.5" />
+              <circle cx="32" cy="24" r="4.2" fill="#141414" />
+              <circle cx="30.5" cy="22.5" r="1.3" fill="#FFFFFF" />
+              <!-- Deadpan protruding snout mouth -->
+              <path d="M 15 30 L 26 30" stroke="#2B2112" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg sm:text-xl font-black tracking-wide text-white">大肚黃奶蛙破風號</h1>
+              <span id="statusBadge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                🚴 挺肚巡航中
+              </span>
+            </div>
+            <p class="text-xs text-slate-400">Chubby Yellow Belly Frog Road Cycling Simulator</p>
+          </div>
+        </div>
+
+        <!-- Audio Mute Button (Mobile friendly placement) -->
+        <button id="muteBtn" class="lg:hidden px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-slate-600 transition">
+          <span id="muteIconMobile">🔊</span> 音效
+        </button>
+      </div>
+
+      <!-- Cycling Computer (GARMIN-style Froggy Head Unit) -->
+      <div class="w-full lg:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+        <div class="lcd-screen rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 border-2 border-slate-600 flex items-center gap-3 sm:gap-5 w-full sm:w-auto justify-around">
+          
+          <!-- Speed km/h -->
+          <div class="flex flex-col items-center sm:items-end">
+            <span class="text-[10px] uppercase tracking-wider text-sky-400 font-bold flex items-center gap-1">
+              <span>⚡ 時速</span>
+              <span id="sprintFlame" class="hidden animate-bounce">🔥</span>
+            </span>
+            <div class="flex items-baseline gap-1">
+              <span id="hudSpeed" class="font-mono-num text-2xl sm:text-3xl font-extrabold text-white">31.5</span>
+              <span class="text-[11px] font-bold text-slate-400">km/h</span>
+            </div>
+          </div>
+
+          <div class="h-8 w-[1px] bg-slate-700"></div>
+
+          <!-- Cadence RPM -->
+          <div class="flex flex-col items-center sm:items-end">
+            <span class="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">🔄 踏頻</span>
+            <div class="flex items-baseline gap-1">
+              <span id="hudCadence" class="font-mono-num text-2xl sm:text-3xl font-extrabold text-emerald-300">86</span>
+              <span class="text-[11px] font-bold text-slate-400">RPM</span>
+            </div>
+          </div>
+
+          <div class="h-8 w-[1px] bg-slate-700"></div>
+
+          <!-- Power Watts -->
+          <div class="hidden sm:flex flex-col items-end">
+            <span class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">💪 功率</span>
+            <div class="flex items-baseline gap-1">
+              <span id="hudPower" class="font-mono-num text-2xl sm:text-3xl font-extrabold text-amber-300">215</span>
+              <span class="text-[11px] font-bold text-slate-400">W</span>
+            </div>
+          </div>
+
+          <div class="hidden sm:block h-8 w-[1px] bg-slate-700"></div>
+
+          <!-- Bugs / Calories -->
+          <div class="flex flex-col items-center sm:items-end">
+            <span class="text-[10px] uppercase tracking-wider text-pink-400 font-bold">🦟 捕蟲 / 熱量</span>
+            <div class="flex items-baseline gap-1">
+              <span id="hudBugs" class="font-mono-num text-2xl sm:text-3xl font-extrabold text-pink-300">0</span>
+              <span class="text-[11px] font-bold text-slate-400">隻 (<span id="hudKcal" class="font-mono-num text-slate-300">42</span> kcal)</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Desktop Audio Mute Button -->
+        <button id="muteBtnDesktop" title="切換音效" class="hidden lg:flex px-3.5 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-sm font-bold text-slate-200 items-center gap-1.5 border-2 border-slate-600 transition shrink-0">
+          <span id="muteIconDesktop">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Interactive SVG Stage -->
+    <div class="relative w-full aspect-[16/10] sm:aspect-[16/9] bg-sky-200 overflow-hidden select-none">
+      
+      <!-- Top-Left Weather & Environment Overlay Pill -->
+      <div class="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 flex flex-wrap items-center gap-2 pointer-events-none">
+        <div id="weatherPill" class="backdrop-blur-md bg-white/75 text-slate-800 px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-md border border-white/60 flex items-center gap-1.5 transition-all">
+          <span id="weatherIcon">☀️</span>
+          <span id="weatherText">晴空微風 · 適合騎行</span>
+        </div>
+        <div id="humidityPill" class="hidden backdrop-blur-md bg-sky-500/85 text-white px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-md border border-sky-300/60 items-center gap-1 animate-pulse">
+          💧 空氣濕度 100% · 牛奶蛙皮膚水潤發亮！
+        </div>
+      </div>
+
+      <!-- Top-Right Quick Tip -->
+      <div class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 pointer-events-none hidden sm:block">
+        <div class="backdrop-blur-md bg-slate-900/55 text-white/90 px-3 py-1.5 rounded-full text-xs font-medium border border-white/15">
+          💡 點擊下方按鈕或直接點擊畫面與牛奶蛙互動
+        </div>
+      </div>
+
+      <!-- THE CORE 2D SVG ANIMATION SCENE -->
+      <svg id="sceneSvg" viewBox="0 0 1000 560" class="w-full h-full block cursor-pointer" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <!-- Sky Gradients for Sunny, Rainy, and Night modes -->
+          <linearGradient id="skySunny" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#38BDF8" />
+            <stop offset="65%" stop-color="#BAE6FD" />
+            <stop offset="100%" stop-color="#FEF9C3" />
+          </linearGradient>
+
+          <linearGradient id="skyRainy" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#334155" />
+            <stop offset="60%" stop-color="#64748B" />
+            <stop offset="100%" stop-color="#94A3B8" />
+          </linearGradient>
+
+          <linearGradient id="skyNight" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#090D16" />
+            <stop offset="55%" stop-color="#1E1B4B" />
+            <stop offset="100%" stop-color="#311042" />
+          </linearGradient>
+
+          <!-- Bike Frame Carbon Metallic Gradient -->
+          <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#EF4444" />
+            <stop offset="50%" stop-color="#DC2626" />
+            <stop offset="100%" stop-color="#991B1B" />
+          </linearGradient>
+
+          <!-- Aero Helmet Gradient -->
+          <linearGradient id="helmetGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#38BDF8" />
+            <stop offset="55%" stop-color="#0284C7" />
+            <stop offset="100%" stop-color="#0369A1" />
+          </linearGradient>
+
+          <!-- Headlight Cone Beam Gradient -->
+          <linearGradient id="headlightBeamGrad" x1="0" y1="0.5" x2="1" y2="0.5">
+            <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.85" />
+            <stop offset="40%" stop-color="#FEF08A" stop-opacity="0.35" />
+            <stop offset="100%" stop-color="#FEF08A" stop-opacity="0" />
+          </linearGradient>
+
+          <!-- Taillight Glow -->
+          <radialGradient id="taillightGlow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stop-color="#FF2E4C" stop-opacity="0.95" />
+            <stop offset="45%" stop-color="#EF4444" stop-opacity="0.45" />
+            <stop offset="100%" stop-color="#EF4444" stop-opacity="0" />
+          </radialGradient>
+
+          <!-- ===== PHOTO-ACCURATE YELLOW PEAR FROG GRADIENTS (3D柔滑黃色大肚奶蛙漸層) ===== -->
+          <!-- Main 3D Matte Yellow Body Gradient -->
+          <radialGradient id="frogBodyGrad" cx="0.38" cy="0.28" r="0.72">
+            <stop offset="0%" stop-color="#FFEA70" />
+            <stop offset="45%" stop-color="#FFD026" />
+            <stop offset="82%" stop-color="#F0A808" />
+            <stop offset="100%" stop-color="#D48800" />
+          </radialGradient>
+
+          <!-- Soft Cream-Yellow Big Belly Patch Gradient (淺奶黃色大肚皮) -->
+          <radialGradient id="frogBellyGrad" cx="0.45" cy="0.4" r="0.65">
+            <stop offset="0%" stop-color="#FAF0CA" />
+            <stop offset="55%" stop-color="#F2DC91" />
+            <stop offset="100%" stop-color="#DEC068" />
+          </radialGradient>
+
+          <!-- Mint-Green / Sage-Green Eye Rim Gradient (標誌性薄荷綠眼圈) -->
+          <radialGradient id="frogEyeMint" cx="0.4" cy="0.35" r="0.65">
+            <stop offset="0%" stop-color="#B5E0C2" />
+            <stop offset="60%" stop-color="#89BF9A" />
+            <stop offset="100%" stop-color="#5E9470" />
+          </radialGradient>
+
+          <!-- Vocal Sac Translucent Warm Yellow-Cream Gradient -->
+          <radialGradient id="vocalSacGrad" cx="0.35" cy="0.35" r="0.65">
+            <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.96" />
+            <stop offset="55%" stop-color="#FDE68A" stop-opacity="0.92" />
+            <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.9" />
+          </radialGradient>
+
+          <!-- Right Calf Gradient: Yellow to Dark Olive-Brown Ankle (小腿至腳踝漸層深橄欖褐色) -->
+          <linearGradient id="rightCalfGrad" id="rightCalfGrad" gradientUnits="userSpaceOnUse" x1="465" y1="320" x2="465" y2="430">
+            <stop offset="0%" stop-color="#FFC824" />
+            <stop offset="52%" stop-color="#DDA214" />
+            <stop offset="82%" stop-color="#7A6620" />
+            <stop offset="100%" stop-color="#4B3E13" />
+          </linearGradient>
+
+          <!-- Left (Far) Calf Gradient: Darker Yellow to Dark Olive-Brown Ankle -->
+          <linearGradient id="leftCalfGrad" gradientUnits="userSpaceOnUse" x1="465" y1="320" x2="465" y2="430">
+            <stop offset="0%" stop-color="#E5A910" />
+            <stop offset="52%" stop-color="#C48B0E" />
+            <stop offset="82%" stop-color="#66551A" />
+            <stop offset="100%" stop-color="#3B310F" />
+          </linearGradient>
+
+          <!-- Right Forearm Gradient: Yellow to Dark Olive-Brown Wrist/Hand (手臂至手掌漸層深橄欖褐色) -->
+          <linearGradient id="rightArmGrad" gradientUnits="userSpaceOnUse" x1="490" y1="245" x2="600" y2="255">
+            <stop offset="0%" stop-color="#FFD026" />
+            <stop offset="58%" stop-color="#E5A812" />
+            <stop offset="83%" stop-color="#786521" />
+            <stop offset="100%" stop-color="#4A3E14" />
+          </linearGradient>
+
+          <!-- Left Forearm Gradient -->
+          <linearGradient id="leftArmGrad" gradientUnits="userSpaceOnUse" x1="490" y1="245" x2="590" y2="270">
+            <stop offset="0%" stop-color="#E0A510" />
+            <stop offset="60%" stop-color="#C28B0E" />
+            <stop offset="85%" stop-color="#61521A" />
+            <stop offset="100%" stop-color="#382F0F" />
+          </linearGradient>
+
+          <!-- 3-Toed Webbed Foot Gradient (深橄欖褐色三趾大腳掌) -->
+          <linearGradient id="oliveFootGrad" x1="0" y1="0" x2="1" y2="0.4">
+            <stop offset="0%" stop-color="#6E5C1E" />
+            <stop offset="55%" stop-color="#4B3F14" />
+            <stop offset="100%" stop-color="#28220A" />
+          </linearGradient>
+
+          <!-- Soft 3D Drop Shadow -->
+          <filter id="softShadow" x="-15%" y="-15%" width="130%" height="140%">
+            <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#0F172A" flood-opacity="0.28"/>
+          </filter>
+        </defs>
+
+        <!-- ==================== 1. SKY & CELESTIAL LAYER ==================== -->
+        <rect id="skyRect" x="0" y="0" width="1000" height="450" fill="url(#skySunny)" />
+
+        <!-- Night Stars Group (Visible in Dusk/Night mode) -->
+        <g id="starsGroup" opacity="0" style="transition: opacity 0.6s ease">
+          <circle cx="120" cy="65" r="2" fill="#FFF" opacity="0.9"/>
+          <circle cx="240" cy="40" r="1.5" fill="#FEF08A" opacity="0.8"/>
+          <circle cx="390" cy="85" r="2.2" fill="#FFF" opacity="0.95"/>
+          <circle cx="550" cy="50" r="1.6" fill="#BAE6FD" opacity="0.7"/>
+          <circle cx="680" cy="95" r="2" fill="#FFF" opacity="0.85"/>
+          <circle cx="820" cy="45" r="2.5" fill="#FEF08A" opacity="0.9"/>
+          <circle cx="930" cy="80" r="1.5" fill="#FFF" opacity="0.8"/>
+          <circle cx="70" cy="140" r="1.5" fill="#FFF" opacity="0.7"/>
+          <circle cx="480" cy="120" r="1.8" fill="#FFF" opacity="0.8"/>
+          <!-- Crescent Moon -->
+          <path d="M845 65 A32 32 0 1 0 885 105 A26 26 0 1 1 845 65 Z" fill="#FEF08A" filter="url(#softShadow)"/>
+        </g>
+
+        <!-- Sun Group (Visible in Sunny mode) -->
+        <g id="sunGroup" transform="translate(850, 90)" style="transition: all 0.6s ease">
+          <circle cx="0" cy="0" r="56" fill="#FDE047" opacity="0.25" />
+          <circle cx="0" cy="0" r="42" fill="#FACC15" opacity="0.4" />
+          <circle cx="0" cy="0" r="30" fill="#FEF08A" />
+        </g>
+
+        <!-- ==================== 2. PARALLAX CLOUDS ==================== -->
+        <g id="cloudsLayer" opacity="0.92"></g>
+
+        <!-- ==================== 3. PARALLAX DISTANT MOUNTAINS ==================== -->
+        <g id="farHillsLayer"></g>
+        <g id="nearHillsLayer"></g>
+
+        <!-- ==================== 4. PARALLAX ROADSIDE TREES &POSTS ==================== -->
+        <g id="treesLayer"></g>
+
+        <!-- ==================== 5. ROAD & GROUND LAYER ==================== -->
+        <g id="roadLayer">
+          <!-- Grass Shoulder -->
+          <rect id="grassShoulder" x="0" y="425" width="1000" height="22" fill="#22C55E" />
+          <!-- Red/White Cycling Curb -->
+          <rect x="0" y="442" width="1000" height="8" fill="#E2E8F0" />
+          <!-- Asphalt Road Surface -->
+          <rect id="asphaltRect" x="0" y="450" width="1000" height="110" fill="#334155" />
+          <!-- Top Edge Road Line -->
+          <line x1="0" y1="458" x2="1000" y2="458" stroke="#F8FAFC" stroke-width="3" opacity="0.7" />
+          <!-- Dynamic Dashed Center Lines & Pebbles -->
+          <g id="roadDashesGroup"></g>
+        </g>
+
+        <!-- ==================== 6. SPEED LINES (SPRINT OVERLAY) ==================== -->
+        <g id="speedLinesGroup" opacity="0"></g>
+
+        <!-- ==================== 7. BICYCLE & MILK FROG ASSEMBLY ==================== -->
+        <!-- Bike Shadow on Asphalt -->
+        <ellipse id="bikeGroundShadow" cx="485" cy="488" rx="185" ry="14" fill="#0F172A" opacity="0.4" />
+
+        <!-- Whole Bike + Frog Group (Pivots around Rear Wheel (330, 410) for Wheelies!) -->
+        <g id="bikeMasterGroup" transform="translate(0, 0)">
+          
+          <!-- ===== 7A. FAR (LEFT) LEG & PEDAL (Behind Bike Frame) ===== -->
+          <g id="leftLegGroup">
+            <!-- Left Crank Arm (Behind) -->
+            <line id="leftCrankLine" x1="465" y1="410" x2="465" y2="452" stroke="#475569" stroke-width="8" stroke-linecap="round" />
+            <!-- Left Thigh (Warm Shaded Yellow) -->
+            <g id="leftThighGroup">
+              <line id="leftThighBase" x1="0" y1="0" x2="0" y2="0" stroke="#9A6804" stroke-width="38" stroke-linecap="round" />
+              <line id="leftThighMilk" x1="0" y1="0" x2="0" y2="0" stroke="#E5A910" stroke-width="34" stroke-linecap="round" />
+            </g>
+            <!-- Left Calf (Yellow transitioning to Dark Olive-Brown Ankle) -->
+            <g id="leftCalfGroup">
+              <line id="leftCalfBase" x1="0" y1="0" x2="0" y2="0" stroke="#3B310F" stroke-width="28" stroke-linecap="round" />
+              <line id="leftCalfMilk" x1="0" y1="0" x2="0" y2="0" stroke="url(#leftCalfGrad)" stroke-width="24" stroke-linecap="round" />
+            </g>
+            <!-- Left Frog Foot with 3 Dark Olive-Brown Webbed Toes -->
+            <g id="leftFootGroup"></g>
+            <!-- Left Pedal Platform -->
+            <rect id="leftPedalRect" x="-14" y="-5" width="28" height="10" rx="4" fill="#1E293B" stroke="#94A3B8" stroke-width="2" />
+          </g>
+
+          <!-- ===== 7B. FAR (LEFT) ARM (Behind Handlebar) ===== -->
+          <g id="leftArmGroup">
+            <path id="leftArmPathBase" d="M480 250 Q525 280 578 275" fill="none" stroke="#59460E" stroke-width="25" stroke-linecap="round" stroke-linejoin="round" />
+            <path id="leftArmPathMilk" d="M480 250 Q525 280 578 275" fill="none" stroke="url(#leftArmGrad)" stroke-width="21" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
+
+          <!-- ===== 7C. REAR & FRONT WHEELS ===== -->
+          <!-- Rear Wheel centered at (330, 410), radius 75 -->
+          <g id="rearWheelWrapper" transform="translate(330, 410)">
+            <g id="rearWheelSpin">
+              <!-- Spokes -->
+              <g stroke="#CBD5E1" stroke-width="1.8" opacity="0.85">
+                <line x1="-70" y1="0" x2="70" y2="0" />
+                <line x1="0" y1="-70" x2="0" y2="70" />
+                <line x1="-50" y1="-50" x2="50" y2="50" />
+                <line x1="-50" y1="50" x2="50" y2="-50" />
+                <line x1="-65" y1="-27" x2="65" y2="27" />
+                <line x1="-27" y1="-65" x2="27" y2="65" />
+                <line x1="27" y1="-65" x2="-27" y2="65" />
+                <line x1="65" y1="-27" x2="-65" y2="27" />
+              </g>
+              <!-- Deep Carbon Aero Rim -->
+              <circle cx="0" cy="0" r="66" fill="none" stroke="#1E293B" stroke-width="10" />
+              <!-- Rim Stickers & Valve -->
+              <path d="M -52 -38 A 65 65 0 0 1 -20 -62" fill="none" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" />
+              <path d="M 52 38 A 65 65 0 0 1 20 62" fill="none" stroke="#F43F5E" stroke-width="4" stroke-linecap="round" />
+              <!-- Presta Valve -->
+              <line x1="0" y1="54" x2="0" y2="63" stroke="#FACC15" stroke-width="3" />
+              <!-- Rear Cassette Gears -->
+              <circle cx="0" cy="0" r="18" fill="#475569" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 2" />
+              <circle cx="0" cy="0" r="12" fill="#334155" stroke="#CBD5E1" stroke-width="1.5" />
+            </g>
+            <!-- Outer Road Tire (Tan-wall pro racing tire) -->
+            <circle cx="0" cy="0" r="72" fill="none" stroke="#D97706" stroke-width="3" opacity="0.85" />
+            <circle cx="0" cy="0" r="75" fill="none" stroke="#0F172A" stroke-width="7" />
+            <!-- Hub Center -->
+            <circle cx="0" cy="0" r="7" fill="#E2E8F0" stroke="#1E293B" stroke-width="2.5" />
+          </g>
+
+          <!-- Front Wheel centered at (635, 410), radius 75 -->
+          <g id="frontWheelWrapper" transform="translate(635, 410)">
+            <g id="frontWheelSpin">
+              <!-- Spokes -->
+              <g stroke="#CBD5E1" stroke-width="1.8" opacity="0.85">
+                <line x1="-70" y1="0" x2="70" y2="0" />
+                <line x1="0" y1="-70" x2="0" y2="70" />
+                <line x1="-50" y1="-50" x2="50" y2="50" />
+                <line x1="-50" y1="50" x2="50" y2="-50" />
+                <line x1="-65" y1="-27" x2="65" y2="27" />
+                <line x1="-27" y1="-65" x2="27" y2="65" />
+                <line x1="27" y1="-65" x2="-27" y2="65" />
+                <line x1="65" y1="-27" x2="-65" y2="27" />
+              </g>
+              <!-- Deep Carbon Aero Rim -->
+              <circle cx="0" cy="0" r="66" fill="none" stroke="#1E293B" stroke-width="10" />
+              <!-- Rim Stickers & Valve -->
+              <path d="M -52 -38 A 65 65 0 0 1 -20 -62" fill="none" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" />
+              <path d="M 52 38 A 65 65 0 0 1 20 62" fill="none" stroke="#F43F5E" stroke-width="4" stroke-linecap="round" />
+              <line x1="0" y1="54" x2="0" y2="63" stroke="#FACC15" stroke-width="3" />
+              <!-- Front Disc Brake Rotor -->
+              <circle cx="0" cy="0" r="19" fill="none" stroke="#94A3B8" stroke-width="3" stroke-dasharray="6 3" />
+            </g>
+            <!-- Outer Road Tire -->
+            <circle cx="0" cy="0" r="72" fill="none" stroke="#D97706" stroke-width="3" opacity="0.85" />
+            <circle cx="0" cy="0" r="75" fill="none" stroke="#0F172A" stroke-width="7" />
+            <circle cx="0" cy="0" r="7" fill="#E2E8F0" stroke="#1E293B" stroke-width="2.5" />
+          </g>
+
+          <!-- ===== 7D. ROAD BIKE CARBON FRAME, DROP BARS, BOTTLE & LIGHTS ===== -->
+          <g id="bikeFrameGroup">
+            <!-- Drive Chain (Animated dashed stroke) -->
+            <path d="M 330 393 L 465 384 A 26 26 0 1 1 465 436 L 330 427 A 17 17 0 1 1 330 393 Z" 
+                  fill="none" stroke="#334155" stroke-width="4.5" />
+            <path id="bikeChainAnimated" d="M 330 393 L 465 384 A 26 26 0 1 1 465 436 L 330 427 A 17 17 0 1 1 330 393 Z" 
+                  fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-dasharray="6 6" />
+
+            <!-- Water Bottle & Cage on Down Tube -->
+            <g transform="translate(505, 362) rotate(-38)">
+              <!-- Bottle Body -->
+              <rect x="-12" y="-32" width="24" height="44" rx="6" fill="#38BDF8" stroke="#0284C7" stroke-width="2.5" />
+              <rect x="-12" y="-16" width="24" height="10" fill="#FEF08A" />
+              <!-- Bottle Cap & Nozzle -->
+              <rect x="-9" y="-38" width="18" height="7" rx="3" fill="#0F172A" />
+              <circle cx="0" cy="-41" r="4" fill="#F43F5E" />
+              <!-- Carbon Cage -->
+              <path d="M-13 8 L-13 -20 L0 -26 L13 -20 L13 8" fill="none" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+
+            <!-- Rear Chainstay & Seatstay -->
+            <line x1="330" y1="410" x2="465" y2="410" stroke="url(#frameGrad)" stroke-width="10" stroke-linecap="round" />
+            <line x1="330" y1="410" x2="422" y2="305" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+
+            <!-- Aero Seat Tube & Seatpost -->
+            <line x1="400" y1="248" x2="420" y2="290" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+            <line x1="415" y1="280" x2="465" y2="410" stroke="url(#frameGrad)" stroke-width="14" stroke-linecap="round" />
+
+            <!-- Down Tube & Top Tube -->
+            <line x1="465" y1="410" x2="572" y2="295" stroke="url(#frameGrad)" stroke-width="16" stroke-linecap="round" />
+            <line x1="415" y1="282" x2="564" y2="275" stroke="url(#frameGrad)" stroke-width="13" stroke-linecap="round" />
+
+            <!-- Frame Brand Accent Stripe -->
+            <line x1="490" y1="383" x2="545" y2="324" stroke="#FEF08A" stroke-width="4" stroke-linecap="round" />
+
+            <!-- Head Tube & Aero Front Fork -->
+            <line x1="560" y1="265" x2="577" y2="305" stroke="#1E293B" stroke-width="14" stroke-linecap="round" />
+            <path d="M572 295 L635 410" stroke="url(#frameGrad)" stroke-width="12" stroke-linecap="round" />
+
+            <!-- Stem & Drop Handlebars (彎把) -->
+            <path d="M562 267 L555 246 L592 242" fill="none" stroke="#0F172A" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- Drop Curve & Brake Hoods -->
+            <path d="M582 242 C618 242, 622 288, 588 292 L572 292" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+            <!-- Brake Hoods & Lever -->
+            <path d="M598 242 L614 232 L610 250 Z" fill="#334155" />
+            <path d="M610 245 L618 272" stroke="#94A3B8" stroke-width="3" stroke-linecap="round" />
+            <!-- Mini GPS Cycling Computer on Stem -->
+            <rect x="572" y="230" width="18" height="8" rx="2" transform="rotate(-10 580 234)" fill="#0284C7" stroke="#E2E8F0" stroke-width="1.5" />
+
+            <!-- Racing Saddle (坐墊) -->
+            <path d="M368 246 Q400 242 432 252 Q405 260 375 256 Z" fill="#0F172A" stroke="#475569" stroke-width="2" />
+
+            <!-- Night/Rain Headlight & Taillight Beams -->
+            <g id="bikeLightsGroup" opacity="0" style="transition: opacity 0.4s ease">
+              <!-- Front LED Beam Cone -->
+              <polygon points="602,254 990,175 990,465" fill="url(#headlightBeamGrad)" />
+              <circle cx="602" cy="254" r="8" fill="#FEF08A" />
+              <!-- Rear Red Blinking Taillight -->
+              <circle id="taillightHalo" cx="403" cy="268" r="28" fill="url(#taillightGlow)" />
+              <circle cx="403" cy="268" r="5" fill="#FF2E4C" stroke="#FFF" stroke-width="1.5" />
+            </g>
+          </g>
+
+          <!-- ===== 7E. PHOTO-ACCURATE YELLOW PEAR MILK FROG BODY, BIG BELLY, HEAD & TONGUE ===== -->
+          <!-- This group moves & tilts dynamically with cadence bobbing and Aero Sprint tuck -->
+          <g id="frogUpperBodyGroup" transform="translate(425, 232)">
+            
+            <!-- Seamless Pear-Shaped Body & Head (還原照片無脖子圓潤梨形大肚身材) -->
+            <g id="frogTorso">
+              <!-- Pear-Shaped Silhouette: Wide round bottom/hips on saddle, bulging potbelly, seamless neckless head at top-right -->
+              <path d="M -42 22
+                       C -54 -12, -26 -52, 8 -68
+                       C 36 -80, 56 -96, 76 -92
+                       C 96 -88, 114 -68, 110 -46
+                       C 107 -34, 96 -28, 95 -14
+                       C 94 26, 74 64, 28 62
+                       C -14 60, -34 44, -42 22 Z"
+                    fill="url(#frogBodyGrad)" stroke="#8C5D05" stroke-width="3" stroke-linejoin="round" />
+
+              <!-- Characteristic Light Cream-Yellow Big Potbelly Patch (淺奶黃色Q彈大肚皮) -->
+              <path id="frogBigBellyPatch"
+                    d="M 88 -12
+                       C 102 18, 84 56, 44 58
+                       C 14 58, 6 32, 24 4
+                       C 40 -18, 76 -26, 88 -12 Z"
+                    fill="url(#frogBellyGrad)" stroke="#D9B65B" stroke-width="1.5" />
+
+              <!-- Subtle 3D Belly & Back Soft Highlight (淋雨模式會更加水潤閃亮) -->
+              <path id="wetTorsoHighlight"
+                    d="M -18 -24 C 8 -54, 46 -76, 76 -84"
+                    fill="none" stroke="#FFFBEB" stroke-width="5" stroke-linecap="round" opacity="0.35" />
+              <path d="M 78 2 C 84 22, 72 44, 50 48"
+                    fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" opacity="0.4" />
+            </g>
+
+            <!-- Frog Facial Features & Helmet Group (Positioned at the top-right of the pear silhouette) -->
+            <g id="frogHeadGroup" transform="translate(76, -54)">
+              
+              <!-- Left (Far) Vocal Sac (鳴囊 - Expands on Croak) -->
+              <circle id="leftVocalSac" cx="26" cy="20" r="1" fill="url(#vocalSacGrad)" stroke="#785106" stroke-width="2" opacity="0" />
+
+              <!-- Long Elastic Frog Tongue (Shoots out from the protruding snout mouth to catch bugs!) -->
+              <g id="tongueGroup" opacity="0">
+                <line id="tongueLine" x1="30" y1="8" x2="30" y2="8" stroke="#FB7185" stroke-width="9" stroke-linecap="round" />
+                <line id="tongueHighlight" x1="30" y1="8" x2="30" y2="8" stroke="#FDA4AF" stroke-width="3" stroke-linecap="round" />
+                <circle id="tongueTip" cx="30" cy="8" r="8" fill="#F43F5E" />
+              </g>
+
+              <!-- Characteristic Protruding Snout Lip & Chin (照片中微凸的小嘴吻部輪廓) -->
+              <path d="M 18 -14 C 34 -12, 42 -2, 40 7 C 39 14, 28 19, 14 20"
+                    fill="url(#frogBodyGrad)" stroke="#8C5D05" stroke-width="2.5" stroke-linecap="round" />
+
+              <!-- Far Eye (Right side edge of face, slightly protruding like in the photo) -->
+              <g transform="translate(30, -14)">
+                <circle cx="0" cy="0" r="8.5" fill="url(#frogEyeMint)" stroke="#5E4918" stroke-width="2" />
+                <circle cx="1.8" cy="0" r="5.8" fill="#141414" />
+                <circle cx="0.5" cy="-2" r="1.6" fill="#FFFFFF" />
+              </g>
+
+              <!-- Near Eye (Main Prominent Mint-Green Rimmed Eye with Big Black Pupil - 薄荷綠眼圈大黑眼) -->
+              <g transform="translate(6, -12)">
+                <!-- Soft 3D Eye Socket Ridge -->
+                <circle cx="-1" cy="1" r="13.5" fill="#E6A10B" opacity="0.65" />
+                <!-- Mint-Green / Sage-Green Iris Rim -->
+                <circle cx="0" cy="0" r="12" fill="url(#frogEyeMint)" stroke="#524118" stroke-width="2.2" />
+                <!-- Normal Big Round Black Pupil -->
+                <g id="mainEyeNormal" class="frog-pupil">
+                  <circle cx="1.5" cy="0.5" r="7.8" fill="#141414" />
+                  <!-- Crisp Glossy Eye Highlights -->
+                  <circle cx="-1.5" cy="-2.8" r="2.5" fill="#FFFFFF" />
+                  <circle cx="4.2" cy="3.2" r="1.2" fill="#FFFFFF" opacity="0.85" />
+                </g>
+                <!-- Fierce Sprint Eyelid (Shown in Aero Sprint Mode!) -->
+                <path id="sprintEyeBrows" d="M -11 -8 L 12 -2" stroke="#524118" stroke-width="3.5" stroke-linecap="round" opacity="0" />
+                <!-- Happy Arc Eye (Shown when eating, croaking, or in Rain mode!) -->
+                <path id="mainEyeHappy" d="M -6 2 Q 1 -6 8 2" fill="none" stroke="#141414" stroke-width="3.2" stroke-linecap="round" opacity="0" />
+              </g>
+
+              <!-- Deadpan Straight Horizontal Line Mouth (照片標誌性冷靜一字平線嘴) -->
+              <path id="frogMouthSmile" d="M 16 7 L 39 6.5" fill="none" stroke="#2B2112" stroke-width="2.8" stroke-linecap="round" />
+              <!-- Open Mouth (Shown when shooting tongue or croaking) -->
+              <path id="frogMouthOpen" d="M 18 6 Q 30 22 39 7 Z" fill="#9F1239" stroke="#2B2112" stroke-width="2.5" opacity="0" />
+
+              <!-- Right (Near) Vocal Sac & Belly Cheek Puff (雙側鼓腮鳴囊) -->
+              <g id="rightVocalSacGroup" opacity="0">
+                <circle id="rightVocalSac" cx="18" cy="20" r="1" fill="url(#vocalSacGrad)" stroke="#785106" stroke-width="2.5" />
+                <path id="rightVocalSacShine" d="M 12 12 Q 18 8 24 12" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />
+              </g>
+
+              <!-- Aerodynamic Road Cycling Helmet (破風安全帽 - Fitted snugly on the round yellow head) -->
+              <g id="aeroHelmet" transform="translate(-6, -27) rotate(-5)">
+                <!-- Helmet Chin Strap -->
+                <path d="M -8 16 L 2 37 L 14 18" fill="none" stroke="#1E293B" stroke-width="2.8" stroke-linejoin="round" />
+                <circle cx="2" cy="37" r="2.5" fill="#F43F5E" />
+                <!-- Sleek Aero Shell Tail & Dome -->
+                <path d="M -36 8 C -32 -18, 22 -22, 42 4 C 24 8, -14 10, -36 8 Z" 
+                      fill="url(#helmetGrad)" stroke="#0F172A" stroke-width="2.8" stroke-linejoin="round" />
+                <!-- White/Yellow Racing Stripe -->
+                <path d="M -30 4 Q 2 -10 36 2" fill="none" stroke="#FEF08A" stroke-width="3.2" stroke-linecap="round" />
+                <!-- Cooling Air Vents -->
+                <path d="M -18 -4 L -6 -6 L -10 1 Z" fill="#0F172A" />
+                <path d="M 2 -6 L 15 -5 L 10 1 Z" fill="#0F172A" />
+                <!-- Flip-up Tinted Aero Cycling Visor -->
+                <path id="aeroVisor" d="M 20 2 L 42 0 C 44 9, 32 13, 20 9 Z" fill="#38BDF8" fill-opacity="0.55" stroke="#0F172A" stroke-width="1.8" />
+              </g>
+
+              <!-- Flying Sweat Drops (Visible in Sprint Mode) -->
+              <g id="sweatDropsGroup" opacity="0">
+                <path d="M -28 -15 Q -38 -18 -35 -10 Q -32 -5 -28 -15 Z" fill="#38BDF8" />
+                <path d="M -42 -2 Q -52 -5 -49 3 Q -46 8 -42 -2 Z" fill="#7DD3FC" />
+              </g>
+
+            </g> <!-- End frogHeadGroup -->
+          </g> <!-- End frogUpperBodyGroup -->
+
+          <!-- ===== 7F. CRANKSET & NEAR (RIGHT) LEG (In Front of Bike Frame) ===== -->
+          <g id="rightLegAndCrankGroup">
+            <!-- Chainring (大盤齒片) centered at (465, 410) -->
+            <g id="chainringSpin" transform="translate(465, 410)">
+              <circle cx="0" cy="0" r="26" fill="#1E293B" stroke="#CBD5E1" stroke-width="3" stroke-dasharray="5 2.5" />
+              <circle cx="0" cy="0" r="19" fill="none" stroke="#475569" stroke-width="4" />
+              <!-- 4-Arm Spider -->
+              <line x1="-22" y1="0" x2="22" y2="0" stroke="#0F172A" stroke-width="5" />
+              <line x1="0" y1="-22" x2="0" y2="22" stroke="#0F172A" stroke-width="5" />
+              <circle cx="0" cy="0" r="6" fill="#64748B" />
+            </g>
+
+            <!-- Right Crank Arm -->
+            <line id="rightCrankLine" x1="465" y1="410" x2="465" y2="368" stroke="#0F172A" stroke-width="9" stroke-linecap="round" />
+            <line id="rightCrankAccent" x1="465" y1="410" x2="465" y2="368" stroke="#94A3B8" stroke-width="3" stroke-linecap="round" />
+
+            <!-- Right Thigh (Plump Yellow Drumstick Thigh matching photo) -->
+            <g id="rightThighGroup">
+              <line id="rightThighOutline" x1="0" y1="0" x2="0" y2="0" stroke="#8C5D05" stroke-width="42" stroke-linecap="round" />
+              <line id="rightThighBase" x1="0" y1="0" x2="0" y2="0" stroke="#F0A808" stroke-width="38" stroke-linecap="round" />
+              <line id="rightThighMilk" x1="0" y1="0" x2="0" y2="0" stroke="#FFD026" stroke-width="32" stroke-linecap="round" />
+            </g>
+
+            <!-- Right Calf (Smooth Gradient from Yellow Knee to Dark Olive-Brown Ankle) -->
+            <g id="rightCalfGroup">
+              <line id="rightCalfOutline" x1="0" y1="0" x2="0" y2="0" stroke="#3B310F" stroke-width="30" stroke-linecap="round" />
+              <line id="rightCalfBase" x1="0" y1="0" x2="0" y2="0" stroke="url(#rightCalfGrad)" stroke-width="26" stroke-linecap="round" />
+              <line id="rightCalfMilk" x1="0" y1="0" x2="0" y2="0" stroke="url(#rightCalfGrad)" stroke-width="22" stroke-linecap="round" />
+            </g>
+
+            <!-- Smooth Yellow Knee Joint Cap -->
+            <circle id="rightKneeDot" cx="0" cy="0" r="13" fill="#FFC824" stroke="#B47B08" stroke-width="2" />
+
+            <!-- Right Frog Foot with Photo-Accurate 3 Chunky Dark Olive-Brown Toes (深橄欖褐色三趾大腳掌) -->
+            <g id="rightFootGroup"></g>
+
+            <!-- Right Pedal Platform -->
+            <rect id="rightPedalRect" x="-15" y="-5" width="30" height="10" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="2" />
+          </g>
+
+          <!-- ===== 7G. NEAR (RIGHT) ARM & GRADIENT DARK OLIVE-BROWN HAND ON HANDLEBAR ===== -->
+          <g id="rightArmGroup">
+            <!-- Upper & Forearm transitioning from Bright Yellow to Dark Olive-Brown Wrist -->
+            <path id="rightArmOutline" d="M475 240 L525 275 L592 252" fill="none" stroke="#59460E" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+            <path id="rightArmBase" d="M475 240 L525 275 L592 252" fill="none" stroke="url(#rightArmGrad)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+            <path id="rightArmMilk" d="M475 240 L525 275 L592 252" fill="none" stroke="url(#rightArmGrad)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- Chubby Dark Olive-Brown Frog Hand & 4 Blunt Fingers Gripping Hoods (深橄欖褐色短胖手指) -->
+            <g id="rightHandPads" transform="translate(595, 252)">
+              <!-- Palm Base -->
+              <ellipse cx="-2" cy="1" rx="9" ry="8" fill="#4B3F14" stroke="#28220A" stroke-width="1.8" />
+              <!-- 4 Chubby Rounded Olive-Brown Fingers -->
+              <path d="M 1 -5 L 11 -6" stroke="#3B310F" stroke-width="6.5" stroke-linecap="round" />
+              <path d="M 2 -1 L 13 -1" stroke="#4B3F14" stroke-width="6.5" stroke-linecap="round" />
+              <path d="M 2 3 L 12 4" stroke="#3B310F" stroke-width="6.5" stroke-linecap="round" />
+              <path d="M 0 7 L 9 9" stroke="#2E270B" stroke-width="6" stroke-linecap="round" />
+            </g>
+          </g>
+
+        </g> <!-- End bikeMasterGroup -->
+
+        <!-- ==================== 8. INTERACTIVE FX LAYER (BUGS, SOUNDWAVES, RAIN, POPUPS) ==================== -->
+        <!-- Flying Bugs / Energy Gels Layer -->
+        <g id="bugsLayer"></g>
+
+        <!-- Croak Soundwave Ripples Layer -->
+        <g id="soundwavesLayer"></g>
+
+        <!-- Raindrops & Road Splashes Layer -->
+        <g id="weatherFxLayer"></g>
+
+        <!-- Floating Text & Cheer Popups Layer (+HP, RIBBIT, WHEELIE!) -->
+        <g id="popupsLayer"></g>
+
+      </svg>
+    </div>
+
+    <!-- Bottom Interactive Control Deck (個性有趣的交互按鈕) -->
+    <section class="bg-slate-200/90 p-3 sm:p-5 border-t-4 border-slate-800">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+        
+        <!-- Button 1: 搖車衝刺 / 破風模式 -->
+        <button id="btnSprint" class="action-btn group relative bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 rounded-2xl p-3 sm:p-3.5 border-2 border-slate-900 flex flex-col items-center justify-center gap-1 text-center cursor-pointer">
+          <div class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">⚡</div>
+          <div class="font-black text-sm sm:text-base leading-tight">破風衝刺模式</div>
+          <div id="sprintSubtext" class="text-[11px] font-bold text-slate-900/75 bg-white/40 px-2 py-0.5 rounded-full">
+            點擊切換：暴走衝刺
+          </div>
+        </button>
+
+        <!-- Button 2: 舌頭捕蟲補給 -->
+        <button id="btnBug" class="action-btn group relative bg-gradient-to-b from-emerald-400 to-teal-500 text-slate-950 rounded-2xl p-3 sm:p-3.5 border-2 border-slate-900 flex flex-col items-center justify-center gap-1 text-center cursor-pointer">
+          <div class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">🦟</div>
+          <div class="font-black text-sm sm:text-base leading-tight">舌頭捕蟲補給</div>
+          <div class="text-[11px] font-bold text-slate-900/75 bg-white/40 px-2 py-0.5 rounded-full">
+            長舌秒殺 +HP 功率UP
+          </div>
+        </button>
+
+        <!-- Button 3: 鼓腮鳴叫按喇叭 -->
+        <button id="btnCroak" class="action-btn group relative bg-gradient-to-b from-sky-400 to-blue-500 text-white rounded-2xl p-3 sm:p-3.5 border-2 border-slate-900 flex flex-col items-center justify-center gap-1 text-center cursor-pointer">
+          <div class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">🐸</div>
+          <div class="font-black text-sm sm:text-base leading-tight">鼓腮鳴叫喇叭</div>
+          <div class="text-[11px] font-bold text-white/90 bg-slate-900/25 px-2 py-0.5 rounded-full">
+            雙側鳴囊「呱！呱！」
+          </div>
+        </button>
+
+        <!-- Button 4: 翹頭特技 (Wheelie) -->
+        <button id="btnWheelie" class="action-btn group relative bg-gradient-to-b from-rose-400 to-pink-600 text-white rounded-2xl p-3 sm:p-3.5 border-2 border-slate-900 flex flex-col items-center justify-center gap-1 text-center cursor-pointer">
+          <div class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">🎪</div>
+          <div class="font-black text-sm sm:text-base leading-tight">翹頭獨輪特技</div>
+          <div class="text-[11px] font-bold text-white/90 bg-slate-900/25 px-2 py-0.5 rounded-full">
+            拉起前輪帥氣炫技
+          </div>
+        </button>
+
+        <!-- Button 5: 淋雨快樂模式 / 天氣切換 -->
+        <button id="btnWeather" class="action-btn col-span-2 sm:col-span-1 group relative bg-gradient-to-b from-indigo-400 to-purple-600 text-white rounded-2xl p-3 sm:p-3.5 border-2 border-slate-900 flex flex-col items-center justify-center gap-1 text-center cursor-pointer">
+          <div id="weatherBtnEmoji" class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">🌧️</div>
+          <div class="font-black text-sm sm:text-base leading-tight">淋雨 / 天氣切換</div>
+          <div id="weatherBtnSub" class="text-[11px] font-bold text-white/90 bg-slate-900/25 px-2 py-0.5 rounded-full">
+            目前：晴天 (點我淋雨)
+          </div>
+        </button>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer Note -->
+  <footer class="mt-3 text-center text-xs text-slate-400">
+    🐸 黃色梨形大肚奶蛙（Yellow Pear Belly Milk Frog）：擁有圓滾滾淺黃大肚皮、薄荷綠眼圈大黑眼與漸層深橄欖褐色手腳掌的超人氣搞笑騎士！
+  </footer>
+
+  <!-- ==================== JAVASCRIPT ANIMATION, IK & AUDIO ENGINE ==================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // ==========================================
+      // 1. WEB AUDIO SYNTHESIZER (No external MP3 needed)
+      // ==========================================
+      class FrogSoundEngine {
+        constructor() {
+          this.ctx = null;
+          this.muted = false;
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        }
+
+        toggleMute() {
+          this.muted = !this.muted;
+          return this.muted;
+        }
+
+        // Cute resonant Milk Frog "Ribbit / Gua! Gua!" + crisp bicycle bell
+        playCroakAndBell() {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+
+          // 1) Crisp Bicycle Bell "Ding-Ding!"
+          [0, 0.14].forEach((offset) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(2480, now + offset);
+            gain.gain.setValueAtTime(0.18, now + offset);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.55);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + offset);
+            osc.stop(now + offset + 0.56);
+          });
+
+          // 2) Dual Resonant Frog Croaks ("Gua! Gua!")
+          [0.06, 0.34].forEach((offset, idx) => {
+            const osc = this.ctx.createOscillator();
+            const mod = this.ctx.createOscillator();
+            const modGain = this.ctx.createGain();
+            const mainGain = this.ctx.createGain();
+
+            // throat rattle modulation
+            mod.type = 'sawtooth';
+            mod.frequency.setValueAtTime(38, now + offset);
+            modGain.gain.setValueAtTime(45, now + offset);
+
+            osc.type = 'triangle';
+            const startFreq = idx === 0 ? 170 : 195;
+            const peakFreq = idx === 0 ? 340 : 390;
+            osc.frequency.setValueAtTime(startFreq, now + offset);
+            osc.frequency.exponentialRampToValueAtTime(peakFreq, now + offset + 0.14);
+            osc.frequency.exponentialRampToValueAtTime(140, now + offset + 0.24);
+
+            mainGain.gain.setValueAtTime(0.01, now + offset);
+            mainGain.gain.linearRampToValueAtTime(0.28, now + offset + 0.05);
+            mainGain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.25);
+
+            mod.connect(modGain);
+            modGain.connect(osc.frequency);
+            osc.connect(mainGain);
+            mainGain.connect(this.ctx.destination);
+
+            osc.start(now + offset);
+            mod.start(now + offset);
+            osc.stop(now + offset + 0.26);
+            mod.stop(now + offset + 0.26);
+          });
+        }
+
+        // Elastic Tongue Zap & Slurp Sound
+        playTongueCatch() {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(280, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+          osc.frequency.exponentialRampToValueAtTime(420, now + 0.18);
+
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.21);
+
+          // Power-up chime after eating
+          setTimeout(() => {
+            if (this.muted || !this.ctx) return;
+            const t = this.ctx.currentTime;
+            [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+              const o = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              o.type = 'triangle';
+              o.frequency.setValueAtTime(freq, t + i * 0.055);
+              g.gain.setValueAtTime(0.14, t + i * 0.055);
+              g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.055 + 0.18);
+              o.connect(g);
+              g.connect(this.ctx.destination);
+              o.start(t + i * 0.055);
+              o.stop(t + i * 0.055 + 0.19);
+            });
+          }, 140);
+        }
+
+        // Whoosh sound for Sprint or Wheelie
+        playBoost(isHigh = true) {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(isHigh ? 220 : 440, now);
+          osc.frequency.exponentialRampToValueAtTime(isHigh ? 660 : 180, now + 0.25);
+
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.27);
+        }
+      }
+
+      const sound = new FrogSoundEngine();
+
+      // ==========================================
+      // 2. APPLICATION STATE & CONFIGURATION
+      // ==========================================
+      const state = {
+        // Motion & Physics
+        crankAngle: 0,           // radians
+        wheelAngle: 0,           // degrees
+        chainOffset: 0,
+        currentSpeed: 31.5,      // km/h
+        targetSpeed: 31.5,
+        currentCadence: 86,      // RPM
+        currentPower: 215,       // Watts
+        bugsEaten: 0,
+        calories: 42,
+        boostTimer: 0,           // temporary boost from eating bugs
+
+        // Interactive Modes
+        isSprinting: false,
+        aeroLeanLerp: 0,         // 0 = normal cruise, 1 = full aero sprint tuck
+
+        // Wheelie Stunt
+        isWheelie: false,
+        wheelieTimer: 0,
+        wheelieAngle: 0,         // degrees (negative lifts front wheel)
+
+        // Croak & Vocal Sacs
+        croakTimer: 0,
+
+        // Weather: 0 = Sunny, 1 = Happy Rain, 2 = Starry Dusk/Night
+        weatherIndex: 0,
+
+        // Tongue & Bug Hunting
+        activeBug: null,         // { x, y, baseY, phase, caught, type }
+        tongueState: 'idle',     // 'idle' | 'shooting' | 'retracting'
+        tongueProgress: 0,       // 0..1
+
+        // Eye Blinking
+        blinkTimer: 0,
+        isBlinking: false,
+
+        // Parallax Scroll Positions
+        scrollClouds: 0,
+        scrollFarHills: 0,
+        scrollNearHills: 0,
+        scrollTrees: 0,
+        scrollRoad: 0
+      };
+
+      // ==========================================
+      // 3. DOM ELEMENT REFERENCES
+      // ==========================================
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const el = {
+        // HUD
+        hudSpeed: document.getElementById('hudSpeed'),
+        hudCadence: document.getElementById('hudCadence'),
+        hudPower: document.getElementById('hudPower'),
+        hudBugs: document.getElementById('hudBugs'),
+        hudKcal: document.getElementById('hudKcal'),
+        sprintFlame: document.getElementById('sprintFlame'),
+        statusBadge: document.getElementById('statusBadge'),
+        weatherPill: document.getElementById('weatherPill'),
+        weatherIcon: document.getElementById('weatherIcon'),
+        weatherText: document.getElementById('weatherText'),
+        humidityPill: document.getElementById('humidityPill'),
+
+        // SVG Layers
+        skyRect: document.getElementById('skyRect'),
+        sunGroup: document.getElementById('sunGroup'),
+        starsGroup: document.getElementById('starsGroup'),
+        cloudsLayer: document.getElementById('cloudsLayer'),
+        farHillsLayer: document.getElementById('farHillsLayer'),
+        nearHillsLayer: document.getElementById('nearHillsLayer'),
+        treesLayer: document.getElementById('treesLayer'),
+        grassShoulder: document.getElementById('grassShoulder'),
+        asphaltRect: document.getElementById('asphaltRect'),
+        roadDashesGroup: document.getElementById('roadDashesGroup'),
+        speedLinesGroup: document.getElementById('speedLinesGroup'),
+
+        // Bike & Frog Elements
+        bikeGroundShadow: document.getElementById('bikeGroundShadow'),
+        bikeMasterGroup: document.getElementById('bikeMasterGroup'),
+        rearWheelSpin: document.getElementById('rearWheelSpin'),
+        frontWheelSpin: document.getElementById('frontWheelSpin'),
+        chainringSpin: document.getElementById('chainringSpin'),
+        bikeChainAnimated: document.getElementById('bikeChainAnimated'),
+        bikeLightsGroup: document.getElementById('bikeLightsGroup'),
+        taillightHalo: document.getElementById('taillightHalo'),
+
+        // Left Leg (Far)
+        leftCrankLine: document.getElementById('leftCrankLine'),
+        leftThighBase: document.getElementById('leftThighBase'),
+        leftThighMilk: document.getElementById('leftThighMilk'),
+        leftCalfBase: document.getElementById('leftCalfBase'),
+        leftCalfMilk: document.getElementById('leftCalfMilk'),
+        leftFootGroup: document.getElementById('leftFootGroup'),
+        leftPedalRect: document.getElementById('leftPedalRect'),
+
+        // Right Leg (Near)
+        rightCrankLine: document.getElementById('rightCrankLine'),
+        rightCrankAccent: document.getElementById('rightCrankAccent'),
+        rightThighOutline: document.getElementById('rightThighOutline'),
+        rightThighBase: document.getElementById('rightThighBase'),
+        rightThighMilk: document.getElementById('rightThighMilk'),
+        rightCalfOutline: document.getElementById('rightCalfOutline'),
+        rightCalfBase: document.getElementById('rightCalfBase'),
+        rightCalfMilk: document.getElementById('rightCalfMilk'),
+        rightKneeDot: document.getElementById('rightKneeDot'),
+        rightFootGroup: document.getElementById('rightFootGroup'),
+        rightPedalRect: document.getElementById('rightPedalRect'),
+
+        // Frog Upper Body, Arms, Head & Facial Features
+        frogUpperBodyGroup: document.getElementById('frogUpperBodyGroup'),
+        frogTorso: document.getElementById('frogTorso'),
+        frogBigBellyPatch: document.getElementById('frogBigBellyPatch'),
+        wetTorsoHighlight: document.getElementById('wetTorsoHighlight'),
+        frogHeadGroup: document.getElementById('frogHeadGroup'),
+        leftArmPathBase: document.getElementById('leftArmPathBase'),
+        leftArmPathMilk: document.getElementById('leftArmPathMilk'),
+        rightArmOutline: document.getElementById('rightArmOutline'),
+        rightArmBase: document.getElementById('rightArmBase'),
+        rightArmMilk: document.getElementById('rightArmMilk'),
+        rightHandPads: document.getElementById('rightHandPads'),
+        rightCalfGrad: document.getElementById('rightCalfGrad'),
+        leftCalfGrad: document.getElementById('leftCalfGrad'),
+        rightArmGrad: document.getElementById('rightArmGrad'),
+        leftArmGrad: document.getElementById('leftArmGrad'),
+
+        // Tongue, Mouth, Vocal Sacs, Eyes, Sweat
+        tongueGroup: document.getElementById('tongueGroup'),
+        tongueLine: document.getElementById('tongueLine'),
+        tongueHighlight: document.getElementById('tongueHighlight'),
+        tongueTip: document.getElementById('tongueTip'),
+        frogMouthSmile: document.getElementById('frogMouthSmile'),
+        frogMouthOpen: document.getElementById('frogMouthOpen'),
+        leftVocalSac: document.getElementById('leftVocalSac'),
+        rightVocalSacGroup: document.getElementById('rightVocalSacGroup'),
+        rightVocalSac: document.getElementById('rightVocalSac'),
+        rightVocalSacShine: document.getElementById('rightVocalSacShine'),
+        mainEyeNormal: document.getElementById('mainEyeNormal'),
+        mainEyeHappy: document.getElementById('mainEyeHappy'),
+        sprintEyeBrows: document.getElementById('sprintEyeBrows'),
+        sweatDropsGroup: document.getElementById('sweatDropsGroup'),
+
+        // Dynamic FX Containers
+        bugsLayer: document.getElementById('bugsLayer'),
+        soundwavesLayer: document.getElementById('soundwavesLayer'),
+        weatherFxLayer: document.getElementById('weatherFxLayer'),
+        popupsLayer: document.getElementById('popupsLayer'),
+
+        // Buttons
+        btnSprint: document.getElementById('btnSprint'),
+        sprintSubtext: document.getElementById('sprintSubtext'),
+        btnBug: document.getElementById('btnBug'),
+        btnCroak: document.getElementById('btnCroak'),
+        btnWheelie: document.getElementById('btnWheelie'),
+        btnWeather: document.getElementById('btnWeather'),
+        weatherBtnEmoji: document.getElementById('weatherBtnEmoji'),
+        weatherBtnSub: document.getElementById('weatherBtnSub'),
+        muteBtn: document.getElementById('muteBtn'),
+        muteBtnDesktop: document.getElementById('muteBtnDesktop'),
+        muteIconMobile: document.getElementById('muteIconMobile'),
+        muteIconDesktop: document.getElementById('muteIconDesktop'),
+        sceneSvg: document.getElementById('sceneSvg')
+      };
+
+      // ==========================================
+      // 4. BUILD PARALLAX BACKGROUND & SPEED LINES
+      // ==========================================
+      function initScenery() {
+        // 1) Fluffy Clouds (Tile width 1200)
+        const cloudSpecs = [
+          { x: 100, y: 80, s: 1.0 },
+          { x: 420, y: 125, s: 0.75 },
+          { x: 740, y: 68, s: 1.15 },
+          { x: 1040, y: 110, s: 0.85 }
+        ];
+        let cloudsHTML = '';
+        for (let copy = 0; copy < 2; copy++) {
+          const offset = copy * 1200;
+          cloudSpecs.forEach((c) => {
+            cloudsHTML += `
+              <g transform="translate(${c.x + offset}, ${c.y}) scale(${c.s})">
+                <path d="M -45 15 H 55 A 22 22 0 0 0 55 -28 A 32 32 0 0 0 -5 -42 A 28 28 0 0 0 -45 -18 A 18 18 0 0 0 -45 15 Z"
+                      fill="#FFFFFF" opacity="0.9" />
+              </g>`;
+          });
+        }
+        el.cloudsLayer.innerHTML = cloudsHTML;
+
+        // 2) Far Mountains (Tile width 1000)
+        let farHillsHTML = '';
+        for (let copy = 0; copy < 2; copy++) {
+          const ox = copy * 1000;
+          farHillsHTML += `
+            <path class="far-hill-path" d="M ${ox} 430 L ${ox} 310 Q ${ox + 160} 180 ${ox + 340} 295 Q ${ox + 540} 150 ${ox + 740} 285 Q ${ox + 880} 210 ${ox + 1000} 310 L ${ox + 1000} 430 Z"
+                  fill="#64748B" opacity="0.45" />`;
+        }
+        el.farHillsLayer.innerHTML = farHillsHTML;
+
+        // 3) Near Rolling Hills (Tile width 1000)
+        let nearHillsHTML = '';
+        for (let copy = 0; copy < 2; copy++) {
+          const ox = copy * 1000;
+          nearHillsHTML += `
+            <path class="near-hill-path" d="M ${ox} 430 L ${ox} 355 Q ${ox + 180} 260 ${ox + 380} 360 Q ${ox + 600} 245 ${ox + 820} 350 Q ${ox + 920} 310 ${ox + 1000} 355 L ${ox + 1000} 430 Z"
+                  fill="#10B981" opacity="0.75" />`;
+        }
+        el.nearHillsLayer.innerHTML = nearHillsHTML;
+
+        // 4) Roadside Trees, Bushes & Cycling Signs (Tile width 1200)
+        const treePositions = [90, 280, 520, 710, 960, 1120];
+        let treesHTML = '';
+        for (let copy = 0; copy < 2; copy++) {
+          const ox = copy * 1200;
+          treePositions.forEach((tx, idx) => {
+            const x = tx + ox;
+            if (idx % 2 === 0) {
+              // Tropical Round Tree
+              treesHTML += `
+                <g transform="translate(${x}, 425)">
+                  <rect x="-6" y="-55" width="12" height="55" rx="3" fill="#78350F" />
+                  <circle cx="0" cy="-78" r="36" fill="#059669" />
+                  <circle cx="-18" cy="-64" r="24" fill="#10B981" />
+                  <circle cx="18" cy="-64" r="25" fill="#047857" />
+                </g>`;
+            } else {
+              // Cypress / Pine Tree + Bush
+              treesHTML += `
+                <g transform="translate(${x}, 425)">
+                  <rect x="-5" y="-45" width="10" height="45" fill="#78350F" />
+                  <polygon points="0,-125 -30,-40 30,-40" fill="#047857" />
+                  <polygon points="0,-105 -24,-35 24,-35" fill="#10B981" />
+                  <circle cx="42" cy="-10" r="14" fill="#059669" />
+                  <circle cx="55" cy="-6" r="10" fill="#10B981" />
+                </g>`;
+            }
+          });
+        }
+        el.treesLayer.innerHTML = treesHTML;
+
+        // 5) Road Center Dashes & Asphalt Pebbles (Tile width 1000)
+        let roadHTML = '';
+        for (let x = 0; x < 2000; x += 125) {
+          roadHTML += `<rect x="${x}" y="496" width="65" height="8" rx="4" fill="#FACC15" opacity="0.9" />`;
+          roadHTML += `<circle cx="${x + 30}" cy="532" r="2" fill="#64748B" />`;
+          roadHTML += `<circle cx="${x + 85}" cy="472" r="1.5" fill="#64748B" />`;
+        }
+        el.roadDashesGroup.innerHTML = roadHTML;
+
+        // 6) Anime Speed Lines for Sprint Mode
+        let speedHTML = '';
+        for (let i = 0; i < 14; i++) {
+          const y = 50 + i * 35;
+          const w = 140 + (i % 3) * 90;
+          const x = (i * 173) % 850;
+          speedHTML += `<line class="speed-line" x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="#FFFFFF" stroke-width="${2 + (i % 3)}" stroke-linecap="round" opacity="0.55" />`;
+        }
+        el.speedLinesGroup.innerHTML = speedHTML;
+      }
+
+      // ==========================================
+      // 5. 2-BONE INVERSE KINEMATICS (IK) FOR FROG LEGS
+      // ==========================================
+      // Solves knee position (kx, ky) given Hip (hx, hy) and Ankle/Foot (ax, ay)
+      // Knee bends forward-right (towards handlebar) as on a bicycle.
+      function solveLegIK(hx, hy, ax, ay, L1, L2) {
+        const dx = ax - hx;
+        const dy = ay - hy;
+        let dist = Math.hypot(dx, dy);
+
+        // Clamp reach so legs never detach
+        const maxReach = L1 + L2 - 0.5;
+        const minReach = Math.abs(L1 - L2) + 0.5;
+        if (dist > maxReach) dist = maxReach;
+        if (dist < minReach) dist = minReach;
+
+        // Law of cosines for angle at hip
+        const cosAngle = (L1 * L1 + dist * dist - L2 * L2) / (2 * L1 * dist);
+        const clampedCos = Math.max(-1, Math.min(1, cosAngle));
+        const baseAngle = Math.atan2(dy, dx);
+        const kneeOffsetAngle = Math.acos(clampedCos);
+
+        // Subtract offset angle so knee bends upward/rightward (anatomically correct for right-facing cyclist)
+        const hipAngle = baseAngle - kneeOffsetAngle;
+
+        const kx = hx + L1 * Math.cos(hipAngle);
+        const ky = hy + L1 * Math.sin(hipAngle);
+        return { kx, ky };
+      }
+
+      // Renders the Photo-Accurate Chunky 3-Toed Dark Olive-Brown Frog Foot onto a pedal
+      function buildFrogFootSVG(isRightLeg) {
+        const strokeColor = '#241E09';
+        const toeFill = isRightLeg ? '#3B310F' : '#2E270B';
+        return `
+          <!-- Chunky Olive-Brown Foot Arch & Heel -->
+          <path d="M -12 -14 C -4 -16, 12 -10, 22 -2 L -14 -2 Z"
+                fill="url(#oliveFootGrad)" stroke="${strokeColor}" stroke-width="2.2" stroke-linejoin="round" />
+          <!-- 3 Distinct Rounded Dark Olive-Brown Toes (還原照片三趾厚實深褐色大腳掌) -->
+          <ellipse cx="6" cy="-2.5" rx="6.5" ry="4.2" fill="${toeFill}" stroke="${strokeColor}" stroke-width="1.8" />
+          <ellipse cx="15" cy="-2" rx="7.5" ry="4.5" fill="${toeFill}" stroke="${strokeColor}" stroke-width="1.8" />
+          <ellipse cx="23" cy="-1.5" rx="6.5" ry="4" fill="${toeFill}" stroke="${strokeColor}" stroke-width="1.8" />
+        `;
+      }
+      el.rightFootGroup.innerHTML = buildFrogFootSVG(true);
+      el.leftFootGroup.innerHTML = buildFrogFootSVG(false);
+
+      // ==========================================
+      // 6. INTERACTIVE FEATURES & POPUPS
+      // ==========================================
+      function spawnFloatingPopup(x, y, text, colorHex = '#FEF08A') {
+        const g = document.createElementNS(svgNS, 'g');
+        g.setAttribute('transform', `translate(${x}, ${y})`);
+        g.innerHTML = `
+          <rect x="-75" y="-20" width="150" height="32" rx="16" fill="#0F172A" fill-opacity="0.82" stroke="${colorHex}" stroke-width="2" />
+          <text x="0" y="1" text-anchor="middle" fill="${colorHex}" font-size="15" font-weight="900" font-family="Noto Sans TC, sans-serif">${text}</text>
+        `;
+        el.popupsLayer.appendChild(g);
+
+        let start = null;
+        function animatePopup(ts) {
+          if (!start) start = ts;
+          const p = Math.min(1, (ts - start) / 1100);
+          const curY = y - p * 55;
+          const scale = p < 0.2 ? 0.5 + (p / 0.2) * 0.6 : 1.1 - (p - 0.2) * 0.15;
+          g.setAttribute('transform', `translate(${x}, ${curY}) scale(${scale})`);
+          g.setAttribute('opacity', String(1 - Math.pow(p, 2)));
+          if (p < 1) {
+            requestAnimationFrame(animatePopup);
+          } else {
+            g.remove();
+          }
+        }
+        requestAnimationFrame(animatePopup);
+      }
+
+      // --- Feature 1: Toggle Sprint / Aero Mode ---
+      function toggleSprintMode() {
+        state.isSprinting = !state.isSprinting;
+        sound.playBoost(state.isSprinting);
+
+        if (state.isSprinting) {
+          el.btnSprint.classList.add('active-state', 'ring-4', 'ring-amber-300');
+          el.sprintSubtext.textContent = '🔥 破風衝刺中 (點擊恢復)';
+          el.sprintFlame.classList.remove('hidden');
+          el.statusBadge.textContent = '🔥 搖車破風衝刺！';
+          el.statusBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/40 animate-pulse';
+          spawnFloatingPopup(510, 145, '⚡ 破風衝刺！踏頻全開！', '#FACC15');
+        } else {
+          el.btnSprint.classList.remove('active-state', 'ring-4', 'ring-amber-300');
+          el.sprintSubtext.textContent = '點擊切換：暴走衝刺';
+          el.sprintFlame.classList.add('hidden');
+          el.statusBadge.textContent = '🚴 舒適巡航中';
+          el.statusBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
+        }
+      }
+
+      // --- Feature 2: Tongue Bug / Energy Gel Catch ---
+      function triggerBugSupply() {
+        if (state.activeBug) return; // Already catching one
+
+        const isGel = Math.random() < 0.35;
+        state.activeBug = {
+          x: 960,
+          y: 185,
+          baseY: 175 + (Math.random() * 35 - 15),
+          phase: Math.random() * Math.PI * 2,
+          caught: false,
+          isGel
+        };
+
+        const bugNode = document.createElementNS(svgNS, 'g');
+        bugNode.id = 'activeBugNode';
+        if (isGel) {
+          // Winged Energy Gel Packet
+          bugNode.innerHTML = `
+            <g>
+              <ellipse cx="-8" cy="-12" rx="12" ry="6" transform="rotate(-25 -8 -12)" fill="#E0F2FE" opacity="0.85" />
+              <ellipse cx="8" cy="-12" rx="12" ry="6" transform="rotate(25 8 -12)" fill="#E0F2FE" opacity="0.85" />
+              <rect x="-10" y="-12" width="20" height="26" rx="5" fill="#F43F5E" stroke="#FFF" stroke-width="2" />
+              <rect x="-5" y="-17" width="10" height="6" rx="2" fill="#FACC15" />
+              <text x="0" y="5" text-anchor="middle" fill="#FFF" font-size="9" font-weight="900">GEL</text>
+            </g>`;
+        } else {
+          // Cute Glowing Golden Dragonfly / Firefly Bug
+          bugNode.innerHTML = `
+            <g>
+              <circle cx="0" cy="0" r="16" fill="#FEF08A" opacity="0.35" />
+              <ellipse cx="-5" cy="-10" rx="11" ry="5" transform="rotate(-30 -5 -10)" fill="#BAE6FD" stroke="#FFF" stroke-width="1.5" />
+              <ellipse cx="6" cy="-10" rx="11" ry="5" transform="rotate(30 6 -10)" fill="#BAE6FD" stroke="#FFF" stroke-width="1.5" />
+              <ellipse cx="0" cy="2" rx="10" ry="6" fill="#84CC16" stroke="#1E293B" stroke-width="2" />
+              <circle cx="-6" cy="1" r="2.5" fill="#1E293B" />
+              <circle cx="7" cy="2" r="4" fill="#FDE047" />
+            </g>`;
+        }
+        el.bugsLayer.appendChild(bugNode);
+      }
+
+      // --- Feature 3: Vocal Sac Croak & Bike Bell ---
+      function triggerCroakHorn() {
+        state.croakTimer = 1.0; // 1 second inflation cycle
+        sound.playCroakAndBell();
+
+        // Spawn expanding visual soundwave rings & "呱！呱！" text
+        const headCenter = state.isWheelie ? { x: 495, y: 125 } : { x: 538, y: 195 };
+        spawnFloatingPopup(headCenter.x, headCenter.y - 55, '🐸 呱！呱！借過一下～🔔', '#38BDF8');
+
+        for (let i = 0; i < 2; i++) {
+          setTimeout(() => {
+            const ring = document.createElementNS(svgNS, 'circle');
+            ring.setAttribute('cx', String(headCenter.x + 20));
+            ring.setAttribute('cy', String(headCenter.y));
+            ring.setAttribute('r', '15');
+            ring.setAttribute('fill', 'none');
+            ring.setAttribute('stroke', '#38BDF8');
+            ring.setAttribute('stroke-width', '4');
+            el.soundwavesLayer.appendChild(ring);
+
+            let start = null;
+            function animWave(ts) {
+              if (!start) start = ts;
+              const p = Math.min(1, (ts - start) / 650);
+              ring.setAttribute('r', String(15 + p * 95));
+              ring.setAttribute('opacity', String(1 - p));
+              ring.setAttribute('stroke-width', String(4 * (1 - p)));
+              if (p < 1) requestAnimationFrame(animWave);
+              else ring.remove();
+            }
+            requestAnimationFrame(animWave);
+          }, i * 220);
+        }
+      }
+
+      // --- Feature 4: Wheelie Stunt (翹頭特技) ---
+      function triggerWheelieStunt() {
+        state.isWheelie = true;
+        state.wheelieTimer = 2.6; // Hold wheelie for 2.6 seconds
+        sound.playBoost(true);
+        spawnFloatingPopup(500, 120, '🌟 獨輪翹頭特技！STYLE +100', '#F43F5E');
+      }
+
+      // --- Feature 5: Cycle Weather (Sunny -> Happy Rain -> Starry Night) ---
+      let rainParticles = [];
+      function initRainParticles() {
+        rainParticles = [];
+        for (let i = 0; i < 42; i++) {
+          rainParticles.push({
+            x: Math.random() * 1100,
+            y: Math.random() * 520,
+            len: 16 + Math.random() * 14,
+            speed: 14 + Math.random() * 6
+          });
+        }
+      }
+      initRainParticles();
+
+      function cycleWeatherMode() {
+        state.weatherIndex = (state.weatherIndex + 1) % 3;
+        sound.playBoost(state.weatherIndex === 1);
+
+        if (state.weatherIndex === 0) {
+          // SUNNY MODE
+          el.skyRect.setAttribute('fill', 'url(#skySunny)');
+          el.sunGroup.setAttribute('opacity', '1');
+          el.sunGroup.setAttribute('transform', 'translate(850, 90)');
+          el.starsGroup.setAttribute('opacity', '0');
+          el.bikeLightsGroup.setAttribute('opacity', '0');
+          el.grassShoulder.setAttribute('fill', '#22C55E');
+          el.asphaltRect.setAttribute('fill', '#334155');
+          el.frogTorso.classList.remove('wet-frog-glow');
+          el.wetTorsoHighlight.setAttribute('opacity', '0.25');
+
+          el.weatherIcon.textContent = '☀️';
+          el.weatherText.textContent = '晴空微風 · 適合騎行';
+          el.humidityPill.classList.add('hidden');
+          el.humidityPill.classList.remove('flex');
+          el.weatherBtnEmoji.textContent = '🌧️';
+          el.weatherBtnSub.textContent = '目前：晴天 (點我淋雨)';
+          el.weatherFxLayer.innerHTML = '';
+          spawnFloatingPopup(500, 150, '☀️ 陽光普照好天氣！', '#FACC15');
+
+        } else if (state.weatherIndex === 1) {
+          // HAPPY RAIN MODE (Milk Frog loves humidity!)
+          el.skyRect.setAttribute('fill', 'url(#skyRainy)');
+          el.sunGroup.setAttribute('opacity', '0');
+          el.starsGroup.setAttribute('opacity', '0');
+          el.bikeLightsGroup.setAttribute('opacity', '0.75');
+          el.grassShoulder.setAttribute('fill', '#15803D');
+          el.asphaltRect.setAttribute('fill', '#1E293B');
+          el.frogTorso.classList.add('wet-frog-glow');
+          el.wetTorsoHighlight.setAttribute('opacity', '0.85');
+
+          el.weatherIcon.textContent = '🌧️';
+          el.weatherText.textContent = '雨林陣雨 · 牛奶蛙最愛淋雨！';
+          el.humidityPill.classList.remove('hidden');
+          el.humidityPill.classList.add('flex');
+          el.weatherBtnEmoji.textContent = '🌙';
+          el.weatherBtnSub.textContent = '目前：快樂淋雨 (點我切夜景)';
+          spawnFloatingPopup(500, 150, '💧 濕度 100%！牛奶蛙超開心！', '#38BDF8');
+
+        } else {
+          // STARRY NIGHT MODE (Headlight & Taillight On)
+          el.skyRect.setAttribute('fill', 'url(#skyNight)');
+          el.sunGroup.setAttribute('opacity', '0');
+          el.starsGroup.setAttribute('opacity', '1');
+          el.bikeLightsGroup.setAttribute('opacity', '1');
+          el.grassShoulder.setAttribute('fill', '#064E3B');
+          el.asphaltRect.setAttribute('fill', '#0F172A');
+          el.frogTorso.classList.remove('wet-frog-glow');
+          el.wetTorsoHighlight.setAttribute('opacity', '0.35');
+
+          el.weatherIcon.textContent = '🌙';
+          el.weatherText.textContent = '星夜破風 · 前後車燈已開啟';
+          el.humidityPill.classList.add('hidden');
+          el.humidityPill.classList.remove('flex');
+          el.weatherBtnEmoji.textContent = '☀️';
+          el.weatherBtnSub.textContent = '目前：星夜騎行 (點我切晴天)';
+          el.weatherFxLayer.innerHTML = '';
+          spawnFloatingPopup(500, 150, '🔦 夜騎模式！開啟破風頭尾燈！', '#C084FC');
+        }
+      }
+
+      // ==========================================
+      // 7. MAIN PHYSICS & KINEMATICS ANIMATION LOOP
+      // ==========================================
+      let lastTime = performance.now();
+
+      function animate(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+
+        // 1) Calculate Target Speed, Cadence & Power
+        if (state.boostTimer > 0) state.boostTimer = Math.max(0, state.boostTimer - dt);
+        const bugBonusSpeed = state.boostTimer > 0 ? 9.5 : 0;
+
+        const baseTarget = state.isSprinting ? 53.8 : 31.5;
+        const rainBonus = state.weatherIndex === 1 ? 2.5 : 0; // Frogs ride happier in rain!
+        state.targetSpeed = baseTarget + bugBonusSpeed + rainBonus + Math.sin(now * 0.0025) * 0.6;
+
+        state.currentSpeed += (state.targetSpeed - state.currentSpeed) * dt * 4.5;
+        state.currentCadence = Math.round(state.currentSpeed * 2.68);
+        state.currentPower = Math.round(Math.pow(state.currentSpeed / 10, 2.55) * 14);
+        state.calories += (state.currentPower * dt) / 4184 * 12;
+
+        // Update Cycling Computer HUD
+        el.hudSpeed.textContent = state.currentSpeed.toFixed(1);
+        el.hudCadence.textContent = String(state.currentCadence);
+        el.hudPower.textContent = String(state.currentPower);
+        el.hudKcal.textContent = String(Math.floor(state.calories));
+
+        // 2) Update Crank, Chain & Wheel Rotations
+        const crankAngularVel = (state.currentCadence / 60) * Math.PI * 2; // rad/s
+        state.crankAngle = (state.crankAngle + crankAngularVel * dt) % (Math.PI * 2);
+        state.wheelAngle = (state.wheelAngle + state.currentSpeed * 12.5 * dt) % 360;
+        state.chainOffset = (state.chainOffset - state.currentSpeed * 1.6 * dt) % 12;
+
+        el.rearWheelSpin.setAttribute('transform', `rotate(${state.wheelAngle})`);
+        el.frontWheelSpin.setAttribute('transform', `rotate(${state.wheelAngle})`);
+        el.chainringSpin.setAttribute('transform', `translate(465, 410) rotate(${(state.crankAngle * 180) / Math.PI})`);
+        el.bikeChainAnimated.setAttribute('stroke-dashoffset', String(state.chainOffset));
+
+        // 3) Update Parallax Scrolling Background
+        const pxSpeed = state.currentSpeed * 11.5; // pixels/sec on road
+        state.scrollClouds = (state.scrollClouds + pxSpeed * 0.06 * dt) % 1200;
+        state.scrollFarHills = (state.scrollFarHills + pxSpeed * 0.14 * dt) % 1000;
+        state.scrollNearHills = (state.scrollNearHills + pxSpeed * 0.30 * dt) % 1000;
+        state.scrollTrees = (state.scrollTrees + pxSpeed * 0.62 * dt) % 1200;
+        state.scrollRoad = (state.scrollRoad + pxSpeed * 1.0 * dt) % 125;
+
+        el.cloudsLayer.setAttribute('transform', `translate(${-state.scrollClouds}, 0)`);
+        el.farHillsLayer.setAttribute('transform', `translate(${-state.scrollFarHills}, 0)`);
+        el.nearHillsLayer.setAttribute('transform', `translate(${-state.scrollNearHills}, 0)`);
+        el.treesLayer.setAttribute('transform', `translate(${-state.scrollTrees}, 0)`);
+        el.roadDashesGroup.setAttribute('transform', `translate(${-state.scrollRoad}, 0)`);
+
+        // 4) Sprint Speed Lines & Sweat Effects
+        const targetAero = state.isSprinting ? 1 : 0;
+        state.aeroLeanLerp += (targetAero - state.aeroLeanLerp) * dt * 6;
+
+        if (state.aeroLeanLerp > 0.05) {
+          el.speedLinesGroup.setAttribute('opacity', String(state.aeroLeanLerp * 0.85));
+          el.sweatDropsGroup.setAttribute('opacity', String(state.aeroLeanLerp));
+          const lines = el.speedLinesGroup.querySelectorAll('.speed-line');
+          lines.forEach((line, idx) => {
+            const curX = ( (now * 1.8 + idx * 190) % 1250 );
+            const x1 = 1000 - curX;
+            const w = 130 + (idx % 3) * 80;
+            line.setAttribute('x1', String(x1));
+            line.setAttribute('x2', String(x1 + w));
+          });
+        } else {
+          el.speedLinesGroup.setAttribute('opacity', '0');
+          el.sweatDropsGroup.setAttribute('opacity', '0');
+        }
+
+        // 5) Wheelie Stunt Pitch Rotation around Rear Hub (330, 410)
+        if (state.isWheelie) {
+          state.wheelieTimer -= dt;
+          if (state.wheelieTimer <= 0) state.isWheelie = false;
+        }
+        const targetWheelieDeg = state.isWheelie ? -24 + Math.sin(now * 0.012) * 2.2 : 0;
+        state.wheelieAngle += (targetWheelieDeg - state.wheelieAngle) * dt * 7;
+
+        el.bikeMasterGroup.setAttribute('transform', `rotate(${state.wheelieAngle}, 330, 410)`);
+        // Shrink & shift ground shadow during wheelie
+        const shadowScale = 1 - Math.abs(state.wheelieAngle) / 55;
+        el.bikeGroundShadow.setAttribute('rx', String(185 * shadowScale));
+        el.bikeGroundShadow.setAttribute('cx', String(485 - Math.abs(state.wheelieAngle) * 3.2));
+
+        // 6) Calculate Crank Pedals & Solve 2-Bone IK for Both Milk Frog Legs
+        const bbX = 465;
+        const bbY = 410;
+        const crankRadius = 42;
+
+        // Right Pedal (Near)
+        const rPedalX = bbX + crankRadius * Math.cos(state.crankAngle);
+        const rPedalY = bbY + crankRadius * Math.sin(state.crankAngle);
+
+        // Left Pedal (Far - opposite phase)
+        const lAngle = state.crankAngle + Math.PI;
+        const lPedalX = bbX + crankRadius * Math.cos(lAngle);
+        const lPedalY = bbY + crankRadius * Math.sin(lAngle);
+
+        // Update Crank Lines & Pedal Platforms
+        el.rightCrankLine.setAttribute('x2', String(rPedalX));
+        el.rightCrankLine.setAttribute('y2', String(rPedalY));
+        el.rightCrankAccent.setAttribute('x2', String(rPedalX));
+        el.rightCrankAccent.setAttribute('y2', String(rPedalY));
+        el.rightPedalRect.setAttribute('transform', `translate(${rPedalX}, ${rPedalY})`);
+
+        el.leftCrankLine.setAttribute('x2', String(lPedalX));
+        el.leftCrankLine.setAttribute('y2', String(lPedalY));
+        el.leftPedalRect.setAttribute('transform', `translate(${lPedalX}, ${lPedalY})`);
+
+        // Natural Upper Body Bobbing synced with double-cadence pedal strokes
+        const bobY = Math.sin(state.crankAngle * 2) * (2.8 + state.aeroLeanLerp * 2.5);
+        const hipX = 408 + state.aeroLeanLerp * 18;
+        const hipY = 242 + bobY + state.aeroLeanLerp * 6;
+
+        // Solve IK for Right Leg (Thigh = 92, Calf = 90)
+        const rFootAnkleX = rPedalX - 4;
+        const rFootAnkleY = rPedalY - 6;
+        const rightIK = solveLegIK(hipX, hipY, rFootAnkleX, rFootAnkleY, 92, 90);
+
+        // Update dynamic gradient coordinates so the yellow-to-olive-brown ankle transition stays locked to the calf bone
+        el.rightCalfGrad.setAttribute('x1', String(rightIK.kx));
+        el.rightCalfGrad.setAttribute('y1', String(rightIK.ky));
+        el.rightCalfGrad.setAttribute('x2', String(rFootAnkleX));
+        el.rightCalfGrad.setAttribute('y2', String(rFootAnkleY));
+
+        [el.rightThighOutline, el.rightThighBase, el.rightThighMilk].forEach((line) => {
+          line.setAttribute('x1', String(hipX));
+          line.setAttribute('y1', String(hipY));
+          line.setAttribute('x2', String(rightIK.kx));
+          line.setAttribute('y2', String(rightIK.ky));
+        });
+        [el.rightCalfOutline, el.rightCalfBase, el.rightCalfMilk].forEach((line) => {
+          line.setAttribute('x1', String(rightIK.kx));
+          line.setAttribute('y1', String(rightIK.ky));
+          line.setAttribute('x2', String(rFootAnkleX));
+          line.setAttribute('y2', String(rFootAnkleY));
+        });
+        el.rightKneeDot.setAttribute('cx', String(rightIK.kx));
+        el.rightKneeDot.setAttribute('cy', String(rightIK.ky));
+        el.rightFootGroup.setAttribute('transform', `translate(${rPedalX}, ${rPedalY})`);
+
+        // Solve IK for Left Leg (Far)
+        const lHipX = hipX + 6;
+        const lHipY = hipY - 4;
+        const lFootAnkleX = lPedalX - 4;
+        const lFootAnkleY = lPedalY - 6;
+        const leftIK = solveLegIK(lHipX, lHipY, lFootAnkleX, lFootAnkleY, 92, 90);
+
+        el.leftCalfGrad.setAttribute('x1', String(leftIK.kx));
+        el.leftCalfGrad.setAttribute('y1', String(leftIK.ky));
+        el.leftCalfGrad.setAttribute('x2', String(lFootAnkleX));
+        el.leftCalfGrad.setAttribute('y2', String(lFootAnkleY));
+
+        [el.leftThighBase, el.leftThighMilk].forEach((line) => {
+          line.setAttribute('x1', String(lHipX));
+          line.setAttribute('y1', String(lHipY));
+          line.setAttribute('x2', String(leftIK.kx));
+          line.setAttribute('y2', String(leftIK.ky));
+        });
+        [el.leftCalfBase, el.leftCalfMilk].forEach((line) => {
+          line.setAttribute('x1', String(leftIK.kx));
+          line.setAttribute('y1', String(leftIK.ky));
+          line.setAttribute('x2', String(lFootAnkleX));
+          line.setAttribute('y2', String(lFootAnkleY));
+        });
+        el.leftFootGroup.setAttribute('transform', `translate(${lPedalX}, ${lPedalY})`);
+
+        // 7) Frog Upper Body, Jiggling Potbelly, Head & Arm Articulation
+        const bodyTiltDeg = state.aeroLeanLerp * 14 + Math.sin(state.crankAngle * 2) * 2.0;
+        const upperX = 415 + state.aeroLeanLerp * 18;
+        const upperY = 232 + bobY + state.aeroLeanLerp * 12;
+        el.frogUpperBodyGroup.setAttribute('transform', `translate(${upperX}, ${upperY}) rotate(${bodyTiltDeg})`);
+
+        // Cute Q-elastic Belly Bounce synced with pedaling and croaking
+        const bellyBounce = Math.sin(state.crankAngle * 2 - 0.6) * 2.2 + (state.croakTimer > 0 ? Math.sin(state.croakTimer * Math.PI * 4) * 4 : 0);
+        el.frogBigBellyPatch.setAttribute('transform', `translate(${bellyBounce * 0.6}, ${bellyBounce})`);
+
+        // Head subtle counter-tilt so our yellow pear frog always looks ahead
+        const headBobDeg = -bodyTiltDeg * 0.55 + Math.cos(state.crankAngle * 2) * 2.0;
+        el.frogHeadGroup.setAttribute('transform', `translate(76, -54) rotate(${headBobDeg})`);
+
+        // Connect Arms from Moving Shoulder to Handlebar Hoods / Drops
+        const shoulderX = upperX + 62;
+        const shoulderY = upperY - 10;
+        // In sprint mode, hands drop lower on the drop bar
+        const handX = 595 + state.aeroLeanLerp * 4;
+        const handY = 252 + state.aeroLeanLerp * 22;
+        const elbowX = (shoulderX + handX) * 0.5 - 12;
+        const elbowY = (shoulderY + handY) * 0.5 + 24 + state.aeroLeanLerp * 12;
+
+        // Update arm gradient vectors so the wrist always fades into dark olive-brown right at the handlebar
+        el.rightArmGrad.setAttribute('x1', String(shoulderX));
+        el.rightArmGrad.setAttribute('y1', String(shoulderY));
+        el.rightArmGrad.setAttribute('x2', String(handX));
+        el.rightArmGrad.setAttribute('y2', String(handY));
+
+        el.leftArmGrad.setAttribute('x1', String(shoulderX - 6));
+        el.leftArmGrad.setAttribute('y1', String(shoulderY - 4));
+        el.leftArmGrad.setAttribute('x2', String(handX - 12));
+        el.leftArmGrad.setAttribute('y2', String(handY + 6));
+
+        const armD = `M ${shoulderX} ${shoulderY} Q ${elbowX} ${elbowY} ${handX} ${handY}`;
+        el.rightArmOutline.setAttribute('d', armD);
+        el.rightArmBase.setAttribute('d', armD);
+        el.rightArmMilk.setAttribute('d', armD);
+        el.rightHandPads.setAttribute('transform', `translate(${handX}, ${handY})`);
+
+        const leftArmD = `M ${shoulderX - 6} ${shoulderY - 4} Q ${elbowX + 8} ${elbowY + 6} ${handX - 12} ${handY + 6}`;
+        el.leftArmPathBase.setAttribute('d', leftArmD);
+        el.leftArmPathMilk.setAttribute('d', leftArmD);
+
+        // 8) Vocal Sac Inflation Animation (鼓腮鳴叫)
+        if (state.croakTimer > 0) {
+          state.croakTimer = Math.max(0, state.croakTimer - dt * 1.45);
+          // Double pulse inflation matching the two "Gua! Gua!" sounds
+          const pulse = Math.abs(Math.sin(state.croakTimer * Math.PI * 2));
+          const sacRadius = 4 + pulse * 22;
+          el.rightVocalSacGroup.setAttribute('opacity', '1');
+          el.rightVocalSac.setAttribute('r', String(sacRadius));
+          el.leftVocalSac.setAttribute('opacity', '0.95');
+          el.leftVocalSac.setAttribute('r', String(sacRadius * 0.88));
+        } else {
+          el.rightVocalSacGroup.setAttribute('opacity', '0');
+          el.leftVocalSac.setAttribute('opacity', '0');
+        }
+
+        // 9) Flying Bug & Elastic Tongue Catching Logic
+        if (state.activeBug) {
+          const bug = state.activeBug;
+          const bugNode = document.getElementById('activeBugNode');
+
+          if (!bug.caught) {
+            bug.x -= dt * 290;
+            bug.y = bug.baseY + Math.sin(now * 0.015 + bug.phase) * 18;
+
+            // When bug enters tongue striking range (x <= 740), launch tongue!
+            if (bug.x <= 740 && state.tongueState === 'idle') {
+              state.tongueState = 'shooting';
+              state.tongueProgress = 0;
+              sound.playTongueCatch();
+            }
+          }
+
+          // Calculate tongue target in frogHeadGroup local coordinates
+          const headWorldX = upperX + 76;
+          const headWorldY = upperY - 54;
+
+          if (state.tongueState === 'shooting') {
+            state.tongueProgress = Math.min(1, state.tongueProgress + dt * 11);
+            if (state.tongueProgress >= 1) {
+              bug.caught = true;
+              state.tongueState = 'retracting';
+            }
+          } else if (state.tongueState === 'retracting') {
+            state.tongueProgress = Math.max(0, state.tongueProgress - dt * 9.5);
+            if (state.tongueProgress <= 0) {
+              // Bug eaten!
+              state.tongueState = 'idle';
+              if (bugNode) bugNode.remove();
+              state.activeBug = null;
+              state.bugsEaten += 1;
+              state.calories += 15;
+              state.boostTimer = 2.8;
+              el.hudBugs.textContent = String(state.bugsEaten);
+              spawnFloatingPopup(headWorldX + 20, headWorldY - 35, bug.isGel ? '🍓 能量果膠補給！大肚皮功率 +50W' : '🦟 美味捕蟲成功！+HP 功率UP!', '#4ADE80');
+            }
+          }
+
+          if (state.activeBug && bugNode) {
+            if (state.tongueState !== 'idle') {
+              el.tongueGroup.setAttribute('opacity', '1');
+              el.frogMouthOpen.setAttribute('opacity', '1');
+              el.frogMouthSmile.setAttribute('opacity', '0');
+
+              const mouthX = 30;
+              const mouthY = 8;
+              const relBugX = bug.x - headWorldX;
+              const relBugY = bug.y - headWorldY;
+
+              const tipX = mouthX + (relBugX - mouthX) * state.tongueProgress;
+              const tipY = mouthY + (relBugY - mouthY) * state.tongueProgress;
+
+              el.tongueLine.setAttribute('x2', String(tipX));
+              el.tongueLine.setAttribute('y2', String(tipY));
+              el.tongueHighlight.setAttribute('x2', String(tipX));
+              el.tongueHighlight.setAttribute('y2', String(tipY));
+              el.tongueTip.setAttribute('cx', String(tipX));
+              el.tongueTip.setAttribute('cy', String(tipY));
+
+              if (bug.caught) {
+                bug.x = headWorldX + tipX;
+                bug.y = headWorldY + tipY;
+              }
+            } else {
+              el.tongueGroup.setAttribute('opacity', '0');
+              el.frogMouthOpen.setAttribute('opacity', '0');
+              el.frogMouthSmile.setAttribute('opacity', '1');
+            }
+
+            bugNode.setAttribute('transform', `translate(${bug.x}, ${bug.y})`);
+          }
+        } else {
+          el.tongueGroup.setAttribute('opacity', '0');
+          el.frogMouthOpen.setAttribute('opacity', state.croakTimer > 0 ? '1' : '0');
+          el.frogMouthSmile.setAttribute('opacity', state.croakTimer > 0 ? '0' : '1');
+        }
+
+        // 10) Frog Eye Expressions (Happy eyes in Rain/Croak/Boost, Determined brow in Sprint, Deadpan otherwise)
+        state.blinkTimer += dt;
+        if (state.blinkTimer > 3.8) {
+          state.isBlinking = true;
+          if (state.blinkTimer > 4.0) {
+            state.isBlinking = false;
+            state.blinkTimer = 0;
+          }
+        }
+
+        const showHappyEyes = state.weatherIndex === 1 || state.croakTimer > 0 || state.boostTimer > 1.8 || state.isBlinking;
+        el.mainEyeNormal.setAttribute('opacity', showHappyEyes ? '0' : '1');
+        el.mainEyeHappy.setAttribute('opacity', showHappyEyes ? '1' : '0');
+        el.sprintEyeBrows.setAttribute('opacity', (!showHappyEyes && state.isSprinting) ? '1' : '0');
+
+        // 11) Weather Particles (Raindrops & Splashes in Rain Mode, Blinking Taillight in Night/Rain)
+        if (state.weatherIndex === 1) {
+          let rainSVG = '';
+          rainParticles.forEach((p) => {
+            p.x -= (8 + state.currentSpeed * 0.15);
+            p.y += p.speed;
+            if (p.y > 480) {
+              // Road splash
+              rainSVG += `<ellipse cx="${p.x}" cy="475" rx="6" ry="2" fill="none" stroke="#BAE6FD" stroke-width="1.5" opacity="0.7" />`;
+              p.y = -20;
+              p.x = Math.random() * 1150;
+            }
+            if (p.x < -30) p.x = 1100;
+            rainSVG += `<line x1="${p.x}" y1="${p.y}" x2="${p.x - 7}" y2="${p.y + p.len}" stroke="#BAE6FD" stroke-width="2" stroke-linecap="round" opacity="0.65" />`;
+          });
+          el.weatherFxLayer.innerHTML = rainSVG;
+        }
+
+        if (state.weatherIndex >= 1) {
+          const pulseScale = 0.8 + Math.abs(Math.sin(now * 0.008)) * 0.45;
+          el.taillightHalo.setAttribute('r', String(26 * pulseScale));
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      // ==========================================
+      // 8. EVENT LISTENERS & INITIALIZATION
+      // ==========================================
+      el.btnSprint.addEventListener('click', toggleSprintMode);
+      el.btnBug.addEventListener('click', triggerBugSupply);
+      el.btnCroak.addEventListener('click', triggerCroakHorn);
+      el.btnWheelie.addEventListener('click', triggerWheelieStunt);
+      el.btnWeather.addEventListener('click', cycleWeatherMode);
+
+      // Clicking directly on the SVG canvas triggers interactive reactions based on click area
+      el.sceneSvg.addEventListener('click', (e) => {
+        const rect = el.sceneSvg.getBoundingClientRect();
+        const clickX = ((e.clientX - rect.left) / rect.width) * 1000;
+        const clickY = ((e.clientY - rect.top) / rect.height) * 560;
+
+        if (clickX > 650 && clickY < 350) {
+          triggerBugSupply();
+        } else if (clickY < 260) {
+          triggerCroakHorn();
+        } else {
+          triggerWheelieStunt();
+        }
+      });
+
+      // Audio Mute Buttons
+      function handleMuteToggle() {
+        const isMuted = sound.toggleMute();
+        const icon = isMuted ? '🔇' : '🔊';
+        el.muteIconMobile.textContent = icon;
+        el.muteIconDesktop.textContent = icon;
+      }
+      el.muteBtn.addEventListener('click', handleMuteToggle);
+      el.muteBtnDesktop.addEventListener('click', handleMuteToggle);
+
+      // Initialize Scenery & Start Loop
+      initScenery();
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>

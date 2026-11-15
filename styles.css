@@ -322,6 +322,16 @@ body.is-dragging * {
 }
 
 /* ============ 作品集板块 ============ */
+.works-list {
+  display: grid;
+  gap: 26px;
+}
+
+.works-list .work-feature--divided {
+  padding-top: 26px;
+  border-top: 1px dashed var(--line);
+}
+
 .work-feature {
   display: grid;
   grid-template-columns: minmax(200px, 1fr) 1.3fr;
@@ -365,6 +375,35 @@ body.is-dragging * {
 .work-cover-emoji {
   font-size: 2.6rem;
   line-height: 1;
+}
+
+/* 第二件作品（牛奶蛙破風日記）：暖色 + 薄荷绿，与作品本身的黄蛙 / 天色呼应 */
+.work-cover--milkfrog {
+  background:
+    radial-gradient(120% 120% at 22% 12%, rgba(250, 204, 21, 0.22), transparent 62%),
+    linear-gradient(160deg, rgba(16, 185, 129, 0.26), rgba(11, 12, 15, 0.68));
+}
+
+.work-cover--milkfrog:hover {
+  border-color: rgba(250, 204, 21, 0.5);
+  box-shadow: 0 0 40px rgba(250, 204, 21, 0.14);
+}
+
+.work-cover--milkfrog .work-cover-cta {
+  color: #F3D07A;
+  border-color: rgba(243, 208, 122, 0.45);
+  background: rgba(243, 208, 122, 0.08);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .work-cover--milkfrog .work-cover-emoji {
+    animation: frogBob 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes frogBob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
 }
 
 .work-cover-cta {

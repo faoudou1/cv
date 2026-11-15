@@ -137,11 +137,27 @@ const defaultResumeData = {
       { label: '简历 PDF', value: '点击在页面内预览中文简历', href: 'assets/resume-zh.pdf', pdf: true }
     ],
     works: {
-      tag: '交互叙事 · 毕业设计',
-      title: '帝女花',
-      desc: '情景式互动叙事游戏：玩家以抉择推动粤剧《帝女花》剧情走向，融合分支叙事、影像演出与 AI 生成的视听语言。',
       enter: '进入作品 →',
-      modalTitle: '帝女花 · 互动叙事作品集'
+      items: [
+        {
+          id: 'dinuhua',
+          tag: '交互叙事 · 毕业设计',
+          title: '帝女花',
+          desc: '情景式互动叙事游戏：玩家以抉择推动粤剧《帝女花》剧情走向，融合分支叙事、影像演出与 AI 生成的视听语言。',
+          cover: '❀',
+          modalTitle: '帝女花 · 互动叙事作品集',
+          url: 'https://dinuhua.app.workbuddy.host/?sharecode=QEYALK4J46'
+        },
+        {
+          id: 'milkfrog',
+          tag: '互动 SVG · 个人小作品',
+          title: '牛奶蛙破風日記',
+          desc: '纯手写 SVG + 原生 JavaScript 的互动骑行小场景：一只大肚奶蛙踩著「破風號」前進，可切换晴／雨／夜三种天气，并用冲刺、喂蚊、呱呱喇叭、翘孤轮等按钮触发实时动画，顶部还配了会跳动的骑行码表。',
+          cover: '🐸',
+          modalTitle: '牛奶蛙破風日記 · 互动 SVG 小场景',
+          url: 'works/milk-frog-bike.html'
+        }
+      ]
     }
   },
   en: {
@@ -269,11 +285,27 @@ const defaultResumeData = {
       { label: 'Resume PDF', value: 'Preview the English resume in this page', href: 'assets/resume-en.pdf', pdf: true }
     ],
     works: {
-      tag: 'Interactive Narrative · Capstone',
-      title: 'The Flower Princess',
-      desc: 'A branching interactive narrative game built on the Cantonese opera "The Flower Princess": your choices steer the story, blending narrative design, cinematic staging and AI-generated audiovisuals.',
       enter: 'Enter work →',
-      modalTitle: 'The Flower Princess · Interactive Narrative'
+      items: [
+        {
+          id: 'dinuhua',
+          tag: 'Interactive Narrative · Capstone',
+          title: 'The Flower Princess',
+          desc: 'A branching interactive narrative game built on the Cantonese opera "The Flower Princess": your choices steer the story, blending narrative design, cinematic staging and AI-generated audiovisuals.',
+          cover: '❀',
+          modalTitle: 'The Flower Princess · Interactive Narrative',
+          url: 'https://dinuhua.app.workbuddy.host/?sharecode=QEYALK4J46'
+        },
+        {
+          id: 'milkfrog',
+          tag: 'Interactive SVG · Side Project',
+          title: 'Milk Frog Road Cycling',
+          desc: 'A hand-coded SVG + vanilla JavaScript cycling vignette: a chubby milk frog rides the "Breakwind" road bike. Switch between sunny, rainy and night weather, and trigger sprint, bug-feeding, croak-horn and wheelie animations — all wired to a live cycling computer at the top.',
+          cover: '🐸',
+          modalTitle: 'Milk Frog Road Cycling · Interactive SVG Scene',
+          url: 'works/milk-frog-bike.html'
+        }
+      ]
     }
   }
 };
@@ -417,25 +449,46 @@ function renderResume() {
   });
 
   // 作品集
-  const workTag = document.getElementById('workTag');
-  const workTitle = document.getElementById('workTitle');
-  const workDesc = document.getElementById('workDesc');
-  const workEnter = document.getElementById('workEnter');
-  const workEnterCover = document.getElementById('workEnterCover');
-  if (workTag) workTag.textContent = text.works.tag;
-  if (workTitle) workTitle.textContent = text.works.title;
-  if (workDesc) workDesc.textContent = text.works.desc;
-  if (workEnter) workEnter.textContent = text.works.enter;
-  if (workEnterCover) workEnterCover.textContent = text.works.enter;
-  const pfTitle = document.getElementById('pfModalTitle');
-  if (pfTitle) pfTitle.textContent = text.works.modalTitle;
-  const pfOpenTab = document.getElementById('pfOpenTab');
-  if (pfOpenTab) pfOpenTab.href = PORTFOLIO_URL;
+  renderWorks(text.works);
 
   document.getElementById('year').textContent = new Date().getFullYear();
   document.getElementById('footerName').textContent = text.name;
   document.getElementById('footerTag').textContent = text.footerTag;
   document.title = text.name + (state.language === 'zh' ? ' · Digital Creative Portfolio' : ' · Digital Creative Portfolio');
+}
+
+/* 作品集卡片：按当前语言渲染，data-work 携带作品 id 供浮层读取 */
+function renderWorks(works) {
+  const list = document.getElementById('worksList');
+  if (!list || !works || !Array.isArray(works.items)) return;
+  list.textContent = '';
+
+  works.items.forEach((item, index) => {
+    const feature = el('div', 'work-feature');
+    if (index > 0) feature.classList.add('work-feature--divided');
+
+    const cover = el('button', 'work-cover work-cover--' + item.id);
+    cover.type = 'button';
+    cover.dataset.work = item.id;
+    cover.setAttribute('aria-label', item.modalTitle);
+    const emoji = el('span', 'work-cover-emoji', item.cover);
+    emoji.setAttribute('aria-hidden', 'true');
+    cover.appendChild(emoji);
+    cover.appendChild(el('span', 'work-cover-cta', works.enter));
+
+    const info = el('div', 'work-info');
+    info.appendChild(el('span', 'work-tag', item.tag));
+    info.appendChild(el('h3', 'work-title', item.title));
+    info.appendChild(el('p', 'work-desc', item.desc));
+    const enter = el('button', 'btn work-enter-btn', works.enter);
+    enter.type = 'button';
+    enter.dataset.work = item.id;
+    info.appendChild(enter);
+
+    feature.appendChild(cover);
+    feature.appendChild(info);
+    list.appendChild(feature);
+  });
 }
 
 /* 折叠切换时的轻微脉冲反馈 */
@@ -565,17 +618,34 @@ function bindPdfModal() {
 }
 
 /* ============================================================
- * 作品集浮层：iframe 内嵌帝女花互动叙事作品
+ * 作品集浮层：iframe 内嵌所选作品（帝女花 / 牛奶蛙破風日記）
  * ============================================================ */
 let pfPrevFocus = null;
+let pfCurrentWorkId = null;
 
-function openPortfolio() {
+function getWork(workId) {
+  const works = getText().works;
+  if (!works || !Array.isArray(works.items)) return null;
+  return works.items.find((item) => item.id === workId) || works.items[0] || null;
+}
+
+function openPortfolio(workId) {
   const modal = document.getElementById('pfModal');
   if (!modal) return;
+  const work = getWork(workId);
+  if (!work) return;
+  pfCurrentWorkId = work.id;
+
+  const title = document.getElementById('pfModalTitle');
+  if (title) title.textContent = work.modalTitle;
+  const openTab = document.getElementById('pfOpenTab');
+  if (openTab) openTab.href = work.url;
+
   const frame = document.getElementById('pfFrame');
-  if (frame.dataset.src !== '1') {
-    frame.src = PORTFOLIO_URL;
-    frame.dataset.src = '1';
+  frame.title = work.modalTitle;
+  if (frame.dataset.src !== work.url) {
+    frame.src = work.url;
+    frame.dataset.src = work.url;
   }
   pfPrevFocus = document.activeElement;
   modal.classList.add('open');
@@ -600,10 +670,18 @@ function closePortfolio() {
 function bindPortfolioModal() {
   const modal = document.getElementById('pfModal');
   if (!modal) return;
-  const cover = document.getElementById('workCover');
-  const enter = document.getElementById('workEnter');
-  if (cover) cover.addEventListener('click', openPortfolio);
-  if (enter) enter.addEventListener('click', openPortfolio);
+
+  // 卡片由 renderWorks 动态生成，用事件委托绑定（语言切换后依然有效）
+  const list = document.getElementById('worksList');
+  if (list) {
+    list.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-work]');
+      if (!trigger) return;
+      event.preventDefault();
+      openPortfolio(trigger.dataset.work);
+    });
+  }
+
   document.getElementById('pfClose').addEventListener('click', closePortfolio);
   modal.querySelectorAll('[data-pf-close]').forEach((node) => {
     node.addEventListener('click', closePortfolio);
@@ -1696,7 +1774,7 @@ function initCubeScene() {
   if (!stage || !canvas || !supports3D()) {
     const faces = Object.keys(CUBE_FACE_SECTION);
     showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faces, (chip) => {
-      if (chip === 'INTERACTIVE') { openPortfolio(); return; }
+      if (chip === 'INTERACTIVE') { openPortfolio('dinuhua'); return; }
       const target = document.getElementById(CUBE_FACE_SECTION[chip]);
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -1983,12 +2061,13 @@ function initCubeScene() {
     // 互动叙事面 → 打开帝女花作品集（沉浸模式下先退出，再打开浮层）
     if (label === 'INTERACTIVE') {
       if (immersive) {
-        setTimeout(() => { exitImmersive(); setTimeout(openPortfolio, 380); }, 180);
+        setTimeout(() => { exitImmersive(); setTimeout(() => openPortfolio('dinuhua'), 380); }, 180);
         return;
       }
-      showTooltip(event.clientX, event.clientY, getText().works.title);
+      const featured = getWork('dinuhua');
+      showTooltip(event.clientX, event.clientY, featured ? featured.title : '');
       setTimeout(hideTooltip, 1400);
-      setTimeout(openPortfolio, 220);
+      setTimeout(() => openPortfolio('dinuhua'), 220);
       return;
     }
     const sectionKey = CUBE_FACE_SECTION[label];
