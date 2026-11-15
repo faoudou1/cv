@@ -35,12 +35,12 @@ const defaultResumeData = {
     nav: ['关于', '教育', '实习', '校园', '作品', '技能', '联系'],
     sectionTitles: {
       about: '关于我',
-      workspace: 'Digital Creative Workspace',
+      workspace: '数字创作工作台',
       education: '教育背景',
       experience: '实习经历',
       projects: '校园经历',
       works: '作品集',
-      cube: 'AIGC Cube',
+      cube: 'AIGC 能力立方',
       skills: '个人技能',
       contact: '联系我'
     },
@@ -49,19 +49,32 @@ const defaultResumeData = {
     exitWorkspace: '退出 ✕',
     immersiveHint: '拖动 360° 环视 · 滚轮缩放 · 点击屏幕关键词或设备跳转板块 · ESC 退出',
     cubeHint: '点击画面进入 · 拖动旋转 · 悬停放大当前面 · 点击面跳转板块',
-    enterCube: '进入 AIGC Cube',
+    enterCube: '进入能力立方',
     cubeImmersiveHint: '拖动旋转 · 滚轮缩放 · 点击立方体面跳转对应板块 · ESC 退出',
-    comingSoon: 'COMING SOON',
-    fallbackWorkspace: 'Digital Creative Workspace',
-    fallbackCube: 'AIGC Cube · 能力矩阵',
+    comingSoon: '敬请期待',
+    fallbackWorkspace: '数字创作工作台',
+    fallbackCube: 'AIGC 能力立方 · 能力矩阵',
     deviceLabels: {
-      desk: 'DIGITAL WORKSPACE',
-      monitor: 'DIGITAL MEDIA',
-      camera: 'VIDEO / MEDIA',
-      tablet: 'VISUAL DESIGN',
-      keyboard: 'CREATIVE TOOLS',
-      phone: 'INTERACTIVE',
+      desk: '数字工作台',
+      monitor: '数字媒体',
+      camera: '影像与媒体',
+      tablet: '视觉设计',
+      keyboard: '创意工具',
+      phone: '互动体验',
       ai: 'AIGC'
+    },
+    // 3D 场景里用 canvas 画进贴图的文字（顺序与 SCREEN_LINKS 一一对应）
+    sceneText: {
+      screenWords: ['数字媒体', '互动体验', '视觉设计', 'AIGC', '动效影像', '视觉叙事'],
+      tabletWords: ['视觉', '设计'],
+      cubeFaces: {
+        VISUAL: '视觉',
+        AIGC: 'AIGC',
+        INTERACTIVE: '互动',
+        VIDEO: '影像',
+        MOTION: '动效',
+        DESIGN: '设计'
+      }
     },
     summary: '数字媒体艺术背景，正在岭南大学攻读艺术科技与商业硕士。关注 AIGC、互动设计与视觉叙事，习惯用 3D、影像与代码把想法做成可交互的体验。做事条理清晰、目标导向，善于分析并解决问题，注重细节与效率，能高效推动任务完成。',
     highlights: [
@@ -211,6 +224,19 @@ const defaultResumeData = {
       phone: 'INTERACTIVE',
       ai: 'AIGC'
     },
+    // 3D 场景里用 canvas 画进贴图的文字（顺序与 SCREEN_LINKS 一一对应）
+    sceneText: {
+      screenWords: ['DIGITAL MEDIA', 'INTERACTIVE', 'DESIGN', 'AIGC', 'MOTION', 'VISUAL'],
+      tabletWords: ['VISUAL', 'DESIGN'],
+      cubeFaces: {
+        VISUAL: 'VISUAL',
+        AIGC: 'AIGC',
+        INTERACTIVE: 'INTERACTIVE',
+        VIDEO: 'VIDEO',
+        MOTION: 'MOTION',
+        DESIGN: 'DESIGN'
+      }
+    },
     summary: 'Digital media art background, now pursuing an M.Sc. in Arts Technology and Business at Lingnan University. I care about AIGC, interactive design and visual storytelling, and I like turning ideas into interactive experiences with 3D, video and code. I work in an organized, goal-oriented way, am good at analysing and solving problems, and focus on detail and efficiency so tasks move forward fast.',
     highlights: [
       'Digital Media / Interactive Design / AIGC',
@@ -322,6 +348,34 @@ const state = {
 
 function getText() {
   return state.resumeData[state.language];
+}
+
+/* ------------------------------------------------------------
+ * 3D 场景文案：贴图里的文字随语言切换重绘
+ * 场景初始化时注册重绘函数，renderResume() 末尾统一调用
+ * ------------------------------------------------------------ */
+const sceneTextRefreshers = [];
+
+function onSceneTextRefresh(fn) {
+  if (typeof fn === 'function') sceneTextRefreshers.push(fn);
+}
+
+function refreshSceneText() {
+  sceneTextRefreshers.forEach((fn) => {
+    try { fn(); } catch (error) { /* 场景未初始化或已销毁，忽略 */ }
+  });
+}
+
+/* 当前语言下某一类场景文案；缺省回落到英文 */
+function getSceneText(key, fallback) {
+  const sceneText = getText().sceneText || {};
+  return sceneText[key] || fallback;
+}
+
+/* 立方体某一面的显示文字（内部仍用英文 key 做跳转映射） */
+function getCubeFaceText(faceKey) {
+  const faces = getSceneText('cubeFaces', {});
+  return faces[faceKey] || faceKey;
 }
 
 /* 安全的文本节点创建（替代 innerHTML 拼接，避免注入） */
@@ -455,6 +509,9 @@ function renderResume() {
   document.getElementById('footerName').textContent = text.name;
   document.getElementById('footerTag').textContent = text.footerTag;
   document.title = text.name + (state.language === 'zh' ? ' · Digital Creative Portfolio' : ' · Digital Creative Portfolio');
+
+  // 语言切换后，3D 场景贴图里的文字同步重绘
+  refreshSceneText();
 }
 
 /* 作品集卡片：按当前语言渲染，data-work 携带作品 id 供浮层读取 */
@@ -815,14 +872,27 @@ function observeSceneActive(elementId, key) {
   observer.observe(target);
 }
 
-/* 冷色调 Canvas 文字纹理 */
+/* 冷色调 Canvas 文字纹理（中英文字体栈都覆盖，便于切换语言后重绘） */
+const SCENE_FONT_STACK = '"Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+
 function makeTextTexture(lines, options) {
   const opts = Object.assign({ width: 512, height: 288, accent: '#7FD6F2', muted: '#8FA3B8', bg: '#0D1119' }, options || {});
   const canvas = document.createElement('canvas');
   canvas.width = opts.width;
   canvas.height = opts.height;
   const ctx = canvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(canvas);
+  const target = { texture, canvas, ctx, opts };
+  drawTextTexture(target, lines);
+  return target;
+}
 
+/* 在同一块 canvas 上换文案重绘（显示器轮播 / 语言切换共用） */
+function drawTextTexture(target, lines) {
+  const { ctx, opts, texture } = target;
+  if (!ctx) return;
+
+  ctx.clearRect(0, 0, opts.width, opts.height);
   ctx.fillStyle = opts.bg;
   ctx.fillRect(0, 0, opts.width, opts.height);
 
@@ -842,16 +912,13 @@ function makeTextTexture(lines, options) {
   lines.forEach((line, i) => {
     const isAccent = i === 0;
     ctx.fillStyle = isAccent ? opts.accent : 'rgba(242, 244, 246, 0.85)';
-    ctx.font = (isAccent ? '700 ' : '500 ') + (isAccent ? Math.round(step * 0.52) : Math.round(step * 0.4)) + 'px "Segoe UI", "PingFang SC", sans-serif';
+    ctx.font = (isAccent ? '700 ' : '500 ') + (isAccent ? Math.round(step * 0.52) : Math.round(step * 0.4)) + 'px ' + SCENE_FONT_STACK;
     ctx.shadowColor = isAccent ? 'rgba(127, 214, 242, 0.55)' : 'transparent';
     ctx.shadowBlur = isAccent ? 18 : 0;
     ctx.fillText(line, opts.width / 2, step * (i + 1));
   });
   ctx.shadowBlur = 0;
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  return { texture, canvas, ctx, opts };
+  if (texture) texture.needsUpdate = true;
 }
 
 /* ============================================================
@@ -1230,16 +1297,15 @@ function initWorkspaceScene() {
   const canvas = document.getElementById('wsCanvas');
   if (!stage || !canvas || !supports3D()) {
     const text = getText();
-    const map = {
-      'DIGITAL MEDIA': '#about',
-      'VIDEO / MEDIA': '#experience',
-      'VISUAL DESIGN': '#projects',
-      'INTERACTIVE': '#skills',
-      'AIGC': '#skills'
-    };
+    // 降级芯片：文字跟随语言，第 i 个对应第 i 个跳转目标
+    const chipTargets = ['#about', '#experience', '#projects', '#skills', '#skills'];
+    const chips = (text.sceneText.screenWords || []).slice(0, chipTargets.length);
     showSceneFallback('workspaceStage', 'workspaceFallback', text.fallbackWorkspace,
-      Object.keys(map),
-      (chip) => { const target = document.querySelector(map[chip]); if (target) target.scrollIntoView({ behavior: 'smooth' }); });
+      chips,
+      (chip) => {
+        const target = document.querySelector(chipTargets[chips.indexOf(chip)]);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
     return;
   }
 
@@ -1305,7 +1371,7 @@ function initWorkspaceScene() {
   const shell = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.05, 0.12), darkMat);
   shell.position.set(0, 1.55, 0.1);
   monitorGroup.add(shell);
-  const monitorWords = ['DIGITAL MEDIA', 'INTERACTIVE', 'DESIGN', 'AIGC', 'MOTION', 'VISUAL'];
+  let monitorWords = getSceneText('screenWords', ['DIGITAL MEDIA', 'INTERACTIVE', 'DESIGN', 'AIGC', 'MOTION', 'VISUAL']);
   const screen = makeTextTexture(monitorWords, { width: 512, height: 288 });
   const screenMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(3.36, 1.86),
@@ -1355,7 +1421,7 @@ function initWorkspaceScene() {
   world.add(tabletGroup);
   const tabletBody = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.05, 0.8), darkMat);
   tabletGroup.add(tabletBody);
-  const tabletTex = makeTextTexture(['VISUAL', 'DESIGN'], { width: 256, height: 160 });
+  const tabletTex = makeTextTexture(getSceneText('tabletWords', ['VISUAL', 'DESIGN']), { width: 256, height: 160 });
   const tabletScreen = new THREE.Mesh(
     new THREE.PlaneGeometry(0.98, 0.62),
     new THREE.MeshBasicMaterial({ map: tabletTex.texture })
@@ -1363,6 +1429,15 @@ function initWorkspaceScene() {
   tabletScreen.rotation.x = -Math.PI / 2;
   tabletScreen.position.y = 0.03;
   tabletGroup.add(tabletScreen);
+
+  // 语言切换时重绘屏幕 / 数位板贴图
+  onSceneTextRefresh(() => {
+    monitorWords = getSceneText('screenWords', []);
+    wordIndex = 0;
+    lastWordSwap = 0;
+    drawTextTexture(screen, monitorWords.slice());
+    drawTextTexture(tabletTex, getSceneText('tabletWords', []));
+  });
 
   // ---- 摄像机（机身 + 镜头） ----
   const cameraGroup = new THREE.Group();
@@ -1565,8 +1640,9 @@ function initWorkspaceScene() {
     const hits = raycaster.intersectObjects(pickables, false);
     const screenRow = hits.length ? screenRowAt(hits[0]) : -1;
     const key = hits.length ? hits[0].object.userData.deviceKey : null;
+    const screenWords = getSceneText('screenWords', []);
     const label = screenRow >= 0
-      ? SCREEN_LINKS[screenRow].word
+      ? (screenWords[screenRow] || SCREEN_LINKS[screenRow].word)
       : (key ? (getText().deviceLabels[key] || key.toUpperCase()) : null);
     const effectiveKey = screenRow >= 0 ? 'screen' : key;
     if (effectiveKey !== hoveredKey) {
@@ -1675,31 +1751,11 @@ function initWorkspaceScene() {
     });
 
     // 显示器文字轮播（每 2.4s，重绘 canvas 纹理）
-    if (t - lastWordSwap > 2.4) {
+    if (t - lastWordSwap > 2.4 && monitorWords.length) {
       lastWordSwap = t;
       wordIndex = (wordIndex + 1) % monitorWords.length;
       const ordered = monitorWords.slice(wordIndex).concat(monitorWords.slice(0, wordIndex));
-      const ctx = screen.ctx;
-      const opts = screen.opts;
-      ctx.fillStyle = opts.bg;
-      ctx.fillRect(0, 0, opts.width, opts.height);
-      ctx.strokeStyle = 'rgba(127, 214, 242, 0.08)';
-      ctx.lineWidth = 1;
-      for (let x = 32; x < opts.width; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, opts.height); ctx.stroke(); }
-      for (let y = 32; y < opts.height; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(opts.width, y); ctx.stroke(); }
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const step = opts.height / (ordered.length + 1);
-      ordered.forEach((line, i) => {
-        const isAccent = i === 0;
-        ctx.fillStyle = isAccent ? opts.accent : 'rgba(242, 244, 246, 0.85)';
-        ctx.font = (isAccent ? '700 ' : '500 ') + (isAccent ? Math.round(step * 0.52) : Math.round(step * 0.4)) + 'px "Segoe UI", "PingFang SC", sans-serif';
-        ctx.shadowColor = isAccent ? 'rgba(127, 214, 242, 0.55)' : 'transparent';
-        ctx.shadowBlur = isAccent ? 18 : 0;
-        ctx.fillText(line, opts.width / 2, step * (i + 1));
-      });
-      ctx.shadowBlur = 0;
-      screen.texture.needsUpdate = true;
+      drawTextTexture(screen, ordered);
     }
 
     // 相机：常规视角 ↔ 沉浸视角平滑过渡；拖拽 360° 环视 + 鼠标微视差 + 缩放
@@ -1772,10 +1828,13 @@ function initCubeScene() {
   const stage = document.getElementById('cubeStage');
   const canvas = document.getElementById('cubeCanvas');
   if (!stage || !canvas || !supports3D()) {
-    const faces = Object.keys(CUBE_FACE_SECTION);
-    showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faces, (chip) => {
-      if (chip === 'INTERACTIVE') { openPortfolio('dinuhua'); return; }
-      const target = document.getElementById(CUBE_FACE_SECTION[chip]);
+    // 降级芯片：显示当前语言的面名，跳转仍按英文 key 映射
+    const faceKeys = Object.keys(CUBE_FACE_SECTION);
+    const faceChips = faceKeys.map((key) => getCubeFaceText(key));
+    showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faceChips, (chip) => {
+      const faceKey = faceKeys[faceChips.indexOf(chip)] || 'AIGC';
+      if (faceKey === 'INTERACTIVE') { openPortfolio('dinuhua'); return; }
+      const target = document.getElementById(CUBE_FACE_SECTION[faceKey]);
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     return;
@@ -1895,21 +1954,22 @@ function initCubeScene() {
 
   // 六面标签（略浮于玻璃表面，双层文字：大字 + 小字方向词）
   const faceDefs = [
-    { label: 'VISUAL', dir: [0, 0, 1] },
-    { label: 'AIGC', dir: [0, 0, -1] },
-    { label: 'INTERACTIVE', dir: [0, 1, 0] },
-    { label: 'VIDEO', dir: [0, -1, 0] },
-    { label: 'MOTION', dir: [1, 0, 0] },
-    { label: 'DESIGN', dir: [-1, 0, 0] }
+    { key: 'VISUAL', dir: [0, 0, 1] },
+    { key: 'AIGC', dir: [0, 0, -1] },
+    { key: 'INTERACTIVE', dir: [0, 1, 0] },
+    { key: 'VIDEO', dir: [0, -1, 0] },
+    { key: 'MOTION', dir: [1, 0, 0] },
+    { key: 'DESIGN', dir: [-1, 0, 0] }
   ];
   const faceMeshes = [];
+  const faceTextures = []; // 与 faceMeshes 同序，语言切换时重绘
   const off = hs + 0.02;
 
-  faceDefs.forEach((def) => {
-    const tex = makeFaceTexture(def.label);
+  faceDefs.forEach((def, index) => {
+    const tex = makeFaceTexture(getCubeFaceText(def.key), index);
     const plane = new THREE.Mesh(
       new THREE.PlaneGeometry(size * 0.82, size * 0.82),
-      new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.92, depthWrite: false })
+      new THREE.MeshBasicMaterial({ map: tex.texture, transparent: true, opacity: 0.92, depthWrite: false })
     );
     plane.position.set(def.dir[0] * off, def.dir[1] * off, def.dir[2] * off);
     if (def.dir[2] === -1) plane.rotation.y = Math.PI;
@@ -1920,13 +1980,30 @@ function initCubeScene() {
     plane.userData.baseScale = 1;
     cubeGroup.add(plane);
     faceMeshes.push(plane);
+    faceTextures.push(tex);
   });
 
-  function makeFaceTexture(label) {
+  // 语言切换：按当前语言重绘六个面
+  onSceneTextRefresh(() => {
+    faceDefs.forEach((def, index) => {
+      drawFaceTexture(faceTextures[index], getCubeFaceText(def.key), index);
+    });
+  });
+
+  function makeFaceTexture(text, index) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
+    const texture = new THREE.CanvasTexture(canvas);
+    const target = { canvas, ctx, texture };
+    drawFaceTexture(target, text, index);
+    return target;
+  }
+
+  function drawFaceTexture(target, text, index) {
+    const { ctx } = target;
+    if (!ctx) return;
     ctx.clearRect(0, 0, 256, 256);
     // 角标记
     ctx.strokeStyle = 'rgba(127, 214, 242, 0.35)';
@@ -1945,18 +2022,17 @@ function initCubeScene() {
     ctx.shadowColor = 'rgba(127, 214, 242, 0.7)';
     ctx.shadowBlur = 16;
     let fontSize = 46;
-    ctx.font = '700 ' + fontSize + 'px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-    while (ctx.measureText(label).width > 200 && fontSize > 20) {
+    ctx.font = '700 ' + fontSize + 'px ' + SCENE_FONT_STACK;
+    while (ctx.measureText(text).width > 200 && fontSize > 20) {
       fontSize -= 3;
-      ctx.font = '700 ' + fontSize + 'px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+      ctx.font = '700 ' + fontSize + 'px ' + SCENE_FONT_STACK;
     }
-    ctx.fillText(label, 128, 128);
+    ctx.fillText(text, 128, 128);
     ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(127, 214, 242, 0.7)';
-    ctx.font = '500 15px "Segoe UI", sans-serif';
-    ctx.fillText('0' + (faceDefs.indexOf(label) === -1 ? faceMeshes.length + 1 : faceDefs.indexOf(label) + 1), 128, 176);
-    const texture = new THREE.CanvasTexture(canvas);
-    return texture;
+    ctx.font = '500 15px ' + SCENE_FONT_STACK;
+    ctx.fillText('0' + (index + 1), 128, 176);
+    if (target.texture) target.texture.needsUpdate = true;
   }
 
   // ---- 拖动旋转 ----
@@ -2027,12 +2103,12 @@ function initCubeScene() {
     if (face !== hoveredFace) {
       hoveredFace = face;
       if (face) {
-        showTooltip(event.clientX, event.clientY, faceDefs[faceMeshes.indexOf(face)].label);
+        showTooltip(event.clientX, event.clientY, getCubeFaceText(faceDefs[faceMeshes.indexOf(face)].key));
       } else {
         hideTooltip();
       }
     } else if (face) {
-      showTooltip(event.clientX, event.clientY, faceDefs[faceMeshes.indexOf(face)].label);
+      showTooltip(event.clientX, event.clientY, getCubeFaceText(faceDefs[faceMeshes.indexOf(face)].key));
     }
   });
 
@@ -2057,9 +2133,9 @@ function initCubeScene() {
     if (!hits.length) return;
     // 点击面 → 前往站内最相关板块（悬停标签已显示面名称，这里提示去向）
     const faceIndex = faceMeshes.indexOf(hits[0].object);
-    const label = faceDefs[faceIndex].label;
+    const faceKey = faceDefs[faceIndex].key;
     // 互动叙事面 → 打开帝女花作品集（沉浸模式下先退出，再打开浮层）
-    if (label === 'INTERACTIVE') {
+    if (faceKey === 'INTERACTIVE') {
       if (immersive) {
         setTimeout(() => { exitImmersive(); setTimeout(() => openPortfolio('dinuhua'), 380); }, 180);
         return;
@@ -2070,13 +2146,13 @@ function initCubeScene() {
       setTimeout(() => openPortfolio('dinuhua'), 220);
       return;
     }
-    const sectionKey = CUBE_FACE_SECTION[label];
+    const sectionKey = CUBE_FACE_SECTION[faceKey];
     const target = document.getElementById(sectionKey);
     if (!target) {
       showComingSoon(event.clientX, event.clientY);
       return;
     }
-    showTooltip(event.clientX, event.clientY, '→ ' + (getText().sectionTitles[sectionKey] || label));
+    showTooltip(event.clientX, event.clientY, '→ ' + (getText().sectionTitles[sectionKey] || faceKey));
     setTimeout(hideTooltip, 1600);
     if (immersive) {
       // 沉浸模式：先退出全屏，再平滑滚动到目标板块
