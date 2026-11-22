@@ -156,6 +156,15 @@ const defaultResumeData = {
           cover: '🐸',
           modalTitle: '牛奶蛙破風日記 · 互动 SVG 小场景',
           url: 'works/milk-frog-bike.html'
+        },
+        {
+          id: 'tripcraft',
+          tag: '智慧旅游 · 互动地图轻应用',
+          title: '行策 · 智旅攻略',
+          desc: '覆盖中国内地 28 座热门旅游城市与港澳地区的旅行攻略规划轻应用：支持单城深度与多城跨城联游编排、高德/OSM 互动路线巡航地图、预算拆解、繁简英三语实时切换、专属网址分享与旅人邮戳护照彩蛋。',
+          cover: '🧭',
+          modalTitle: '行策 · 智旅攻略 · 中国旅游路线规划',
+          url: 'https://xingce-tripcraft.netlify.app'
         }
       ]
     }
@@ -304,6 +313,15 @@ const defaultResumeData = {
           cover: '🐸',
           modalTitle: 'Milk Frog Road Cycling · Interactive SVG Scene',
           url: 'works/milk-frog-bike.html'
+        },
+        {
+          id: 'tripcraft',
+          tag: 'Smart Travel · Interactive Map App',
+          title: 'TripCraft · China Guide',
+          desc: 'An interactive travel itinerary planner covering 28 top cities across Mainland China, Hong Kong & Macau: supports single- and multi-city loops, Amap/OSM route-tour maps, budget breakdown, Traditional/Simplified Chinese & English switching, shareable trip URLs, and a stamp passport with hidden Easter eggs.',
+          cover: '🧭',
+          modalTitle: 'TripCraft · China Travel Itinerary Planner',
+          url: 'https://xingce-tripcraft.netlify.app'
         }
       ]
     }
