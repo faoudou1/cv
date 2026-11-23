@@ -406,7 +406,7 @@ body.is-dragging * {
   50% { transform: translateY(-6px) rotate(2deg); }
 }
 
-/* 第三件作品（NOVA 岭南站 3D 建筑可视化）：暖香槟金 + 蓝调玻璃幕墙辉光 */
+/* NOVA 岭南站 3D 建筑可视化：暖香槟金 + 蓝调玻璃幕墙辉光 */
 .work-cover--lingnan-nova {
   background:
     radial-gradient(120% 120% at 24% 14%, rgba(245, 184, 81, 0.24), transparent 62%),
