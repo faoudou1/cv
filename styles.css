@@ -406,6 +406,35 @@ body.is-dragging * {
   50% { transform: translateY(-6px) rotate(2deg); }
 }
 
+/* 第三件作品（NOVA 岭南站 3D 建筑可视化）：暖香槟金 + 蓝调玻璃幕墙辉光 */
+.work-cover--lingnan-nova {
+  background:
+    radial-gradient(120% 120% at 24% 14%, rgba(245, 184, 81, 0.24), transparent 62%),
+    linear-gradient(160deg, rgba(37, 99, 235, 0.28), rgba(11, 12, 18, 0.72));
+}
+
+.work-cover--lingnan-nova:hover {
+  border-color: rgba(245, 184, 81, 0.52);
+  box-shadow: 0 0 40px rgba(245, 184, 81, 0.16);
+}
+
+.work-cover--lingnan-nova .work-cover-cta {
+  color: #FCD34D;
+  border-color: rgba(252, 211, 77, 0.45);
+  background: rgba(252, 211, 77, 0.08);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .work-cover--lingnan-nova .work-cover-emoji {
+    animation: archGlowFloat 3.6s ease-in-out infinite;
+  }
+}
+
+@keyframes archGlowFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.04); }
+}
+
 .work-cover-cta {
   font-size: 0.9rem;
   font-weight: 700;

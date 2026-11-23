@@ -169,6 +169,15 @@ const defaultResumeData = {
           cover: '🐸',
           modalTitle: '牛奶蛙破風日記 · 互动 SVG 小场景',
           url: 'works/milk-frog-bike.html'
+        },
+        {
+          id: 'lingnan-nova',
+          tag: 'Three.js 3D · 建筑可视化',
+          title: 'NOVA 岭南站 · 3D 商业地标',
+          desc: '基于 Vite + Three.js 打造的佛山岭南站交互式 3D 建筑可视化：包含流线型物理玻璃幕墙、多楼层挑空中庭与交叉扶梯、110 位实时行人流模拟与奢尚品牌灯箱，支持多视角平滑转场、日间／黄昏蓝调光照过渡，以及「圣诞奇幻季／平日商业版」一键主题切换。',
+          cover: '🏙️',
+          modalTitle: 'NOVA 岭南站 · 3D 交互式建筑可视化',
+          url: 'works/lingnan-station-nova/index.html'
         }
       ]
     }
@@ -330,6 +339,15 @@ const defaultResumeData = {
           cover: '🐸',
           modalTitle: 'Milk Frog Road Cycling · Interactive SVG Scene',
           url: 'works/milk-frog-bike.html'
+        },
+        {
+          id: 'lingnan-nova',
+          tag: 'Three.js 3D · ArchViz',
+          title: 'NOVA Lingnan Station · 3D Landmark',
+          desc: 'An interactive 3D architectural visualization of Foshan Lingnan Station (NOVA) built with Vite + Three.js: streamlined physical glass facade, multi-level atrium with crisscrossed escalators, 110 animated instanced pedestrians, illuminated luxury billboards, smooth camera presets, Daylight/Blue-Hour lighting, and real-time Christmas/Everyday theme switching.',
+          cover: '🏙️',
+          modalTitle: 'NOVA Lingnan Station · 3D Architectural Visualization',
+          url: 'works/lingnan-station-nova/index.html'
         }
       ]
     }
@@ -675,7 +693,7 @@ function bindPdfModal() {
 }
 
 /* ============================================================
- * 作品集浮层：iframe 内嵌所选作品（帝女花 / 牛奶蛙破風日記）
+ * 作品集浮层：iframe 内嵌所选作品（帝女花 / 牛奶蛙破風日記 / NOVA 岭南站）
  * ============================================================ */
 let pfPrevFocus = null;
 let pfCurrentWorkId = null;
