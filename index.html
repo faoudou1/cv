@@ -1,129 +1,268 @@
 ﻿<!doctype html>
-<html lang="zh-CN" data-page-node-id="HazpNPa6G0XqEq2XljCuXU">
-<head data-page-node-id="X1ws3GuevcBspEppuYv0yi">
-  <meta charset="utf-8" data-page-node-id="8GYyOWQrFxxmCOTF47UlAv" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" data-page-node-id="fAejCNtUZlxUn8PvYYk22b" />
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>朱肖尚 · 3D 交互简历</title>
-  <meta name="description" content="朱肖尚 — 岭南大学（中国香港）艺术科技与商业硕士，本科数字媒体艺术。Digital Media / Interactive Design / AIGC 方向 3D 互动 Portfolio。" data-page-node-id="vNk69k8FcsqbjIR4GoLnIi" />
-  <link rel="stylesheet" href="styles.css?v=20261123" data-page-node-id="zm1gDl4Na1jO91rA367Q3s" />
+  <meta name="description" content="朱肖尚 — 岭南大学（中国香港）艺术科技与商业硕士，本科数字媒体艺术。Digital Media / Interactive Design / AIGC 方向 3D 互动 Portfolio。" />
+
+  <!-- Open Graph & Twitter 社交分享卡片元数据 -->
+  <meta property="og:title" content="朱肖尚 · Daily Aesthetic Atelier | 3D 交互简历" />
+  <meta property="og:description" content="岭南大学（中国香港）艺术科技与商业硕士，本科数字媒体艺术。Digital Media / Interactive Design / AIGC 方向 3D 互动作品集。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://faoudou1.github.io/cv/assets/og-cover.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="朱肖尚 · Daily Aesthetic Atelier 3D 交互简历封面" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="朱肖尚 · Daily Aesthetic Atelier | 3D 交互简历" />
+  <meta name="twitter:description" content="M.Sc. in Arts Technology and Business · Lingnan University. Digital Media, Interactive Design & AIGC 3D Portfolio." />
+  <meta name="twitter:image" content="https://faoudou1.github.io/cv/assets/og-cover.png" />
+
+  <!-- 极简 DA 字母徽标 SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23F4F3EF'/%3E%3Crect x='3' y='3' width='58' height='58' rx='11' fill='none' stroke='%231B6A82' stroke-width='2.5'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Georgia,serif' font-size='28' font-weight='600' fill='%231A1A1A'%3EDA%3C/text%3E%3C/svg%3E" />
+
+  <!-- 字体异步非阻塞加载（含 display=swap，中国内地网络受限时自动回落本地字体栈） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@500;600;700&display=swap"
+        media="print"
+        onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@500;600;700&display=swap" />
+  </noscript>
+  <link rel="stylesheet" href="styles.css?v=20261129" />
 </head>
-<body data-page-node-id="HR4Hp4bBgOW8iC4UncHglg">
-  <!-- Three.js 3D 场景背景（CDN 加载失败时自动降级为静态渐变背景） -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-  <script>
-    /* CDN 兜底：jsdelivr 不可用时加载本地 three.min.js，保证 3D 场景始终可用 */
-    window.THREE || document.write('<script src="three.min.js"><\/script>');
-  </script>
-  <canvas id="bg3d" aria-hidden="true" data-page-node-id="k2w4z3cuGBaFUsyAe8rgSZ"></canvas>
-
-  <div class="scene-light" aria-hidden="true" data-page-node-id="wnoAGdJgAqRoUg9EKE2XPE"></div>
-
-  <header class="top-bar" data-page-node-id="BgfDufB1QR6VC33CGYG6EI">
-    <div class="topbar-brand" data-page-node-id="jBY04lw2At5UVg5bozpfDR">
-      <span class="brand-mark" data-page-node-id="VsMu44zADHcevwM4mktKXh">DA</span>
-      <span class="brand-text" data-page-node-id="wkYdcBSVvUOzKfCwz3xcAi">Daily Aesthetic Atelier</span>
-    </div>
-    <div class="top-actions" data-page-node-id="sqZTb5ufWKcQ2ml2w1txUp">
-      <nav class="quick" aria-label="页面导航" data-page-node-id="v4fvMl09xKhqNx5wDdUjfw">
-        <a href="#about" data-nav="0" data-page-node-id="CRdOgCo6WeZIg6PiZGAI5x">关于</a>
-        <a href="#education" data-nav="1" data-page-node-id="DKRbYVP0BSP0ycCQguIufJ">教育</a>
-        <a href="#experience" data-nav="2" data-page-node-id="3pKZxbqTGByrwcjQTV35IZ">实习</a>
-        <a href="#projects" data-nav="3" data-page-node-id="pPIwpDlh2GgCfzh0mtGwg3">校园</a>
-        <a href="#works" data-nav="4">作品</a>
-        <a href="#skills" data-nav="5" data-page-node-id="NW3m26gw3aiAhCOEg6S5Ia">技能</a>
-        <a href="#contact" data-nav="6" data-page-node-id="x29yFFsYzSZUQorsleAjaJ">联系</a>
-      </nav>
-      <div class="lang-switch" role="group" aria-label="语言切换" data-page-node-id="F9lepMNvsMt3lRXXEIdZjD">
-        <button class="lang-btn active" data-lang="zh" type="button" aria-pressed="true" data-page-node-id="lLNzbY6Mzs5c1xAWoCFlwj">中</button>
-        <button class="lang-btn" data-lang="en" type="button" aria-pressed="false" data-page-node-id="xQFaFMl9n5Bdm58QNpKWyo">EN</button>
+<body class="is-preloading">
+  <!-- 策展式开场 Preloader 幕布（<=1000ms 上限，减弱动效模式自动跳过） -->
+  <div class="atelier-preloader" id="atelierPreloader" aria-hidden="true">
+    <div class="preloader-inner">
+      <div class="preloader-mark">DA</div>
+      <div class="preloader-wordmark">Daily Aesthetic Atelier</div>
+      <div class="preloader-progress">
+        <div class="preloader-bar"><span class="preloader-bar-fill" id="preloaderBarFill"></span></div>
+        <span class="preloader-count" id="preloaderCount">00%</span>
       </div>
-      <button class="btn" id="copyEmail" type="button" data-page-node-id="j6JY0f9No1s3Y1YRyEIlAn">复制邮箱</button>
+    </div>
+  </div>
+
+  <!-- Three.js 3D 场景背景（2.5s 超时或 CDN 失败时自动切换本地 three.min.js，防重复注入） -->
+  <script>
+    window.__threeReady = new Promise(function (resolve) {
+      var settled = false;
+      var localInjected = false;
+      var timer = null;
+
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        if (timer) clearTimeout(timer);
+        resolve(!!ok);
+      }
+
+      window.__resolveThree = function (ok) {
+        finish(ok || !!window.THREE);
+      };
+
+      window.__loadLocalThree = function () {
+        if (window.THREE) { finish(true); return; }
+        if (localInjected) return;
+        localInjected = true;
+        var fallback = document.createElement('script');
+        fallback.src = 'three.min.js';
+        fallback.async = true;
+        fallback.onload = function () { finish(!!window.THREE); };
+        fallback.onerror = function () { finish(false); };
+        document.head.appendChild(fallback);
+      };
+
+      timer = setTimeout(function () {
+        if (!window.THREE) window.__loadLocalThree();
+        else finish(true);
+      }, 2500);
+    });
+  </script>
+  <script async
+          src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"
+          onload="window.__resolveThree(!!window.THREE)"
+          onerror="window.__loadLocalThree()"></script>
+
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="scene-light" aria-hidden="true"></div>
+
+  <header class="top-bar">
+    <div class="topbar-brand">
+      <span class="brand-mark" id="brandMark" title="Daily Aesthetic Atelier">DA</span>
+      <span class="brand-text">Daily Aesthetic Atelier</span>
+      <span class="availability-pill" id="availabilityBadge" role="status">
+        <span class="availability-dot" aria-hidden="true"></span>
+        <span id="availabilityText">求职中</span>
+      </span>
+    </div>
+    <div class="top-actions">
+      <nav class="quick" aria-label="页面导航">
+        <a href="#about" data-nav="0">关于</a>
+        <a href="#education" data-nav="1">教育</a>
+        <a href="#experience" data-nav="2">实习</a>
+        <a href="#projects" data-nav="3">校园</a>
+        <a href="#works" data-nav="4">作品</a>
+        <a href="#skills" data-nav="5">技能</a>
+        <a href="#contact" data-nav="6">联系</a>
+      </nav>
+      <div class="lang-switch" role="group" aria-label="语言切换">
+        <button class="lang-btn active" data-lang="zh" type="button" aria-pressed="true">中</button>
+        <button class="lang-btn" data-lang="en" type="button" aria-pressed="false">EN</button>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">
+        <span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">◐</span>
+      </button>
+      <button class="btn" id="copyEmail" type="button">复制邮箱</button>
       <button class="btn btn-ghost" id="pdfBtn" type="button" aria-haspopup="dialog">简历 PDF</button>
     </div>
   </header>
 
-  <main class="content" data-page-node-id="p74XNl4gUPIKRm7VLVPhHT">
+  <main class="content">
     <!-- 首屏 Hero：大标题悬浮在 3D 场景之上 -->
-    <section class="hero" id="top" data-page-node-id="i1fzGJcS5Fpd8MjEB8dLqj">
-      <p class="eyebrow" id="heroEyebrow" data-page-node-id="ZXkXQ1HBq5ojelznQ1ESPy">求职意向 · 运营岗 / 设计岗</p>
-      <h1 class="hero-name tilt-soft" data-tilt data-page-node-id="A1EIVCKW3uQ4fvIr25Dly7">
-        <span id="heroName" data-page-node-id="ksHUGdkdkjFTg6pG9QkiCB">朱肖尚</span>
+    <section class="hero" id="top">
+      <p class="eyebrow" id="heroEyebrow">求职意向 · 运营岗 / 设计岗</p>
+      <h1 class="hero-name tilt-soft" data-tilt>
+        <span id="heroName">朱肖尚</span>
       </h1>
-      <p class="hero-subtitle" data-page-node-id="j7ummsumfuJGGNEDV0jCMP"><span class="subtitle-label" id="heroDegreeLabel" data-page-node-id="Y0WeSG7Vh8Nyd7S8TPd48Z">学历</span><span id="heroDegree" data-page-node-id="A8CeOBcGSaTsjLYWlQ0gZb">艺术科技与商业硕士 · 岭南大学（中国香港）</span></p>
-      <p class="hero-location" data-page-node-id="tGzxSJACUJua4sdFStWfne"><span class="subtitle-label" id="heroLocationLabel" data-page-node-id="DICawxg89t8GxnnGaBCU6I">现居</span><span id="heroLocation" data-page-node-id="0AIxmFrHZbxIGiFCHqJ1iB">中国 · 香港</span></p>
-      <div class="hero-hint" id="heroHint" data-page-node-id="ehTLFG9A8u9ZY5X9lJZOJk">拖动背景旋转 · 滚动探索 ↓</div>
-      <div class="scroll-cue" aria-hidden="true" data-page-node-id="6sgaA5NIG5WTJFJe7A8GxK"><span data-page-node-id="wnwDfp8OyeAqJwHetOSRK2"></span></div>
+      <p class="hero-subtitle"><span class="subtitle-label" id="heroDegreeLabel">学历</span><span id="heroDegree">艺术科技与商业硕士 · 岭南大学（中国香港）</span></p>
+      <p class="hero-location"><span class="subtitle-label" id="heroLocationLabel">现居</span><span id="heroLocation">中国 · 香港</span></p>
+      <div class="hero-hint" id="heroHint">拖动背景旋转 · 滚动探索 ↓</div>
+      <div class="scroll-cue" aria-hidden="true"><span></span></div>
     </section>
 
-    <div class="container" data-page-node-id="zwmILLPMaAWj9XanUeYaJB">
-      <section id="about" class="card tilt" data-tilt data-page-node-id="sWC5JZO1hhWTjq8NAu31RG">
-        <h2 id="t-about" data-page-node-id="APGgAlNtvqyIumUiB8tShF">关于我</h2>
-        <p class="summary-copy" id="aboutSummary" data-page-node-id="TctupTCNwDZEdDZgDi3Ji7"></p>
-        <div class="resume-highlights" id="aboutHighlights" data-page-node-id="LSdbGBhidqy5NpuGU2yR3v"></div>
-      </section>
-
-      <!-- Digital Creative Workspace：3D 数字创作工作台（About 区域旁） -->
-      <section id="workspace" class="card scene-card" aria-labelledby="t-workspace">
-        <h2 id="t-workspace">数字创作工作台</h2>
-        <p class="scene-hint" id="workspaceHint"></p>
-        <div class="scene-stage" id="workspaceStage">
-          <canvas id="wsCanvas" aria-label="3D 数字创作工作台，可进入沉浸视角查看设备"></canvas>
-          <button class="scene-enter" id="workspaceEnter" type="button"></button>
-          <button class="scene-exit" id="workspaceExit" type="button" hidden></button>
-          <p class="scene-immersive-hint" id="workspaceImmersiveHint" hidden></p>
-          <div class="scene-fallback" id="workspaceFallback" hidden></div>
+    <div class="container">
+      <!-- ATB 双重视角聚焦控制器（非破坏性高亮切换） -->
+      <div class="focus-lens-bar" id="focusLensBar" role="region" aria-label="ATB 聚焦视角">
+        <span class="focus-lens-caption" id="focusLensCaption">ATB 聚焦视角</span>
+        <div class="focus-lens-group" role="group" aria-label="视角切换">
+          <button class="focus-lens-btn active" type="button" data-lens="all" aria-pressed="true">全部</button>
+          <button class="focus-lens-btn" type="button" data-lens="design-tech" aria-pressed="false">设计与技术</button>
+          <button class="focus-lens-btn" type="button" data-lens="ops-business" aria-pressed="false">运营与商业</button>
         </div>
+      </div>
+
+      <!-- 桌面端非对称分栏：45% 关于我 + 55% 3D 数字创作工作台 -->
+      <div class="editorial-split" id="aboutWorkspaceSplit">
+        <section id="about" class="card tilt" data-tilt>
+          <h2 id="t-about">关于我</h2>
+          <p class="summary-copy" id="aboutSummary"></p>
+          <div class="resume-highlights" id="aboutHighlights"></div>
+        </section>
+
+        <!-- Digital Creative Workspace：3D 数字创作工作台（About 区域旁） -->
+        <section id="workspace" class="card scene-card" aria-labelledby="t-workspace">
+          <h2 id="t-workspace">数字创作工作台</h2>
+          <p class="scene-hint" id="workspaceHint"></p>
+          <div class="scene-stage" id="workspaceStage">
+            <canvas id="wsCanvas" aria-label="3D 数字创作工作台，可进入沉浸视角查看设备或点击彩蛋交互"></canvas>
+            <button class="scene-enter" id="workspaceEnter" type="button"></button>
+            <button class="scene-exit" id="workspaceExit" type="button" hidden></button>
+            <p class="scene-immersive-hint" id="workspaceImmersiveHint" hidden></p>
+            <div class="scene-fallback" id="workspaceFallback" hidden></div>
+          </div>
+          <div class="scene-legend" id="workspaceLegend" aria-label="工作台交互捷径"></div>
+        </section>
+      </div>
+
+      <!-- 中段编辑式吸顶双栏时间轴（教育 / 实习 / 校园） -->
+      <section id="education" class="card card--editorial">
+        <div class="editorial-aside">
+          <span class="editorial-index">02 / EDUCATION</span>
+          <h2 id="t-education">教育背景</h2>
+        </div>
+        <div class="editorial-timeline list" id="educationList"></div>
       </section>
 
-      <section id="education" class="card tilt" data-tilt data-page-node-id="j90uf2Z07lrGX6CXLY8OZr">
-        <h2 id="t-education" data-page-node-id="ICpDBGW1M2jPEnqExSwolB">教育背景</h2>
-        <div class="list" id="educationList" data-page-node-id="dBD4el1PwmX14bi4MV64lI"></div>
+      <section id="experience" class="card card--editorial">
+        <div class="editorial-aside">
+          <span class="editorial-index">03 / EXPERIENCE</span>
+          <h2 id="t-experience">实习经历</h2>
+        </div>
+        <div class="editorial-timeline list" id="experienceList"></div>
       </section>
 
-      <section id="experience" class="card tilt" data-tilt data-page-node-id="dOXWhrDNsSyAMu83Ei93Fq">
-        <h2 id="t-experience" data-page-node-id="kqToJ7yNePHgZZ84vGWDbl">实习经历</h2>
-        <div class="list" id="experienceList" data-page-node-id="EWJ63aFNE05Df2fjtX7GOO"></div>
+      <section id="projects" class="card card--editorial">
+        <div class="editorial-aside">
+          <span class="editorial-index">04 / CAMPUS</span>
+          <h2 id="t-projects">校园经历</h2>
+        </div>
+        <div class="editorial-timeline list" id="projectsList"></div>
       </section>
 
-      <section id="projects" class="card tilt" data-tilt data-page-node-id="qvGakqEPviXmSaXWeY4Ft4">
-        <h2 id="t-projects" data-page-node-id="mYdhI8Pg396tnUPAyg2HvZ">校园经历</h2>
-        <div class="list" id="projectsList" data-page-node-id="6IzKII1evZZY0D2IT05yVg"></div>
-      </section>
-
-      <!-- 作品集：帝女花互动叙事游戏 + 牛奶蛙破风日记 + 行策·智旅攻略 + NOVA 岭南站 3D 建筑可视化（卡片由 script.js 按语言渲染） -->
-      <section id="works" class="card tilt" data-tilt data-page-node-id="wrks01">
+      <!-- 作品集：Bento 非对称展陈网格（卡片由 script.js 按语言渲染） -->
+      <section id="works" class="card tilt" data-tilt>
         <h2 id="t-works">作品集</h2>
+        <div class="filter-bar" id="worksFilterBar" hidden></div>
         <div class="works-list" id="worksList"></div>
       </section>
 
-      <!-- AIGC Cube：透明玻璃 3D 能力立方体（Portfolio 区域） -->
+      <!-- AIGC Cube：透明玻璃 3D 能力立方体（交互控制器，联动技能与作品） -->
       <section id="cube" class="card scene-card" aria-labelledby="t-cube">
         <h2 id="t-cube">AIGC 能力立方</h2>
         <p class="scene-hint" id="cubeHint"></p>
         <div class="scene-stage cube-stage" id="cubeStage">
-          <canvas id="cubeCanvas" aria-label="3D AIGC 立方体，可进入沉浸视角，六个面对应六个创作方向"></canvas>
+          <canvas id="cubeCanvas" aria-label="3D AIGC 立方体，可进入沉浸视角，六个面对应六个创作方向并可联动筛选"></canvas>
           <button class="scene-enter" id="cubeEnter" type="button"></button>
           <button class="scene-exit" id="cubeExit" type="button" hidden></button>
           <p class="scene-immersive-hint" id="cubeImmersiveHint" hidden></p>
           <div class="scene-fallback" id="cubeFallback" hidden></div>
         </div>
+        <div class="cube-controller-bar" id="cubeControllerBar"></div>
       </section>
 
-      <section id="skills" class="card tilt" data-tilt data-page-node-id="fI1OEApU5Q7x9Ew89CoKrd">
-        <h2 id="t-skills" data-page-node-id="idIH4B7QL5OgEMxEa4TAV6">个人技能</h2>
-        <div class="skills-grid" id="skillsGrid" data-page-node-id="CrDSehPFfYCLBHP2GF2xKE"></div>
+      <section id="skills" class="card tilt" data-tilt>
+        <h2 id="t-skills">个人技能</h2>
+        <div class="filter-bar" id="skillsFilterBar" hidden></div>
+        <div class="skills-grid" id="skillsGrid"></div>
       </section>
 
-      <section id="contact" class="card tilt" data-tilt data-page-node-id="X3ixiULpbpXNO8LZpfgrzR">
-        <h2 id="t-contact" data-page-node-id="Bi9jyzTJHbkVu9rZEURFLR">联系我</h2>
-        <div class="contact-grid" id="contactGrid" data-page-node-id="rEZoNtEreg8yY0St0DhvmH"></div>
+      <section id="contact" class="card tilt" data-tilt>
+        <h2 id="t-contact">联系我</h2>
+        <div class="contact-grid" id="contactGrid"></div>
       </section>
     </div>
 
-    <footer class="site-footer" data-page-node-id="oOFibFnPgpG1ehaTbhp9Fr">
-      <p data-page-node-id="VyDftIReLM474FOfgLuls8">© <span id="year" data-page-node-id="csaEGso85UcuTc34aphuLo"></span> <span id="footerName">朱肖尚</span> — <span id="footerTag">3D 交互式简历</span></p>
+    <footer class="site-footer">
+      <p>© <span id="year"></span> <span id="footerName">朱肖尚</span> — <span id="footerTag">3D 交互式简历</span></p>
     </footer>
   </main>
+
+  <!-- 隐藏微光粒子彩蛋：4 枚边缘星核路标 + 360° 轨道日晷滚动进度盘 -->
+  <div class="star-cores-layer" id="starCoresLayer" aria-hidden="true"></div>
+  <aside class="orbital-dial" id="orbitalDial" aria-label="页面进度日晷">
+    <div class="orbital-readout" id="orbitalReadout" role="status" aria-live="off">
+      <span class="orbital-pct" id="orbitalPct">00%</span>
+      <span class="orbital-sep" aria-hidden="true">·</span>
+      <span class="orbital-sec" id="orbitalSec">首页</span>
+      <button class="orbital-top-btn" id="orbitalTopBtn" type="button" hidden>↑ 顶部</button>
+    </div>
+    <div class="orbital-ring-wrap" id="orbitalRingWrap">
+      <svg class="orbital-svg" id="orbitalSvg" viewBox="0 0 100 100" aria-hidden="false">
+        <defs>
+          <linearGradient id="orbitalGradLight" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1A1A1A" />
+            <stop offset="100%" stop-color="#B59461" />
+          </linearGradient>
+          <linearGradient id="orbitalGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#E8ECF5" />
+            <stop offset="100%" stop-color="#D6B88C" />
+          </linearGradient>
+        </defs>
+        <circle class="orbital-track" cx="50" cy="50" r="40" />
+        <circle class="orbital-arc" id="orbitalArc" cx="50" cy="50" r="40" transform="rotate(-90 50 50)" />
+        <g class="orbital-nodes" id="orbitalNodes"></g>
+        <circle class="orbital-bead" id="orbitalBead" cx="50" cy="10" r="3" />
+      </svg>
+      <button class="particle-trigger" id="particleTrigger" type="button" aria-pressed="false" aria-label="唤醒微光" data-tooltip="唤醒微光">
+        <span class="particle-trigger-icon" aria-hidden="true">✦</span>
+      </button>
+    </div>
+  </aside>
 
   <!-- 简历 PDF：站内预览弹层（内容由 script.js 按语言切换） -->
   <div class="pdf-modal" id="pdfModal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle" aria-hidden="true">
@@ -143,7 +282,7 @@
     </div>
   </div>
 
-  <!-- 作品集浮层：iframe 内嵌作品（标题与链接由 script.js 按所选作品注入） -->
+  <!-- 作品集浮层：iframe 内嵌作品（标题、速览栏与链接由 script.js 注入） -->
   <div class="pf-modal" id="pfModal" role="dialog" aria-modal="true" aria-labelledby="pfModalTitle" aria-hidden="true">
     <div class="pf-modal-backdrop" data-pf-close></div>
     <div class="pf-modal-panel">
@@ -154,15 +293,34 @@
           <button class="pf-close" id="pfClose" type="button" aria-label="关闭">×</button>
         </div>
       </div>
+      <div class="pf-brief-bar" id="pfBriefBar">
+        <div class="pf-brief-item">
+          <span class="pf-brief-label" id="pfBriefRoleLabel">担任角色</span>
+          <span class="pf-brief-value" id="pfBriefRole"></span>
+        </div>
+        <span class="pf-brief-divider" aria-hidden="true"></span>
+        <div class="pf-brief-item pf-brief-item--outcome">
+          <span class="pf-brief-label" id="pfBriefOutcomeLabel">核心亮点</span>
+          <span class="pf-brief-value" id="pfBriefOutcome"></span>
+        </div>
+      </div>
       <div class="pf-modal-body">
         <iframe id="pfFrame" title="作品预览" referrerpolicy="no-referrer" allow="fullscreen; autoplay; encrypted-media" src="about:blank"></iframe>
       </div>
     </div>
   </div>
 
-  <!-- 3D 场景悬停标签（工作台设备 / Cube 面，内容由 script.js 控制） -->
+  <!-- 3D 场景悬停标签 -->
   <div class="scene-tooltip" id="sceneTooltip" role="status" aria-hidden="true"></div>
 
-  <script src="script.js?v=20261123"></script>
+  <!-- 浮动提示 Toast -->
+  <div class="atelier-toast" id="atelierToast" role="status" aria-live="polite" aria-hidden="true"></div>
+
+  <!-- 作品集悬停定制语境光标（仅桌面端精细指针启用） -->
+  <div class="custom-cursor" id="customCursor" aria-hidden="true">
+    <span class="custom-cursor-label" id="customCursorLabel"></span>
+  </div>
+
+  <script src="script.js?v=20261129"></script>
 </body>
 </html>

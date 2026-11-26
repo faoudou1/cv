@@ -1,16 +1,17 @@
 /**
- * Digital Creative Portfolio — 数据 + 渲染 + Three.js 场景（深色主题版）
- * 依赖：three.min.js (CDN)。若加载失败，自动降级为静态版。
+ * Daily Aesthetic Atelier — Neo-Atelier 3D 交互式简历与作品展厅
+ * 依赖：three.min.js (CDN + onerror 本地兜底)。若 WebGL 不可用，自动降级为静态版。
  *
  * 三个 3D 场景：
- *  1. Hero 个人数字身份装置（背景层，含首字母 / 玻璃主体 / 金属环 / 粒子）
- *  2. Digital Creative Workspace（About 区域旁的 3D 工作台）
- *  3. AIGC Cube（Portfolio 区域的透明能力立方体）
- * 每个场景都有静态 fallback；离屏场景自动暂停渲染以节省性能。
+ *  1. Hero 个人数字身份装置（全屏背景层，随页面滚动进度进行章节化运镜与构图切换）
+ *  2. Digital Creative Workspace（About 区域旁 3D 工作台：显示器/简历本/台灯真实交互彩蛋）
+ *  3. AIGC Cube（能力立方体控制器：点击六面联动高亮技能与作品集，支持 Reset / Show All）
+ * 离屏场景通过 IntersectionObserver 真正停止 requestAnimationFrame 循环以节省性能。
  */
 
 const PORTFOLIO_URL = 'https://dinuhua.app.workbuddy.host/?sharecode=QEYALK4J46';
 
+/* 简历核心数据（严禁改动任何既有文案内容） */
 const defaultResumeData = {
   zh: {
     name: '朱肖尚',
@@ -33,6 +34,7 @@ const defaultResumeData = {
     pdfFile: 'assets/resume-zh.pdf?v=20260929',
     pdfDownloadName: '朱肖尚简历.pdf',
     nav: ['关于', '教育', '实习', '校园', '作品', '技能', '联系'],
+    railNav: ['关于', '教育', '实习', '校园', '作品', '技能', '联系'],
     sectionTitles: {
       about: '关于我',
       workspace: '数字创作工作台',
@@ -44,26 +46,67 @@ const defaultResumeData = {
       skills: '个人技能',
       contact: '联系我'
     },
-    workspaceHint: '点击画面进入 3D 工作台 · 拖动 360° 环视 · 滚轮缩放',
+    availability: '求职中',
+    themeToDark: '切换至展厅暗色模式',
+    themeToLight: '切换至画廊浅色模式',
+    toastThemeDark: '台灯已点亮 · 展厅暗色模式',
+    toastThemeLight: '画廊自然光 · 浅色画廊模式',
+    toastEmailCopied: '已复制邮箱：',
+    focusLensCaption: 'ATB 聚焦视角',
+    focusLensOptions: {
+      all: '全部',
+      'design-tech': '设计与技术',
+      'ops-business': '运营与商业'
+    },
+    particleTooltipOff: '唤醒微光',
+    particleTooltipOn: '收起微光 (ESC)',
+    toastParticleOn: '✦ 发现隐藏光影彩蛋 · 移动鼠标雕塑微光，按住聚拢，点击星核跳转重点',
+    toastParticleOff: '✦ 已回到静谧展厅背景',
+    orbitalTop: '↑ 顶部',
+    orbitalHero: '首页',
+    starCores: [
+      { id: 'about', label: '01 · 岭南 ATB' },
+      { id: 'works', label: '02 · 3D 作品集' },
+      { id: 'cube', label: '03 · AIGC 能力' },
+      { id: 'contact', label: '04 · 联系我' }
+    ],
+    pfOpen: '新标签页打开',
+    pfClose: '关闭',
+    pfRoleLabel: '担任角色',
+    pfOutcomeLabel: '核心亮点',
+    cubeFilterAll: '重置 / 显示全部',
+    cubeFilterPrompt: '点击立方体任意面或下方标签，联动高亮相关技能与作品',
+    cubeFilterActive: '当前聚焦',
+    cubeJumpWorks: '查看联动作品 ↑',
+    cubeJumpSkills: '查看联动技能 ↓',
+    matchedBadge: '能力匹配',
+    cubeMatchSummary: '已聚焦 {face}：匹配 {skills} 项技能、{works} 件作品',
+    workspaceLegend: {
+      monitor: '显示器 → 作品预览',
+      notebook: '简历本 → 简历 PDF',
+      lamp: '台灯 → 明暗切换'
+    },
+    workspaceHint: '点击画面进入 3D 工作台 · 点击显示器/简历本/台灯触发彩蛋',
     enterWorkspace: '进入 3D 工作台',
     exitWorkspace: '退出 ✕',
-    immersiveHint: '拖动 360° 环视 · 滚轮缩放 · 点击屏幕关键词或设备跳转板块 · ESC 退出',
-    cubeHint: '点击画面进入 · 拖动旋转 · 悬停放大当前面 · 点击面跳转板块',
+    immersiveHint: '拖动 360° 环视 · 滚轮缩放 · 点击显示器/简历本/台灯触发彩蛋 · ESC 退出',
+    cubeHint: '点击画面进入 · 拖动旋转 · 点击立方体六面联动筛选技能与作品',
     enterCube: '进入能力立方',
-    cubeImmersiveHint: '拖动旋转 · 滚轮缩放 · 点击立方体面跳转对应板块 · ESC 退出',
+    cubeImmersiveHint: '拖动旋转 · 滚轮缩放 · 点击立方体面联动筛选技能与作品 · ESC 退出',
     comingSoon: '敬请期待',
     fallbackWorkspace: '数字创作工作台',
     fallbackCube: 'AIGC 能力立方 · 能力矩阵',
     deviceLabels: {
-      desk: '数字工作台',
-      monitor: '数字媒体',
-      camera: '影像与媒体',
-      tablet: '视觉设计',
-      keyboard: '创意工具',
-      phone: '互动体验',
-      ai: 'AIGC'
+      desk: '数字工作台 · 关于我',
+      monitor: '显示器 · 点击预览作品集',
+      notebook: '简历本 · 点击打开简历 PDF',
+      lamp: '台灯 · 点击切换明暗模式',
+      camera: '影像与媒体 · 实习经历',
+      tablet: '视觉设计 · 校园经历',
+      keyboard: '创意工具 · 个人技能',
+      phone: '互动体验 · 联系我',
+      ai: 'AIGC · 个人技能'
     },
-    // 3D 场景里用 canvas 画进贴图的文字（顺序与 SCREEN_LINKS 一一对应）
     sceneText: {
       screenWords: ['数字媒体', '互动体验', '视觉设计', 'AIGC', '动效影像', '视觉叙事'],
       tabletWords: ['视觉', '设计'],
@@ -212,6 +255,7 @@ const defaultResumeData = {
     pdfFile: 'assets/resume-en.pdf?v=20260929',
     pdfDownloadName: 'Zhu_Xiaoshang_Resume_EN.pdf',
     nav: ['About', 'Education', 'Internships', 'Campus', 'Works', 'Skills', 'Contact'],
+    railNav: ['ABOUT', 'EDUCATION', 'INTERNSHIPS', 'CAMPUS', 'WORKS', 'SKILLS', 'CONTACT'],
     sectionTitles: {
       about: 'About Me',
       workspace: 'Digital Creative Workspace',
@@ -223,26 +267,67 @@ const defaultResumeData = {
       skills: 'Skills',
       contact: 'Contact Me'
     },
-    workspaceHint: 'Click the scene to enter the 3D workspace · drag for a 360° view · scroll to zoom',
+    availability: 'Open to Work',
+    themeToDark: 'Switch to Dark Exhibition Mode',
+    themeToLight: 'Switch to Light Gallery Mode',
+    toastThemeDark: 'Desk Lamp On · Dark Exhibition Mode',
+    toastThemeLight: 'Gallery Daylight · Light Gallery Mode',
+    toastEmailCopied: 'Email copied: ',
+    focusLensCaption: 'ATB Focus Lens',
+    focusLensOptions: {
+      all: 'All',
+      'design-tech': 'Design & Tech',
+      'ops-business': 'Ops & Business'
+    },
+    particleTooltipOff: 'Awaken Particles',
+    particleTooltipOn: 'Exit Atelier (ESC)',
+    toastParticleOn: '✦ Particle Atelier awakened · Move to sculpt light, hold to gather, click star cores to jump',
+    toastParticleOff: '✦ Returned to ambient gallery backdrop',
+    orbitalTop: '↑ TOP',
+    orbitalHero: 'TOP',
+    starCores: [
+      { id: 'about', label: '01 · Lingnan ATB' },
+      { id: 'works', label: '02 · 3D Works' },
+      { id: 'cube', label: '03 · AIGC Cube' },
+      { id: 'contact', label: '04 · Contact' }
+    ],
+    pfOpen: 'Open in new tab',
+    pfClose: 'Close',
+    pfRoleLabel: 'ROLE',
+    pfOutcomeLabel: 'KEY HIGHLIGHTS',
+    cubeFilterAll: 'Reset / Show All',
+    cubeFilterPrompt: 'Click any cube face or tag below to highlight linked skills & works',
+    cubeFilterActive: 'Active Focus',
+    cubeJumpWorks: 'View Works ↑',
+    cubeJumpSkills: 'View Skills ↓',
+    matchedBadge: 'MATCHED',
+    cubeMatchSummary: 'Focused on {face}: {skills} skills & {works} works matched',
+    workspaceLegend: {
+      monitor: 'Monitor → Portfolio',
+      notebook: 'Notebook → Resume PDF',
+      lamp: 'Desk Lamp → Light / Dark'
+    },
+    workspaceHint: 'Click to enter 3D workspace · click Monitor / Notebook / Lamp for shortcuts',
     enterWorkspace: 'Enter 3D Workspace',
     exitWorkspace: 'Exit ✕',
-    immersiveHint: 'Drag for 360° view · scroll to zoom · click screen keywords or devices to jump · ESC to exit',
-    cubeHint: 'Click the scene to enter · drag to rotate · hover to zoom a face · click a face to jump',
+    immersiveHint: 'Drag for 360° view · scroll to zoom · click Monitor / Notebook / Lamp · ESC to exit',
+    cubeHint: 'Click to enter · drag to rotate · click a face to highlight linked skills & works',
     enterCube: 'Enter AIGC Cube',
-    cubeImmersiveHint: 'Drag for 360° view around the cube · scroll to zoom · click a face to jump · ESC to exit',
+    cubeImmersiveHint: 'Drag for 360° view · scroll to zoom · click a face to filter skills & works · ESC to exit',
     comingSoon: 'COMING SOON',
     fallbackWorkspace: 'Digital Creative Workspace',
     fallbackCube: 'AIGC Cube · Capability Matrix',
     deviceLabels: {
-      desk: 'DIGITAL WORKSPACE',
-      monitor: 'DIGITAL MEDIA',
-      camera: 'VIDEO / MEDIA',
-      tablet: 'VISUAL DESIGN',
-      keyboard: 'CREATIVE TOOLS',
-      phone: 'INTERACTIVE',
-      ai: 'AIGC'
+      desk: 'DIGITAL WORKSPACE · ABOUT',
+      monitor: 'MONITOR · OPEN PORTFOLIO',
+      notebook: 'NOTEBOOK · OPEN RESUME PDF',
+      lamp: 'DESK LAMP · TOGGLE THEME',
+      camera: 'VIDEO / MEDIA · INTERNSHIPS',
+      tablet: 'VISUAL DESIGN · CAMPUS',
+      keyboard: 'CREATIVE TOOLS · SKILLS',
+      phone: 'INTERACTIVE · CONTACT',
+      ai: 'AIGC · SKILLS'
     },
-    // 3D 场景里用 canvas 画进贴图的文字（顺序与 SCREEN_LINKS 一一对应）
     sceneText: {
       screenWords: ['DIGITAL MEDIA', 'INTERACTIVE', 'DESIGN', 'AIGC', 'MOTION', 'VISUAL'],
       tabletWords: ['VISUAL', 'DESIGN'],
@@ -372,13 +457,120 @@ const defaultResumeData = {
   }
 };
 
+/* 作品集结构化元数据（Bento 卡片 Pills 与弹窗速览栏） */
+const WORK_META = {
+  dinuhua: {
+    featured: true,
+    cursor: 'PLAY',
+    role: { zh: '主创 · 交互叙事设计', en: 'Lead · Interactive Narrative' },
+    stack: ['Branching Story', 'AIGC Audiovisuals', 'Interactive Web'],
+    outcome: {
+      zh: '将粤剧《帝女花》重构为分支抉择体验，融合影像演出与 AI 生成视听语言。',
+      en: 'Reimagines Cantonese opera "The Flower Princess" into a branching choice game with AI audiovisuals.'
+    }
+  },
+  milkfrog: {
+    featured: false,
+    cursor: 'PLAY',
+    role: { zh: '独立开发 · 互动 SVG', en: 'Solo Dev · Interactive SVG' },
+    stack: ['Hand-coded SVG', 'Vanilla JS', 'Live Telemetry'],
+    outcome: {
+      zh: '纯手写 SVG 与原生 JS 实时骑行动画，集成晴/雨/夜三天气与跳动骑行码表。',
+      en: 'Hand-coded SVG + vanilla JS cycling animation with 3 weather states & live cycling computer.'
+    }
+  },
+  tripcraft: {
+    featured: false,
+    cursor: 'EXPLORE',
+    role: { zh: '产品策划 · 地图交互', en: 'Product · Map Interaction' },
+    stack: ['Amap / OSM', 'Trilingual UI', 'Route Planner'],
+    outcome: {
+      zh: '覆盖内地 28 城及港澳地区，支持多城联游巡航地图、预算拆解与繁简英三语切换。',
+      en: 'Covers 28 Mainland cities + HK/Macau with multi-city routing, budget breakdown & trilingual UI.'
+    }
+  },
+  'lingnan-nova': {
+    featured: true,
+    cursor: 'VIEW 3D',
+    role: { zh: '3D 场景与交互开发', en: '3D Scene & Interactive Dev' },
+    stack: ['Vite', 'Three.js', 'PBR Glass'],
+    outcome: {
+      zh: '物理玻璃幕墙、110 位实时行人流模拟、日间/黄昏蓝调光照与主题一键切换。',
+      en: 'Physical glass facade, 110 instanced pedestrians, Daylight/Blue-Hour lighting & theme toggle.'
+    }
+  }
+};
+
+/* AIGC Cube 六面 → 技能索引（0-based）与作品集 ID 联动映射 */
+const CUBE_FACE_MAPPING = {
+  VISUAL: { skillIndices: [5, 6, 7, 10], workIds: ['lingnan-nova', 'dinuhua'] },
+  AIGC: { skillIndices: [6, 9, 10, 11], workIds: ['dinuhua', 'tripcraft'] },
+  INTERACTIVE: { skillIndices: [5, 6, 9], workIds: ['dinuhua', 'milkfrog', 'tripcraft', 'lingnan-nova'] },
+  VIDEO: { skillIndices: [8, 9, 11], workIds: ['dinuhua'] },
+  MOTION: { skillIndices: [7, 8, 9, 11], workIds: ['milkfrog', 'lingnan-nova'] },
+  DESIGN: { skillIndices: [5, 7, 10], workIds: ['lingnan-nova', 'tripcraft', 'milkfrog'] }
+};
+
+const CUBE_FACE_ORDER = ['VISUAL', 'AIGC', 'INTERACTIVE', 'VIDEO', 'MOTION', 'DESIGN'];
+
+/* ATB 双重视角聚焦映射（非破坏性高亮） */
+const FOCUS_LENS_MAP = {
+  highlights: {
+    0: ['design-tech'],
+    1: ['ops-business', 'design-tech'],
+    2: ['design-tech'],
+    3: ['design-tech'],
+    4: ['design-tech', 'ops-business']
+  },
+  education: {
+    0: ['ops-business', 'design-tech'],
+    1: ['design-tech']
+  },
+  experience: {
+    0: ['ops-business', 'design-tech'],
+    1: ['ops-business'],
+    2: ['design-tech']
+  },
+  projects: {
+    0: ['ops-business']
+  },
+  works: {
+    dinuhua: ['design-tech'],
+    milkfrog: ['design-tech'],
+    tripcraft: ['ops-business'],
+    'lingnan-nova': ['design-tech', 'ops-business']
+  },
+  skills: {
+    0: ['ops-business'],
+    1: ['ops-business'],
+    2: ['ops-business'],
+    3: ['ops-business'],
+    4: ['ops-business'],
+    5: ['design-tech'],
+    6: ['design-tech'],
+    7: ['design-tech'],
+    8: ['design-tech', 'ops-business'],
+    9: ['design-tech'],
+    10: ['design-tech', 'ops-business'],
+    11: ['ops-business', 'design-tech']
+  }
+};
+
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 /* ============================================================
- * 状态
+ * 状态与主题系统
  * ============================================================ */
 const cloneData = (data) => JSON.parse(JSON.stringify(data));
 
 const state = {
   language: 'zh',
+  theme: 'light',
+  activeCubeFace: null,
+  focusLens: 'all',
+  particleAtelier: false,
   resumeData: cloneData(defaultResumeData)
 };
 
@@ -386,35 +578,36 @@ function getText() {
   return state.resumeData[state.language];
 }
 
-/* ------------------------------------------------------------
- * 3D 场景文案：贴图里的文字随语言切换重绘
- * 场景初始化时注册重绘函数，renderResume() 末尾统一调用
- * ------------------------------------------------------------ */
 const sceneTextRefreshers = [];
-
 function onSceneTextRefresh(fn) {
   if (typeof fn === 'function') sceneTextRefreshers.push(fn);
 }
-
 function refreshSceneText() {
   sceneTextRefreshers.forEach((fn) => {
-    try { fn(); } catch (error) { /* 场景未初始化或已销毁，忽略 */ }
+    try { fn(); } catch (error) { /* 忽略未初始化场景 */ }
   });
 }
 
-/* 当前语言下某一类场景文案；缺省回落到英文 */
+const themeChangeListeners = [];
+function onThemeChange(fn) {
+  if (typeof fn === 'function') themeChangeListeners.push(fn);
+}
+
+const cubeVisualRefreshers = [];
+function onCubeVisualRefresh(fn) {
+  if (typeof fn === 'function') cubeVisualRefreshers.push(fn);
+}
+
 function getSceneText(key, fallback) {
   const sceneText = getText().sceneText || {};
   return sceneText[key] || fallback;
 }
 
-/* 立方体某一面的显示文字（内部仍用英文 key 做跳转映射） */
 function getCubeFaceText(faceKey) {
   const faces = getSceneText('cubeFaces', {});
   return faces[faceKey] || faceKey;
 }
 
-/* 安全的文本节点创建（替代 innerHTML 拼接，避免注入） */
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -423,7 +616,63 @@ function el(tag, className, text) {
 }
 
 /* ============================================================
- * 渲染
+ * 浮动 Toast 通知
+ * ============================================================ */
+let toastTimer = 0;
+function showToast(message, durationMs) {
+  const toast = document.getElementById('atelierToast');
+  if (!toast || !message) return;
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add('visible');
+  toast.setAttribute('aria-hidden', 'false');
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('visible');
+    toast.setAttribute('aria-hidden', 'true');
+  }, durationMs || 2600);
+}
+
+/* ============================================================
+ * 双主题切换（Light Gallery Mode ↔ Dark Exhibition Mode）
+ * ============================================================ */
+function updateThemeToggleUI() {
+  const btn = document.getElementById('themeToggle');
+  const icon = document.getElementById('themeToggleIcon');
+  const text = getText();
+  const isDark = state.theme === 'dark';
+  if (icon) icon.textContent = isDark ? '☀' : '◐';
+  if (btn) {
+    const label = isDark ? text.themeToLight : text.themeToDark;
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-pressed', String(isDark));
+  }
+}
+
+function applyTheme(nextTheme, options) {
+  const opts = options || {};
+  const normalized = nextTheme === 'dark' ? 'dark' : 'light';
+  state.theme = normalized;
+  document.documentElement.dataset.theme = normalized;
+  updateThemeToggleUI();
+
+  themeChangeListeners.forEach((fn) => {
+    try { fn(normalized); } catch (error) { /* 忽略场景未就绪 */ }
+  });
+  refreshSceneText();
+
+  if (!opts.silent) {
+    const text = getText();
+    showToast(normalized === 'dark' ? text.toastThemeDark : text.toastThemeLight);
+  }
+}
+
+function toggleTheme(silent) {
+  applyTheme(state.theme === 'light' ? 'dark' : 'light', { silent: !!silent });
+}
+
+/* ============================================================
+ * 渲染主简历内容
  * ============================================================ */
 function renderResume() {
   const text = getText();
@@ -440,6 +689,10 @@ function renderResume() {
   document.getElementById('aboutSummary').textContent = text.summary;
   document.getElementById('workspaceHint').textContent = text.workspaceHint;
   document.getElementById('cubeHint').textContent = text.cubeHint;
+
+  const availText = document.getElementById('availabilityText');
+  if (availText) availText.textContent = text.availability;
+
   const wsEnter = document.getElementById('workspaceEnter');
   const wsExit = document.getElementById('workspaceExit');
   const wsImmHint = document.getElementById('workspaceImmersiveHint');
@@ -465,24 +718,30 @@ function renderResume() {
   // 关于我 - 亮点
   const highlights = document.getElementById('aboutHighlights');
   highlights.innerHTML = '';
-  text.highlights.forEach((item) => highlights.appendChild(el('span', 'highlight-item', item)));
+  text.highlights.forEach((item, idx) => {
+    const span = el('span', 'highlight-item', item);
+    span.dataset.highlightIndex = String(idx);
+    highlights.appendChild(span);
+  });
 
   // 教育背景
   const educationList = document.getElementById('educationList');
   educationList.innerHTML = '';
-  text.education.forEach((item) => {
+  text.education.forEach((item, idx) => {
     const row = el('div', 'list-item');
+    row.dataset.eduIndex = String(idx);
     row.appendChild(el('strong', null, item.degree + ' — ' + item.school));
     row.appendChild(el('p', 'meta', item.period));
     if (item.note) row.appendChild(el('p', 'desc', item.note));
     educationList.appendChild(row);
   });
 
-  // 工作经历
+  // 实习经历
   const experienceList = document.getElementById('experienceList');
   experienceList.innerHTML = '';
-  text.experience.forEach((item) => {
+  text.experience.forEach((item, idx) => {
     const article = el('article', 'article interactive-item');
+    article.dataset.expIndex = String(idx);
     const details = document.createElement('details');
     details.open = true;
     const summary = document.createElement('summary');
@@ -499,22 +758,27 @@ function renderResume() {
     experienceList.appendChild(article);
   });
 
-  // 项目
+  // 校园经历
   const projectsList = document.getElementById('projectsList');
   projectsList.innerHTML = '';
-  text.projects.forEach((item) => {
+  text.projects.forEach((item, idx) => {
     const row = el('div', 'list-item');
+    row.dataset.projIndex = String(idx);
     row.appendChild(el('strong', null, item.name));
     row.appendChild(el('p', 'desc', item.description));
     projectsList.appendChild(row);
   });
 
-  // 技能
+  // 个人技能（记录 0-based index 以便与 AIGC Cube 联动）
   const skillsGrid = document.getElementById('skillsGrid');
   skillsGrid.innerHTML = '';
-  text.skills.forEach((skill) => skillsGrid.appendChild(el('span', 'skill-pill', skill)));
+  text.skills.forEach((skill, idx) => {
+    const pill = el('span', 'skill-pill', skill);
+    pill.dataset.skillIndex = String(idx);
+    skillsGrid.appendChild(pill);
+  });
 
-  // 联系
+  // 联系方式
   const contactGrid = document.getElementById('contactGrid');
   contactGrid.innerHTML = '';
   text.links.forEach((link) => {
@@ -523,7 +787,6 @@ function renderResume() {
     if (link.href) {
       const a = el('a', link.pdf ? 'pdf-trigger' : null, link.value);
       a.href = link.href;
-      // PDF 入口：不跳转，改为在页面内弹出预览
       if (link.pdf) {
         a.setAttribute('aria-haspopup', 'dialog');
         a.addEventListener('click', (event) => {
@@ -538,53 +801,274 @@ function renderResume() {
     contactGrid.appendChild(item);
   });
 
-  // 作品集
+  // 作品集 Bento Grid + 辅助控制条
   renderWorks(text.works);
+  renderWorkspaceLegend();
+  applyCubeFilterUI();
+  renderFocusLensUI();
+  applyFocusLensUI();
+  scheduleOrbitalLayout();
+  renderStarCores();
+  updateParticleTriggerUI();
+  updateThemeToggleUI();
+
+  // 如果作品弹窗已打开，同步切换语言后的速览信息
+  if (pfCurrentWorkId) {
+    const modal = document.getElementById('pfModal');
+    if (modal && modal.classList.contains('open')) {
+      syncPortfolioModalMeta(pfCurrentWorkId);
+    }
+  }
 
   document.getElementById('year').textContent = new Date().getFullYear();
   document.getElementById('footerName').textContent = text.name;
   document.getElementById('footerTag').textContent = text.footerTag;
-  document.title = text.name + (state.language === 'zh' ? ' · Digital Creative Portfolio' : ' · Digital Creative Portfolio');
+  document.title = text.name + ' · Digital Creative Portfolio';
 
-  // 语言切换后，3D 场景贴图里的文字同步重绘
   refreshSceneText();
 }
 
-/* 作品集卡片：按当前语言渲染，data-work 携带作品 id 供浮层读取 */
+/* 工作台彩蛋捷径条（可点击直接体验，与 3D 场景点击完全等价） */
+function renderWorkspaceLegend() {
+  const container = document.getElementById('workspaceLegend');
+  if (!container) return;
+  const legend = getText().workspaceLegend || {};
+  container.textContent = '';
+
+  const actions = [
+    { key: 'monitor', label: legend.monitor, onClick: () => openPortfolio('dinuhua') },
+    { key: 'notebook', label: legend.notebook, onClick: () => openResumePdf() },
+    { key: 'lamp', label: legend.lamp, onClick: () => toggleTheme(false) }
+  ];
+
+  actions.forEach((item) => {
+    if (!item.label) return;
+    const chip = el('button', 'legend-chip', item.label);
+    chip.type = 'button';
+    chip.dataset.easterEgg = item.key;
+    chip.addEventListener('click', item.onClick);
+    container.appendChild(chip);
+  });
+}
+
+/* 作品集 Bento 网格渲染 */
 function renderWorks(works) {
   const list = document.getElementById('worksList');
   if (!list || !works || !Array.isArray(works.items)) return;
   list.textContent = '';
+  const lang = state.language;
 
   works.items.forEach((item, index) => {
-    const feature = el('div', 'work-feature');
-    if (index > 0) feature.classList.add('work-feature--divided');
+    const meta = WORK_META[item.id] || {};
+    const card = el('article', 'work-card');
+    if (meta.featured) card.classList.add('work-card--featured');
+    card.dataset.workId = item.id;
+    card.dataset.cursorLabel = meta.cursor || 'EXPLORE';
 
     const cover = el('button', 'work-cover work-cover--' + item.id);
     cover.type = 'button';
     cover.dataset.work = item.id;
     cover.setAttribute('aria-label', item.modalTitle);
+
+    const idxBadge = el('span', 'work-cover-index', '0' + (index + 1));
+    idxBadge.setAttribute('aria-hidden', 'true');
+    cover.appendChild(idxBadge);
+
     const emoji = el('span', 'work-cover-emoji', item.cover);
     emoji.setAttribute('aria-hidden', 'true');
     cover.appendChild(emoji);
     cover.appendChild(el('span', 'work-cover-cta', works.enter));
 
     const info = el('div', 'work-info');
-    info.appendChild(el('span', 'work-tag', item.tag));
+    const tagRow = el('div', 'work-tag-row');
+    tagRow.appendChild(el('span', 'work-tag', item.tag));
+    const matchBadge = el('span', 'work-match-badge', getText().matchedBadge);
+    matchBadge.hidden = true;
+    tagRow.appendChild(matchBadge);
+    info.appendChild(tagRow);
+
     info.appendChild(el('h3', 'work-title', item.title));
+
+    // Monospace 角色与技术栈标签
+    const metaPills = el('div', 'work-meta-pills');
+    const roleText = meta.role ? (meta.role[lang] || meta.role.zh) : '';
+    if (roleText) {
+      metaPills.appendChild(el('span', 'work-pill work-pill--role', roleText));
+    }
+    if (Array.isArray(meta.stack)) {
+      meta.stack.forEach((tech) => {
+        metaPills.appendChild(el('span', 'work-pill work-pill--tech', tech));
+      });
+    }
+    info.appendChild(metaPills);
+
     info.appendChild(el('p', 'work-desc', item.desc));
     const enter = el('button', 'btn work-enter-btn', works.enter);
     enter.type = 'button';
     enter.dataset.work = item.id;
     info.appendChild(enter);
 
-    feature.appendChild(cover);
-    feature.appendChild(info);
-    list.appendChild(feature);
+    card.appendChild(cover);
+    card.appendChild(info);
+    list.appendChild(card);
   });
 }
 
-/* 折叠切换时的轻微脉冲反馈 */
+/* ============================================================
+ * AIGC Cube 联动控制器（技能高亮 + 作品筛选 + Reset / Show All）
+ * ============================================================ */
+function setCubeFilter(faceKey, options) {
+  const opts = options || {};
+  const normalized = CUBE_FACE_MAPPING[faceKey] ? faceKey : null;
+  if (!normalized || state.activeCubeFace === normalized) {
+    resetCubeFilter();
+    return;
+  }
+  state.activeCubeFace = normalized;
+  applyCubeFilterUI();
+
+  if (!opts.silent) {
+    const mapping = CUBE_FACE_MAPPING[normalized];
+    const text = getText();
+    const summary = (text.cubeMatchSummary || '')
+      .replace('{face}', getCubeFaceText(normalized))
+      .replace('{skills}', String(mapping.skillIndices.length))
+      .replace('{works}', String(mapping.workIds.length));
+    if (summary) showToast(summary, 2800);
+  }
+}
+
+function resetCubeFilter() {
+  state.activeCubeFace = null;
+  applyCubeFilterUI();
+}
+
+function buildFilterStatusBar(targetEl, faceKey, jumpSelector, jumpLabel) {
+  if (!targetEl) return;
+  const text = getText();
+  if (!faceKey || !CUBE_FACE_MAPPING[faceKey]) {
+    targetEl.hidden = true;
+    targetEl.textContent = '';
+    return;
+  }
+
+  targetEl.hidden = false;
+  targetEl.textContent = '';
+
+  const info = el('div', 'filter-bar-info');
+  info.appendChild(el('span', 'filter-bar-badge', getCubeFaceText(faceKey)));
+  info.appendChild(el('span', null, text.cubeFilterActive));
+
+  const actions = el('div', 'filter-bar-actions');
+  if (jumpSelector && jumpLabel) {
+    const jumpBtn = el('button', 'filter-jump-btn', jumpLabel);
+    jumpBtn.type = 'button';
+    jumpBtn.addEventListener('click', () => {
+      const target = document.querySelector(jumpSelector);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    actions.appendChild(jumpBtn);
+  }
+
+  const resetBtn = el('button', 'filter-reset-btn', text.cubeFilterAll);
+  resetBtn.type = 'button';
+  resetBtn.addEventListener('click', resetCubeFilter);
+  actions.appendChild(resetBtn);
+
+  targetEl.appendChild(info);
+  targetEl.appendChild(actions);
+}
+
+function applyCubeFilterUI() {
+  const text = getText();
+  const faceKey = state.activeCubeFace;
+  const mapping = faceKey ? CUBE_FACE_MAPPING[faceKey] : null;
+
+  // 1. 技能胶囊高亮 / 降噪
+  document.querySelectorAll('#skillsGrid .skill-pill').forEach((pill) => {
+    const idx = Number(pill.dataset.skillIndex);
+    if (!mapping) {
+      pill.classList.remove('is-highlighted', 'is-dimmed');
+    } else {
+      const match = mapping.skillIndices.includes(idx);
+      pill.classList.toggle('is-highlighted', match);
+      pill.classList.toggle('is-dimmed', !match);
+    }
+  });
+
+  // 2. 作品集卡片高亮 / 降噪
+  document.querySelectorAll('#worksList .work-card').forEach((card) => {
+    const workId = card.dataset.workId;
+    const badge = card.querySelector('.work-match-badge');
+    if (!mapping) {
+      card.classList.remove('is-highlighted', 'is-dimmed');
+      if (badge) badge.hidden = true;
+    } else {
+      const match = mapping.workIds.includes(workId);
+      card.classList.toggle('is-highlighted', match);
+      card.classList.toggle('is-dimmed', !match);
+      if (badge) {
+        badge.textContent = text.matchedBadge;
+        badge.hidden = !match;
+      }
+    }
+  });
+
+  // 3. #works 与 #skills 顶部的联动提示与 Reset 条
+  buildFilterStatusBar(document.getElementById('worksFilterBar'), faceKey, '#skills', text.cubeJumpSkills);
+  buildFilterStatusBar(document.getElementById('skillsFilterBar'), faceKey, '#works', text.cubeJumpWorks);
+
+  // 4. #cube 底部的控制面板
+  const bar = document.getElementById('cubeControllerBar');
+  if (bar) {
+    bar.textContent = '';
+    const pillsWrap = el('div', 'cube-face-pills');
+    CUBE_FACE_ORDER.forEach((key) => {
+      const btn = el('button', 'cube-face-btn', getCubeFaceText(key));
+      btn.type = 'button';
+      btn.dataset.cubeFace = key;
+      btn.classList.toggle('active', faceKey === key);
+      btn.setAttribute('aria-pressed', String(faceKey === key));
+      btn.addEventListener('click', () => setCubeFilter(key));
+      pillsWrap.appendChild(btn);
+    });
+    bar.appendChild(pillsWrap);
+
+    const actions = el('div', 'filter-bar-actions');
+    if (faceKey) {
+      const jumpWorks = el('button', 'filter-jump-btn', text.cubeJumpWorks);
+      jumpWorks.type = 'button';
+      jumpWorks.addEventListener('click', () => {
+        const w = document.getElementById('works');
+        if (w) w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      actions.appendChild(jumpWorks);
+
+      const jumpSkills = el('button', 'filter-jump-btn', text.cubeJumpSkills);
+      jumpSkills.type = 'button';
+      jumpSkills.addEventListener('click', () => {
+        const s = document.getElementById('skills');
+        if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      actions.appendChild(jumpSkills);
+
+      const resetBtn = el('button', 'filter-reset-btn', text.cubeFilterAll);
+      resetBtn.type = 'button';
+      resetBtn.addEventListener('click', resetCubeFilter);
+      actions.appendChild(resetBtn);
+    } else {
+      actions.appendChild(el('span', null, text.cubeFilterPrompt));
+    }
+    bar.appendChild(actions);
+  }
+
+  // 5. 通知 3D Cube 重绘选中面光效
+  cubeVisualRefreshers.forEach((fn) => {
+    try { fn(faceKey); } catch (error) { /* 忽略 */ }
+  });
+  scheduleOrbitalLayout();
+}
+
 function pulseCard(node) {
   node.classList.remove('pulsing');
   void node.offsetWidth;
@@ -592,7 +1076,7 @@ function pulseCard(node) {
 }
 
 /* ============================================================
- * 交互：语言切换 / 复制邮箱
+ * 交互：语言切换 / 主题切换 / 复制邮箱 / 磁性按钮 / 自定义光标
  * ============================================================ */
 function bindLanguageToggle() {
   document.querySelectorAll('.lang-btn').forEach((button) => {
@@ -612,13 +1096,21 @@ function bindLanguageToggle() {
   document.documentElement.lang = 'zh-CN';
 }
 
+function bindThemeToggle() {
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.addEventListener('click', () => toggleTheme(false));
+  }
+}
+
 function bindCopyEmail() {
   document.getElementById('copyEmail').addEventListener('click', () => {
     const text = getText();
     const button = document.getElementById('copyEmail');
     const done = () => {
       button.textContent = text.copied;
-      setTimeout(() => { button.textContent = text.copy; }, 1200);
+      showToast(text.toastEmailCopied + text.email);
+      setTimeout(() => { button.textContent = getText().copy; }, 1400);
     };
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text.email).then(done).catch(() => fallbackCopy(text, button, done));
@@ -642,6 +1134,98 @@ function fallbackCopy(text, button, done) {
     window.alert(text.copyFailed + text.email);
   }
   document.body.removeChild(textarea);
+}
+
+/* 磁性按钮轻微吸附动效（仅桌面精细指针且非减弱动效模式） */
+function bindMagneticButtons() {
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!finePointer || reduced) return;
+
+  ['copyEmail', 'pdfBtn'].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('mousemove', (event) => {
+      const rect = btn.getBoundingClientRect();
+      const dx = (event.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+      const dy = (event.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+      const pullX = Math.max(-1, Math.min(1, dx)) * 6;
+      const pullY = Math.max(-1, Math.min(1, dy)) * 5;
+      btn.style.transform = `translate3d(${pullX.toFixed(1)}px, ${pullY.toFixed(1)}px, 0)`;
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = '';
+    });
+  });
+}
+
+/* 作品集悬停定制语境光标（仅悬停期间运行插值 rAF，触屏自动忽略） */
+function bindCustomCursor() {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cursor = document.getElementById('customCursor');
+  const labelEl = document.getElementById('customCursorLabel');
+  const list = document.getElementById('worksList');
+  if (reduced || !cursor || !labelEl || !list) return;
+
+  let active = false;
+  let rafId = 0;
+  let tx = -100, ty = -100;
+  let cx = -100, cy = -100;
+
+  function renderFrame() {
+    if (!active) { rafId = 0; return; }
+    cx += (tx - cx) * 0.24;
+    cy += (ty - cy) * 0.24;
+    cursor.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0) translate(-50%, -50%)`;
+    rafId = requestAnimationFrame(renderFrame);
+  }
+
+  function showCursor(label, x, y) {
+    labelEl.textContent = label;
+    tx = x;
+    ty = y;
+    if (!active) {
+      cx = x;
+      cy = y;
+      cursor.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0) translate(-50%, -50%)`;
+      active = true;
+      cursor.classList.add('visible');
+      document.body.classList.add('cursor-work-active');
+      if (!rafId) rafId = requestAnimationFrame(renderFrame);
+    }
+  }
+
+  function hideCursor() {
+    active = false;
+    cursor.classList.remove('visible');
+    document.body.classList.remove('cursor-work-active');
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+
+  function handlePointer(event) {
+    if (event.pointerType === 'touch') return;
+    if (document.body.classList.contains('is-pf-open') || document.body.classList.contains('is-pdf-open')) {
+      hideCursor();
+      return;
+    }
+    const card = event.target.closest('.work-card');
+    if (!card) {
+      hideCursor();
+      return;
+    }
+    const label = card.dataset.cursorLabel || 'EXPLORE';
+    showCursor(label, event.clientX, event.clientY);
+  }
+
+  list.addEventListener('pointerover', handlePointer);
+  list.addEventListener('pointermove', handlePointer);
+  list.addEventListener('mousemove', handlePointer);
+  list.addEventListener('pointerleave', hideCursor);
+  list.addEventListener('mouseleave', hideCursor);
+  window.addEventListener('scroll', hideCursor, { passive: true });
 }
 
 /* ============================================================
@@ -711,7 +1295,7 @@ function bindPdfModal() {
 }
 
 /* ============================================================
- * 作品集浮层：iframe 内嵌所选作品（帝女花 / 牛奶蛙破風日記 / 行策·智旅攻略 / NOVA 岭南站）
+ * 作品集浮层：iframe 内嵌所选作品 + Quick-Brief 元信息栏
  * ============================================================ */
 let pfPrevFocus = null;
 let pfCurrentWorkId = null;
@@ -722,6 +1306,37 @@ function getWork(workId) {
   return works.items.find((item) => item.id === workId) || works.items[0] || null;
 }
 
+function syncPortfolioModalMeta(workId) {
+  const work = getWork(workId);
+  if (!work) return;
+  const text = getText();
+  const lang = state.language;
+  const meta = WORK_META[work.id] || {};
+
+  const title = document.getElementById('pfModalTitle');
+  if (title) title.textContent = work.modalTitle;
+  const openTab = document.getElementById('pfOpenTab');
+  if (openTab) {
+    openTab.href = work.url;
+    openTab.textContent = text.pfOpen;
+  }
+  const closeBtn = document.getElementById('pfClose');
+  if (closeBtn) closeBtn.setAttribute('aria-label', text.pfClose);
+
+  const roleLabel = document.getElementById('pfBriefRoleLabel');
+  const roleValue = document.getElementById('pfBriefRole');
+  const outcomeLabel = document.getElementById('pfBriefOutcomeLabel');
+  const outcomeValue = document.getElementById('pfBriefOutcome');
+  if (roleLabel) roleLabel.textContent = text.pfRoleLabel;
+  if (outcomeLabel) outcomeLabel.textContent = text.pfOutcomeLabel;
+  if (roleValue) {
+    roleValue.textContent = meta.role ? (meta.role[lang] || meta.role.zh) : work.tag;
+  }
+  if (outcomeValue) {
+    outcomeValue.textContent = meta.outcome ? (meta.outcome[lang] || meta.outcome.zh) : work.desc;
+  }
+}
+
 function openPortfolio(workId) {
   const modal = document.getElementById('pfModal');
   if (!modal) return;
@@ -729,10 +1344,7 @@ function openPortfolio(workId) {
   if (!work) return;
   pfCurrentWorkId = work.id;
 
-  const title = document.getElementById('pfModalTitle');
-  if (title) title.textContent = work.modalTitle;
-  const openTab = document.getElementById('pfOpenTab');
-  if (openTab) openTab.href = work.url;
+  syncPortfolioModalMeta(work.id);
 
   const frame = document.getElementById('pfFrame');
   frame.title = work.modalTitle;
@@ -744,6 +1356,9 @@ function openPortfolio(workId) {
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('is-pf-open');
+  document.body.classList.remove('cursor-work-active');
+  const cursor = document.getElementById('customCursor');
+  if (cursor) cursor.classList.remove('visible');
   const closeBtn = document.getElementById('pfClose');
   if (closeBtn) closeBtn.focus();
 }
@@ -755,6 +1370,11 @@ function closePortfolio() {
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('is-pf-open');
   const frame = document.getElementById('pfFrame');
+  try {
+    if (frame.contentWindow && typeof frame.contentWindow.stop === 'function') {
+      frame.contentWindow.stop();
+    }
+  } catch (error) { /* 跨域 iframe 忽略 */ }
   frame.src = 'about:blank';
   delete frame.dataset.src;
   if (pfPrevFocus && typeof pfPrevFocus.focus === 'function') pfPrevFocus.focus();
@@ -764,7 +1384,6 @@ function bindPortfolioModal() {
   const modal = document.getElementById('pfModal');
   if (!modal) return;
 
-  // 卡片由 renderWorks 动态生成，用事件委托绑定（语言切换后依然有效）
   const list = document.getElementById('worksList');
   if (list) {
     list.addEventListener('click', (event) => {
@@ -785,49 +1404,142 @@ function bindPortfolioModal() {
 }
 
 /* ============================================================
- * 3D 倾斜卡片（鼠标跟随透视）
+ * 3D 倾斜卡片与滚动渐显
  * ============================================================ */
 function bindTilt() {
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduceMotion) return;
+  if (prefersReducedMotion()) return;
 
   document.querySelectorAll('[data-tilt]').forEach((node) => {
-    const maxTilt = node.classList.contains('hero-name') ? 8 : 5;
+    const maxTilt = node.classList.contains('hero-name') ? 7 : 4;
 
-    // will-change 只在倾斜交互期间启用，避免所有卡片常驻合成层拖慢滚动
     node.addEventListener('mouseenter', () => { node.style.willChange = 'transform'; });
     node.addEventListener('mousemove', (event) => {
       const rect = node.getBoundingClientRect();
       const x = (event.clientX - rect.left) / rect.width - 0.5;
       const y = (event.clientY - rect.top) / rect.height - 0.5;
-      node.style.transform = `rotateY(${x * maxTilt * 2}deg) rotateX(${-y * maxTilt * 2}deg) translateZ(6px)`;
+      node.style.transform = `perspective(1100px) rotateY(${x * maxTilt * 2}deg) rotateX(${-y * maxTilt * 2}deg) translateZ(6px)`;
     });
 
     node.addEventListener('mouseleave', () => {
-      node.style.transform = 'rotateY(0deg) rotateX(0deg) translateZ(0)';
+      node.style.transform = 'perspective(1100px) rotateY(0deg) rotateX(0deg) translateZ(0)';
       node.style.willChange = 'auto';
     });
   });
 }
 
-/* 滚动渐显 */
 function bindReveal() {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('revealed');
-        observer.unobserve(entry.target);
+  const cards = Array.from(document.querySelectorAll('.card'));
+  if (!cards.length) return;
+
+  function revealInView() {
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    let remaining = 0;
+    cards.forEach((card) => {
+      if (card.classList.contains('revealed')) return;
+      const rect = card.getBoundingClientRect();
+      if (rect.top < vh + 80 && rect.bottom > -40) {
+        card.classList.add('revealed');
+      } else {
+        remaining += 1;
       }
     });
-  }, { threshold: 0.12 });
+    if (remaining === 0) {
+      window.removeEventListener('scroll', onScrollReveal);
+      window.removeEventListener('resize', revealInView);
+    }
+  }
 
-  document.querySelectorAll('.card').forEach((card) => observer.observe(card));
+  let revealTicking = false;
+  function onScrollReveal() {
+    if (revealTicking) return;
+    revealTicking = true;
+    requestAnimationFrame(() => {
+      revealTicking = false;
+      revealInView();
+    });
+  }
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.01, rootMargin: '80px 0px' });
+    cards.forEach((card) => observer.observe(card));
+  }
+
+  window.addEventListener('scroll', onScrollReveal, { passive: true });
+  window.addEventListener('resize', revealInView, { passive: true });
+  window.addEventListener('hashchange', () => {
+    const id = (window.location.hash || '').slice(1);
+    const target = id ? document.getElementById(id) : null;
+    if (target && target.classList.contains('card')) target.classList.add('revealed');
+    setTimeout(revealInView, 450);
+  });
+  document.querySelectorAll('.quick a').forEach((link) => {
+    link.addEventListener('click', () => {
+      const href = link.getAttribute('href') || '';
+      if (href.startsWith('#')) {
+        const target = document.getElementById(href.slice(1));
+        if (target && target.classList.contains('card')) target.classList.add('revealed');
+      }
+      setTimeout(revealInView, 500);
+    });
+  });
+  revealInView();
 }
 
 /* ============================================================
- * 3D 场景公共工具
+ * 3D 场景公共工具（含真实 IntersectionObserver rAF 启停控制器）
  * ============================================================ */
-const SCENE_ACTIVE = { bg: true, workspace: false, cube: false };
+const SCENE_LOOPS = {};
+
+function createSceneLoop(elementId, key, renderFrame, isImmersiveFn) {
+  const target = document.getElementById(elementId);
+  let visible = !('IntersectionObserver' in window);
+  let rafId = 0;
+
+  const ctrl = {
+    isRunning: () => rafId !== 0,
+    isVisible: () => visible,
+    sync: () => {
+      const shouldRun = !document.hidden && (visible || (isImmersiveFn && isImmersiveFn()));
+      if (shouldRun && !rafId) {
+        rafId = requestAnimationFrame(tick);
+      } else if (!shouldRun && rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+    }
+  };
+
+  function tick(now) {
+    if (document.hidden || (!visible && !(isImmersiveFn && isImmersiveFn()))) {
+      rafId = 0;
+      return;
+    }
+    renderFrame(now);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  if (target && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        visible = entry.isIntersecting;
+        ctrl.sync();
+      });
+    }, { rootMargin: '120px' });
+    observer.observe(target);
+  }
+
+  document.addEventListener('visibilitychange', () => ctrl.sync());
+  SCENE_LOOPS[key] = ctrl;
+  ctrl.sync();
+  return ctrl;
+}
 
 function supports3D() {
   return typeof THREE !== 'undefined' &&
@@ -841,7 +1553,6 @@ function supports3D() {
     })();
 }
 
-/* 静态 fallback：显示可点击的关键词芯片 */
 function showSceneFallback(containerId, fallbackId, title, chips, onClickChip) {
   const stage = document.getElementById(containerId);
   const fallback = document.getElementById(fallbackId);
@@ -864,7 +1575,6 @@ function showSceneFallback(containerId, fallbackId, title, chips, onClickChip) {
   fallback.appendChild(chipsWrap);
 }
 
-/* 全局悬停标签 */
 const tooltipEl = () => document.getElementById('sceneTooltip');
 
 function showTooltip(clientX, clientY, label) {
@@ -884,7 +1594,6 @@ function hideTooltip() {
   tip.setAttribute('aria-hidden', 'true');
 }
 
-/* 把 canvas 指针事件换算为 NDC 坐标 */
 function toNDC(event, canvas) {
   const rect = canvas.getBoundingClientRect();
   return new THREE.Vector2(
@@ -893,26 +1602,19 @@ function toNDC(event, canvas) {
   );
 }
 
-/* 离屏自动暂停渲染 */
-function observeSceneActive(elementId, key) {
-  const target = document.getElementById(elementId);
-  if (!target || !('IntersectionObserver' in window)) {
-    SCENE_ACTIVE[key] = true;
-    return;
-  }
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      SCENE_ACTIVE[key] = entry.isIntersecting;
-    });
-  }, { rootMargin: '120px' });
-  observer.observe(target);
-}
-
-/* 冷色调 Canvas 文字纹理（中英文字体栈都覆盖，便于切换语言后重绘） */
-const SCENE_FONT_STACK = '"Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+const SCENE_FONT_STACK = '"JetBrains Mono", "Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
 
 function makeTextTexture(lines, options) {
-  const opts = Object.assign({ width: 512, height: 288, accent: '#7FD6F2', muted: '#8FA3B8', bg: '#0D1119' }, options || {});
+  const opts = Object.assign({
+    width: 512,
+    height: 288,
+    accent: '#1B6A82',
+    muted: '#5D5B55',
+    bg: '#F4F3EF',
+    text: '#1A1A1A',
+    grid: 'rgba(27, 106, 130, 0.10)',
+    glow: 'transparent'
+  }, options || {});
   const canvas = document.createElement('canvas');
   canvas.width = opts.width;
   canvas.height = opts.height;
@@ -923,7 +1625,6 @@ function makeTextTexture(lines, options) {
   return target;
 }
 
-/* 在同一块 canvas 上换文案重绘（显示器轮播 / 语言切换共用） */
 function drawTextTexture(target, lines) {
   const { ctx, opts, texture } = target;
   if (!ctx) return;
@@ -932,8 +1633,7 @@ function drawTextTexture(target, lines) {
   ctx.fillStyle = opts.bg;
   ctx.fillRect(0, 0, opts.width, opts.height);
 
-  // 细网格，增加"数字工作台"质感
-  ctx.strokeStyle = 'rgba(127, 214, 242, 0.08)';
+  ctx.strokeStyle = opts.grid;
   ctx.lineWidth = 1;
   for (let x = 32; x < opts.width; x += 32) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, opts.height); ctx.stroke();
@@ -947,10 +1647,10 @@ function drawTextTexture(target, lines) {
   const step = opts.height / (lines.length + 1);
   lines.forEach((line, i) => {
     const isAccent = i === 0;
-    ctx.fillStyle = isAccent ? opts.accent : 'rgba(242, 244, 246, 0.85)';
-    ctx.font = (isAccent ? '700 ' : '500 ') + (isAccent ? Math.round(step * 0.52) : Math.round(step * 0.4)) + 'px ' + SCENE_FONT_STACK;
-    ctx.shadowColor = isAccent ? 'rgba(127, 214, 242, 0.55)' : 'transparent';
-    ctx.shadowBlur = isAccent ? 18 : 0;
+    ctx.fillStyle = isAccent ? opts.accent : opts.text;
+    ctx.font = (isAccent ? '700 ' : '500 ') + (isAccent ? Math.round(step * 0.5) : Math.round(step * 0.38)) + 'px ' + SCENE_FONT_STACK;
+    ctx.shadowColor = isAccent ? opts.glow : 'transparent';
+    ctx.shadowBlur = isAccent && opts.glow !== 'transparent' ? 16 : 0;
     ctx.fillText(line, opts.width / 2, step * (i + 1));
   });
   ctx.shadowBlur = 0;
@@ -958,150 +1658,289 @@ function drawTextTexture(target, lines) {
 }
 
 /* ============================================================
- * 场景 1：Hero 个人数字身份装置（全屏背景层）
- * 抽象几何主体 + 首字母 + 玻璃卫星体 + 金属环 + 粒子 + 微光
+ * 场景 1：Hero 个人数字身份装置 + 隐藏彩蛋「Particle Atelier」微光雕塑
  * ============================================================ */
+let particleAtelierBridge = null;
+
 function init3DScene() {
   const canvas = document.getElementById('bg3d');
-
-  if (!supports3D() || !canvas) {
-    canvas.style.display = 'none'; // 降级：显示 CSS 光斑背景
+  if (!canvas || !supports3D()) {
+    if (canvas) canvas.style.display = 'none';
     return;
   }
 
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+  const prefersReduced = prefersReducedMotion();
+  const isCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0B0C0F, 0.02);
+  scene.fog = new THREE.FogExp2(0xF4F3EF, 0.017);
 
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, 14);
 
-  // ---- 灯光：冷白环境光 + 冷青主光 + 淡蓝辅光 ----
-  scene.add(new THREE.AmbientLight(0xBFD4E2, 0.7));
+  const ambientLight = new THREE.AmbientLight(0xFFFDF8, 0.95);
+  scene.add(ambientLight);
 
-  const keyLight = new THREE.PointLight(0x7FD6F2, 1.5, 80);
+  const keyLight = new THREE.PointLight(0x5BBAD5, 1.15, 80);
   keyLight.position.set(9, 7, 12);
   scene.add(keyLight);
 
-  const fillLight = new THREE.PointLight(0x5B79A8, 0.8, 80);
+  const fillLight = new THREE.PointLight(0xC29A63, 0.75, 80);
   fillLight.position.set(-11, -4, 9);
   scene.add(fillLight);
 
-  // 身份装置中心的呼吸微光（悬停时增强）
-  const identityGlow = new THREE.PointLight(0x7FD6F2, 0.9, 24);
+  const identityGlow = new THREE.PointLight(0x1B6A82, 0.65, 24);
   identityGlow.position.set(0, 0.4, -1.5);
   scene.add(identityGlow);
 
-  // ---- 微粒：冷色低透明度，安静漂浮 ----
-  const particleCount = 1200;
+  // ---- 基础环境微粒场 ----
+  const particleCount = 1100;
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
-  const palette = [new THREE.Color(0x6FA8C9), new THREE.Color(0x7FD6F2), new THREE.Color(0x43536B), new THREE.Color(0xC9D6E3)];
-
+  const particleSeeds = [];
   for (let i = 0; i < particleCount; i++) {
     positions[i * 3] = (Math.random() - 0.5) * 60;
     positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
     positions[i * 3 + 2] = (Math.random() - 0.5) * 50 - 5;
-    const color = palette[Math.floor(Math.random() * palette.length)];
-    colors[i * 3] = color.r;
-    colors[i * 3 + 1] = color.g;
-    colors[i * 3 + 2] = color.b;
+    particleSeeds.push(Math.floor(Math.random() * 4));
   }
-
   const particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-  const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({
-    size: 0.09,
+  const particleMat = new THREE.PointsMaterial({
+    size: 0.085,
     vertexColors: true,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.42,
     depthWrite: false,
     blending: THREE.NormalBlending
-  }));
+  });
+  const particles = new THREE.Points(particleGeo, particleMat);
   scene.add(particles);
 
-  // ---- 远景几何体（深空冷色线框，弱化装饰感） ----
+  function recolorParticles(theme) {
+    const palette = theme === 'dark'
+      ? [new THREE.Color(0x6FA8C9), new THREE.Color(0x8ED8F0), new THREE.Color(0xD8B986), new THREE.Color(0x43536B)]
+      : [new THREE.Color(0x1B6A82), new THREE.Color(0x9A723E), new THREE.Color(0x6E6A61), new THREE.Color(0xA6A196)];
+    const colAttr = particleGeo.getAttribute('color');
+    for (let i = 0; i < particleCount; i++) {
+      const c = palette[particleSeeds[i]];
+      colAttr.setXYZ(i, c.r, c.g, c.b);
+    }
+    colAttr.needsUpdate = true;
+  }
+
+  // ---- Particle Atelier 动态流光粒子池（仅在彩蛋唤醒后生成并参与物理雕塑） ----
+  const maxAtelierCount = isCoarsePointer ? 96 : 320;
+  const atelierPos = new Float32Array(maxAtelierCount * 3);
+  const atelierCol = new Float32Array(maxAtelierCount * 3);
+  const atelierVel = new Float32Array(maxAtelierCount * 3);
+  const atelierLife = new Float32Array(maxAtelierCount);
+  const atelierMaxLife = new Float32Array(maxAtelierCount);
+  const atelierBaseCol = new Float32Array(maxAtelierCount * 3);
+  for (let i = 0; i < maxAtelierCount; i++) {
+    atelierPos[i * 3 + 2] = 9999; // 初始置于相机后方不可见
+  }
+
+  // 生成柔和圆形发光 Sprite 贴图
+  const glowCanvas = document.createElement('canvas');
+  glowCanvas.width = 64;
+  glowCanvas.height = 64;
+  const glowCtx = glowCanvas.getContext('2d');
+  const grad = glowCtx.createRadialGradient(32, 32, 0, 32, 32, 30);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  grad.addColorStop(0.32, 'rgba(255, 255, 255, 0.72)');
+  grad.addColorStop(0.7, 'rgba(255, 255, 255, 0.16)');
+  grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  glowCtx.fillStyle = grad;
+  glowCtx.fillRect(0, 0, 64, 64);
+  const atelierTex = new THREE.CanvasTexture(glowCanvas);
+
+  const atelierGeo = new THREE.BufferGeometry();
+  atelierGeo.setAttribute('position', new THREE.BufferAttribute(atelierPos, 3));
+  atelierGeo.setAttribute('color', new THREE.BufferAttribute(atelierCol, 3));
+
+  const atelierMat = new THREE.PointsMaterial({
+    size: isCoarsePointer ? 0.38 : 0.44,
+    map: atelierTex,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+    blending: THREE.NormalBlending
+  });
+  const atelierPoints = new THREE.Points(atelierGeo, atelierMat);
+  atelierPoints.frustumCulled = false;
+  scene.add(atelierPoints);
+
+  let atelierCursor = 0;
+  let vortexActive = false;
+  const vortexWorld = new THREE.Vector3(0, 0, 2);
+  const tmpProjVec = new THREE.Vector3();
+  const tmpProjDir = new THREE.Vector3();
+
+  function screenToWorld(clientX, clientY, targetVec) {
+    const ndcX = (clientX / window.innerWidth) * 2 - 1;
+    const ndcY = -(clientY / window.innerHeight) * 2 + 1;
+    tmpProjVec.set(ndcX, ndcY, 0.5).unproject(camera);
+    tmpProjDir.copy(tmpProjVec).sub(camera.position).normalize();
+    const dist = Math.abs(tmpProjDir.z) > 0.001 ? (2.0 - camera.position.z) / tmpProjDir.z : 10;
+    targetVec.copy(camera.position).addScaledVector(tmpProjDir, dist);
+    return targetVec;
+  }
+
+  function getAtelierPalette() {
+    if (state.theme === 'dark') {
+      // 暗色展厅：高细腻度冷白星尘与极微弱虹彩渐变
+      return [
+        new THREE.Color(0xE8ECF5),
+        new THREE.Color(0xD6E7F5),
+        new THREE.Color(0xEAE2D6),
+        new THREE.Color(0xDCD8F2)
+      ];
+    }
+    // 浅色画廊：低饱和香槟金与暖银灰
+    return [
+      new THREE.Color(0xC5A880),
+      new THREE.Color(0xB4976F),
+      new THREE.Color(0x9A9EA6),
+      new THREE.Color(0xB9B5AC)
+    ];
+  }
+
+  function spawnAtelierParticle(wx, wy, wz, vx, vy, vz, lifeSec) {
+    const idx = atelierCursor;
+    atelierCursor = (atelierCursor + 1) % maxAtelierCount;
+    const p3 = idx * 3;
+    atelierPos[p3] = wx;
+    atelierPos[p3 + 1] = wy;
+    atelierPos[p3 + 2] = wz;
+    atelierVel[p3] = vx;
+    atelierVel[p3 + 1] = vy;
+    atelierVel[p3 + 2] = vz;
+    atelierLife[idx] = lifeSec;
+    atelierMaxLife[idx] = lifeSec;
+
+    const palette = getAtelierPalette();
+    const c = palette[Math.floor(Math.random() * palette.length)];
+    atelierBaseCol[p3] = c.r;
+    atelierBaseCol[p3 + 1] = c.g;
+    atelierBaseCol[p3 + 2] = c.b;
+    atelierCol[p3] = c.r;
+    atelierCol[p3 + 1] = c.g;
+    atelierCol[p3 + 2] = c.b;
+  }
+
+  function emitStarCoreRipple(clientX, clientY) {
+    if (!state.particleAtelier) return;
+    const center = screenToWorld(clientX, clientY, new THREE.Vector3());
+    const count = isCoarsePointer ? 18 : 34;
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      const spd = 0.045 + Math.random() * 0.03;
+      spawnAtelierParticle(
+        center.x + Math.cos(a) * 0.15,
+        center.y + Math.sin(a) * 0.15,
+        center.z + (Math.random() - 0.5) * 0.3,
+        Math.cos(a) * spd,
+        Math.sin(a) * spd,
+        (Math.random() - 0.5) * 0.015,
+        1.45 + Math.random() * 0.5
+      );
+    }
+  }
+
+  particleAtelierBridge = {
+    setActive: (active) => {
+      if (!active) vortexActive = false;
+    },
+    emitRipple: emitStarCoreRipple
+  };
+
+  // ---- 远景几何体（拥有「自由漂浮位」与「结构秩序排列位」双态，随滚动平滑插值） ----
   const shapes = [];
   const wireMat = (color, opacity) => new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity });
   const glassMat = (color, opacity) => new THREE.MeshPhongMaterial({ color, transparent: true, opacity: opacity || 0.28, shininess: 70, flatShading: true });
 
-  function addShape(geo, material, position, speed) {
+  function addShape(geo, material, floatPos, alignedPos, speed, kind) {
     const mesh = new THREE.Mesh(geo, material);
-    mesh.position.set(position[0], position[1], position[2]);
-    mesh.userData.speed = speed;
+    mesh.position.set(floatPos[0], floatPos[1], floatPos[2]);
+    mesh.userData = {
+      speed,
+      kind,
+      floatPos: new THREE.Vector3(floatPos[0], floatPos[1], floatPos[2]),
+      alignedPos: new THREE.Vector3(alignedPos[0], alignedPos[1], alignedPos[2])
+    };
     shapes.push(mesh);
     scene.add(mesh);
     return mesh;
   }
 
-  addShape(new THREE.IcosahedronGeometry(2.2, 0), wireMat(0x43536B, 0.35), [-11, 4, -8], 0.0032);
-  addShape(new THREE.TorusKnotGeometry(1.5, 0.4, 80, 12), glassMat(0x2C3A4C, 0.32), [11, -4, -9], 0.0045);
-  addShape(new THREE.OctahedronGeometry(1.7, 0), wireMat(0x5FA8C7, 0.30), [8, 6, -13], 0.004);
-  addShape(new THREE.TorusGeometry(1.9, 0.3, 10, 48), wireMat(0x4E7E9B, 0.30), [-12, -6, -11], 0.0055);
-  addShape(new THREE.DodecahedronGeometry(1.4, 0), glassMat(0x33465C, 0.3), [1, -8, -10], 0.0038);
-  addShape(new THREE.ConeGeometry(1.3, 2.6, 5), wireMat(0x43536B, 0.26), [-5, 9, -15], 0.005);
+  addShape(new THREE.IcosahedronGeometry(2.1, 0), wireMat(0x8A857B, 0.28), [-11, 4, -8], [-9.5, 4.2, -9], 0.0030, 'wire');
+  addShape(new THREE.TorusKnotGeometry(1.4, 0.36, 80, 12), glassMat(0xB8C5CE, 0.28), [11, -4, -9], [9.5, 4.2, -9], 0.0042, 'glass');
+  addShape(new THREE.OctahedronGeometry(1.6, 0), wireMat(0x1B6A82, 0.26), [8, 6, -13], [9.5, 0, -10], 0.0038, 'wireAccent');
+  addShape(new THREE.TorusGeometry(1.8, 0.28, 10, 48), wireMat(0x9A723E, 0.25), [-12, -6, -11], [-9.5, 0, -10], 0.0050, 'wireWarm');
+  addShape(new THREE.DodecahedronGeometry(1.35, 0), glassMat(0xA6B5C2, 0.28), [1, -8, -10], [9.5, -4.2, -9], 0.0035, 'glass');
+  addShape(new THREE.ConeGeometry(1.25, 2.5, 5), wireMat(0x8A857B, 0.24), [-5, 9, -15], [-9.5, -4.2, -9], 0.0046, 'wire');
 
-  // ============================================================
-  // 个人数字身份装置：Personal Identity Object
-  // ============================================================
+  // ---- 个人数字身份装置 ----
   const identity = new THREE.Group();
   identity.position.set(0, 0.4, -4);
   scene.add(identity);
 
-  // 渐显动画（0 → 1，页面进入时约 1.8s）
   const fadeIn = { value: 0 };
 
-  // 抽象几何主体：深空玻璃二十面体 + 冷色线框
   const mainGlass = new THREE.Mesh(
     new THREE.IcosahedronGeometry(2.6, 1),
-    new THREE.MeshPhongMaterial({ color: 0x16202E, transparent: true, opacity: 0, shininess: 90, flatShading: true })
+    new THREE.MeshPhongMaterial({ color: 0xD3E3EA, transparent: true, opacity: 0, shininess: 95, flatShading: true })
   );
   identity.add(mainGlass);
 
   const mainWire = new THREE.Mesh(
     new THREE.IcosahedronGeometry(2.74, 1),
-    wireMat(0x7FD6F2, 0)
+    wireMat(0x1B6A82, 0)
   );
   identity.add(mainWire);
 
-  // 内核：小型发光体
   const core = new THREE.Mesh(
     new THREE.OctahedronGeometry(0.9, 0),
-    new THREE.MeshBasicMaterial({ color: 0x7FD6F2, transparent: true, opacity: 0 })
+    new THREE.MeshBasicMaterial({ color: 0x1B6A82, transparent: true, opacity: 0 })
   );
   identity.add(core);
 
-  // 姓名首字母（取自英文姓名 Zhu Xiaoshang → Z）
   const initial = (defaultResumeData.en.name || 'Z').trim().charAt(0).toUpperCase();
   const letterCanvas = document.createElement('canvas');
   letterCanvas.width = 256;
   letterCanvas.height = 256;
   const letterCtx = letterCanvas.getContext('2d');
-  letterCtx.clearRect(0, 0, 256, 256);
-  letterCtx.textAlign = 'center';
-  letterCtx.textBaseline = 'middle';
-  letterCtx.font = '700 170px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  letterCtx.fillStyle = '#FFFFFF';
-  letterCtx.shadowColor = 'rgba(127, 214, 242, 0.9)';
-  letterCtx.shadowBlur = 28;
-  letterCtx.fillText(initial, 128, 138);
   const letterTexture = new THREE.CanvasTexture(letterCanvas);
+
+  function redrawIdentityLetter(theme) {
+    const isDark = theme === 'dark';
+    letterCtx.clearRect(0, 0, 256, 256);
+    letterCtx.textAlign = 'center';
+    letterCtx.textBaseline = 'middle';
+    letterCtx.font = '600 168px "Cormorant Garamond", Georgia, serif';
+    letterCtx.fillStyle = isDark ? '#F5F4F0' : '#1A1A1A';
+    letterCtx.shadowColor = isDark ? 'rgba(142, 216, 240, 0.85)' : 'rgba(27, 106, 130, 0.28)';
+    letterCtx.shadowBlur = isDark ? 26 : 10;
+    letterCtx.fillText(initial, 128, 136);
+    letterCtx.shadowBlur = 0;
+    letterTexture.needsUpdate = true;
+  }
+
   const letterPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(1.8, 1.8),
     new THREE.MeshBasicMaterial({ map: letterTexture, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
   );
-  letterPlane.position.set(0, 0.05, 2.68); // 贴在主体前方
+  letterPlane.position.set(0, 0.05, 2.68);
   identity.add(letterPlane);
 
-  // 金属环 × 2（高光银灰，缓慢反向运动）
-  const metalMat = new THREE.MeshPhongMaterial({ color: 0xC9CFD8, shininess: 120, specular: 0xE8EEF5, transparent: true, opacity: 0 });
+  const metalMat = new THREE.MeshPhongMaterial({ color: 0x9A723E, shininess: 120, specular: 0xF5E7CE, transparent: true, opacity: 0 });
   const ringA = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.045, 16, 96), metalMat.clone());
   ringA.rotation.set(1.15, 0.3, 0);
   identity.add(ringA);
@@ -1110,10 +1949,9 @@ function init3DScene() {
   ringB.rotation.set(1.6, -0.5, 0.4);
   identity.add(ringB);
 
-  // 环上的小型玻璃卫星体
   const satellites = [];
   for (let i = 0; i < 3; i++) {
-    const sat = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), glassMat(0x9FD8EF, 0));
+    const sat = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), glassMat(0x1B6A82, 0));
     sat.userData.orbit = {
       radius: i === 0 ? 3.5 : 4.05,
       speed: 0.22 + i * 0.08,
@@ -1124,39 +1962,97 @@ function init3DScene() {
     identity.add(sat);
   }
 
-  // 交互状态
+  function applySceneTheme(theme) {
+    const isDark = theme === 'dark';
+    scene.fog.color.setHex(isDark ? 0x0D0E12 : 0xF4F3EF);
+    ambientLight.color.setHex(isDark ? 0xBFD4E2 : 0xFFFDF8);
+    ambientLight.intensity = isDark ? 0.68 : 0.95;
+    keyLight.color.setHex(isDark ? 0x8ED8F0 : 0x5BBAD5);
+    fillLight.color.setHex(isDark ? 0x5B79A8 : 0xC29A63);
+    identityGlow.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+
+    mainGlass.material.color.setHex(isDark ? 0x16202E : 0xD3E3EA);
+    mainWire.material.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    core.material.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    ringA.material.color.setHex(isDark ? 0xC9CFD8 : 0x9A723E);
+    ringB.material.color.setHex(isDark ? 0xD8B986 : 0x4E6E7D);
+    satellites.forEach((sat) => sat.material.color.setHex(isDark ? 0x9FD8EF : 0x1B6A82));
+
+    shapes.forEach((mesh) => {
+      const k = mesh.userData.kind;
+      if (k === 'glass') mesh.material.color.setHex(isDark ? 0x2C3A4C : 0xB8C5CE);
+      else if (k === 'wireAccent') mesh.material.color.setHex(isDark ? 0x5FA8C7 : 0x1B6A82);
+      else if (k === 'wireWarm') mesh.material.color.setHex(isDark ? 0xD8B986 : 0x9A723E);
+      else mesh.material.color.setHex(isDark ? 0x43536B : 0x8A857B);
+    });
+
+    atelierMat.blending = isDark ? THREE.AdditiveBlending : THREE.NormalBlending;
+    atelierMat.opacity = isDark ? 0.95 : 0.82;
+    atelierMat.needsUpdate = true;
+
+    recolorParticles(theme);
+    redrawIdentityLetter(theme);
+  }
+
+  onThemeChange(applySceneTheme);
+  applySceneTheme(state.theme);
+
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
   const drag = { active: false, lastX: 0, lastY: 0, rotY: 0, rotX: 0, moved: 0 };
   let scrollProgress = 0;
+  let smoothScroll = 0;
   let identityHover = 0;
-  let pulsePower = 0; // 点击装置触发的"重组脉冲"能量，随时间衰减
+  let pulsePower = 0;
 
-  // 字母 Z 面向相机的补偿计算所用临时对象（避免每帧分配内存）
   const Z_AXIS = new THREE.Vector3(0, 0, 1);
   const tmpDevicePos = new THREE.Vector3();
   const tmpDir = new THREE.Vector3();
   const tmpLetterPos = new THREE.Vector3();
   const tmpQParent = new THREE.Quaternion();
   const tmpQTarget = new THREE.Quaternion();
+  const tmpSpawnPos = new THREE.Vector3();
 
   window.addEventListener('mousemove', (event) => {
     pointer.tx = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.ty = (event.clientY / window.innerHeight) * 2 - 1;
 
-    // 悬停检测：指针靠近屏幕中心的装置区域 → 轻微发光
     const dx = event.clientX - window.innerWidth / 2;
     const dy = event.clientY - window.innerHeight / 2;
     const distance = Math.sqrt(dx * dx + dy * dy);
     const hovered = distance < Math.min(window.innerWidth, window.innerHeight) * 0.28;
     identityHover += ((hovered ? 1 : 0) - identityHover) * 0.08;
+
+    if (state.particleAtelier && !document.body.classList.contains('is-pdf-open') && !document.body.classList.contains('is-pf-open')) {
+      screenToWorld(event.clientX, event.clientY, tmpSpawnPos);
+      if (vortexActive) vortexWorld.copy(tmpSpawnPos);
+      const count = (prefersReduced || isCoarsePointer) ? 1 : 3;
+      for (let i = 0; i < count; i++) {
+        spawnAtelierParticle(
+          tmpSpawnPos.x + (Math.random() - 0.5) * 0.32,
+          tmpSpawnPos.y + (Math.random() - 0.5) * 0.32,
+          tmpSpawnPos.z + (Math.random() - 0.5) * 0.45,
+          (Math.random() - 0.5) * 0.022,
+          (Math.random() - 0.5) * 0.022 + 0.004,
+          (Math.random() - 0.5) * 0.014,
+          (prefersReduced ? 0.9 : 1.5) + Math.random() * 0.9
+        );
+      }
+    }
   }, { passive: true });
 
   function isInteractiveTarget(target) {
     return !!(target && target.closest &&
-      target.closest('a, button, summary, details, input, textarea, select, .card, .top-bar, .pdf-modal, canvas#wsCanvas, canvas#cubeCanvas'));
+      target.closest('a, button, summary, details, input, textarea, select, .card, .top-bar, .pdf-modal, .pf-modal, .orbital-dial, .focus-lens-bar, .star-cores-layer, canvas#wsCanvas, canvas#cubeCanvas'));
   }
 
   window.addEventListener('pointerdown', (event) => {
+    if (state.particleAtelier) {
+      if (event.button === 0 && !event.target.closest('a, button, summary, details, input, textarea, select, .pdf-modal, .pf-modal, .top-bar, .orbital-dial, .star-cores-layer')) {
+        vortexActive = true;
+        screenToWorld(event.clientX, event.clientY, vortexWorld);
+      }
+      return;
+    }
     if (isInteractiveTarget(event.target)) return;
     if (event.pointerType === 'mouse' && event.cancelable) event.preventDefault();
     drag.active = true;
@@ -1167,6 +2063,10 @@ function init3DScene() {
   });
 
   window.addEventListener('pointermove', (event) => {
+    if (state.particleAtelier && vortexActive) {
+      screenToWorld(event.clientX, event.clientY, vortexWorld);
+      return;
+    }
     if (!drag.active) return;
     const dx = event.clientX - drag.lastX;
     const dy = event.clientY - drag.lastY;
@@ -1179,8 +2079,22 @@ function init3DScene() {
   }, { passive: true });
 
   const endDrag = () => {
+    if (vortexActive) {
+      vortexActive = false;
+      // 松手时给予微粒柔和的丝绸散开初速度
+      for (let i = 0; i < maxAtelierCount; i++) {
+        if (atelierLife[i] <= 0) continue;
+        const p3 = i * 3;
+        const dx = atelierPos[p3] - vortexWorld.x;
+        const dy = atelierPos[p3 + 1] - vortexWorld.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 0.2;
+        if (dist < 4.5) {
+          atelierVel[p3] += (dx / dist) * 0.028;
+          atelierVel[p3 + 1] += (dy / dist) * 0.028;
+        }
+      }
+    }
     if (drag.active && drag.moved < 6) {
-      // 点击空白处（非拖动）→ 触发身份装置的重组脉冲
       pulsePower = 1;
     }
     drag.active = false;
@@ -1190,10 +2104,12 @@ function init3DScene() {
   window.addEventListener('pointerup', endDrag);
   window.addEventListener('pointercancel', endDrag);
 
-  window.addEventListener('scroll', () => {
+  function updateScrollProgress() {
     const max = document.documentElement.scrollHeight - window.innerHeight;
-    scrollProgress = max > 0 ? window.scrollY / max : 0;
-  }, { passive: true });
+    scrollProgress = max > 0 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0;
+  }
+  window.addEventListener('scroll', updateScrollProgress, { passive: true });
+  updateScrollProgress();
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -1201,76 +2117,71 @@ function init3DScene() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // ---- 动画循环 ----
   const clock = new THREE.Clock();
+  let prevElapsed = 0;
 
-  function animate() {
-    requestAnimationFrame(animate);
+  function renderBgFrame() {
     const t = clock.getElapsedTime();
+    const dt = Math.min(0.05, Math.max(0.008, t - prevElapsed));
+    prevElapsed = t;
 
-    // 页面进入渐显（约 1.8s，克制）
     if (fadeIn.value < 1) {
-      fadeIn.value = Math.min(1, fadeIn.value + 0.012);
+      fadeIn.value = Math.min(1, fadeIn.value + 0.015);
       const f = fadeIn.value;
-      mainGlass.material.opacity = 0.42 * f;
-      mainWire.material.opacity = 0.35 * f;
+      mainGlass.material.opacity = (state.theme === 'dark' ? 0.42 : 0.34) * f;
+      mainWire.material.opacity = 0.38 * f;
       core.material.opacity = 0.85 * f;
       letterPlane.material.opacity = f;
-      ringA.material.opacity = 0.9 * f;
-      ringB.material.opacity = 0.9 * f;
-      satellites.forEach((sat) => { sat.material.opacity = 0.8 * f; });
+      ringA.material.opacity = 0.88 * f;
+      ringB.material.opacity = 0.85 * f;
+      satellites.forEach((sat) => { sat.material.opacity = 0.78 * f; });
     }
 
-    // 指针平滑跟随（视差）
     pointer.x += (pointer.tx - pointer.x) * 0.04;
     pointer.y += (pointer.ty - pointer.y) * 0.04;
+    smoothScroll += (scrollProgress - smoothScroll) * 0.06;
 
-    // 相机：鼠标视差 + 滚动下潜 + 拖拽旋转
-    camera.position.x = pointer.x * 1.6;
-    camera.position.y = -pointer.y * 1.1 - scrollProgress * 3.5;
-    camera.position.z = 14 - scrollProgress * 3;
+    const expWeight = Math.max(0, Math.sin(Math.min(1, Math.max(0, (smoothScroll - 0.18) / 0.48)) * Math.PI));
+    const portWeight = Math.max(0, Math.sin(Math.min(1, Math.max(0, (smoothScroll - 0.52) / 0.38)) * Math.PI));
 
-    camera.lookAt(pointer.x * 0.6, -pointer.y * 0.4 - scrollProgress * 3, 0);
+    identity.position.x = -expWeight * 2.1 + portWeight * 2.3;
+    identity.position.y = 0.4 - smoothScroll * 0.6;
+    identity.position.z = -4 + portWeight * 1.1;
 
-    // 拖拽旋转整个场景内容
+    const motionMul = prefersReduced ? 0.18 : 1;
+    camera.position.x = pointer.x * 1.45 * motionMul + expWeight * 1.15 - portWeight * 1.05;
+    camera.position.y = -pointer.y * 1.05 * motionMul - smoothScroll * 2.8;
+    camera.position.z = 14 - smoothScroll * 2.6 - portWeight * 1.2;
+    camera.lookAt(pointer.x * 0.5 * motionMul + identity.position.x * 0.2, -pointer.y * 0.4 * motionMul - smoothScroll * 2.4, -1.2);
+
     scene.rotation.y = drag.rotY;
     scene.rotation.x = drag.rotX;
 
     if (!prefersReduced) {
-      // 粒子缓慢漂移
-      particles.rotation.y = t * 0.018;
+      particles.rotation.y = t * 0.016 + smoothScroll * 0.22;
       particles.rotation.x = Math.sin(t * 0.1) * 0.03;
 
-      // 远景几何体自转 + 浮动
       shapes.forEach((mesh, i) => {
-        mesh.rotation.x += mesh.userData.speed;
-        mesh.rotation.y += mesh.userData.speed * 1.3;
-        mesh.position.y += Math.sin(t * 0.6 + i * 1.7) * 0.004;
+        const alignT = expWeight * 0.78;
+        const targetPos = mesh.userData.floatPos.clone().lerp(mesh.userData.alignedPos, alignT);
+        targetPos.y += Math.sin(t * 0.55 + i * 1.7) * (0.28 * (1 - alignT * 0.65));
+        mesh.position.lerp(targetPos, 0.05);
+        mesh.rotation.x += mesh.userData.speed * (1 - alignT * 0.45);
+        mesh.rotation.y += mesh.userData.speed * 1.25;
       });
 
-      // 装置：非常缓慢的自转 + 呼吸
-      identity.rotation.y = t * 0.06;
-      identity.rotation.x = Math.sin(t * 0.12) * 0.05;
+      identity.rotation.y = t * 0.06 + smoothScroll * 1.15;
+      identity.rotation.x = Math.sin(t * 0.12) * 0.05 + portWeight * 0.14;
     } else {
       identity.rotation.y = 0.4;
     }
 
-    // 脉冲能量衰减（点击装置后触发）
-    if (pulsePower > 0.001) {
-      pulsePower *= 0.965;
-    } else {
-      pulsePower = 0;
-    }
+    if (pulsePower > 0.001) pulsePower *= 0.965;
+    else pulsePower = 0;
 
-    // 呼吸 + 脉冲闪光
-    const breathe = 1 + Math.sin(t * 0.7) * 0.015 + pulsePower * 0.25;
+    const breathe = 1 + (prefersReduced ? 0 : Math.sin(t * 0.7) * 0.015) + pulsePower * 0.25;
     core.scale.setScalar(breathe);
 
-    // ============================================================
-    // 字母 Z：无论场景/装置如何旋转，始终缓慢转向相机正面
-    // 做法：每帧把字母的世界朝向对齐"装置中心 → 相机"方向，
-    // 再用 slerp 平滑补偿（缓慢回正），位置同步贴在装置前缘。
-    // ============================================================
     identity.updateWorldMatrix(true, false);
     identity.getWorldQuaternion(tmpQParent);
     identity.getWorldPosition(tmpDevicePos);
@@ -1278,25 +2189,20 @@ function init3DScene() {
     tmpQTarget.setFromUnitVectors(Z_AXIS, tmpDir);
     tmpQTarget.premultiply(tmpQParent.invert());
     letterPlane.quaternion.slerp(tmpQTarget, 0.06);
-    // 位置：装置中心 + 指向相机方向 × 半径（世界空间），再转回装置本地坐标
     tmpLetterPos.copy(tmpDevicePos).addScaledVector(tmpDir, 2.78);
-    tmpLetterPos.y += Math.sin(t * 0.8) * 0.06;
+    tmpLetterPos.y += prefersReduced ? 0 : Math.sin(t * 0.8) * 0.06;
     identity.worldToLocal(tmpLetterPos);
     letterPlane.position.copy(tmpLetterPos);
 
-    // 金属环：极缓慢反向运动（脉冲时短暂加速，模拟重组）
     if (!prefersReduced) {
       const spinBoost = pulsePower * 0.05;
       ringA.rotation.z += 0.0012 + spinBoost;
       ringB.rotation.z -= 0.0008 + spinBoost * 0.7;
       ringA.rotation.x += 0.0004 + spinBoost * 0.5;
       ringB.rotation.x -= 0.0003 + spinBoost * 0.5;
-    }
 
-    // 玻璃卫星沿各自的环公转：悬停时被轻微"磁吸"（半径收缩、提速），脉冲时环绕加速
-    if (!prefersReduced) {
       const speedMul = 1 + identityHover * 0.6 + pulsePower * 2.5;
-      const radiusMul = 1 - identityHover * 0.12 - pulsePower * 0.06;
+      const radiusMul = 1 - identityHover * 0.12 - pulsePower * 0.06 - portWeight * 0.06;
       satellites.forEach((sat) => {
         const o = sat.userData.orbit;
         const angle = t * o.speed * speedMul + o.phase;
@@ -1310,31 +2216,90 @@ function init3DScene() {
       });
     }
 
-    // 悬停发光 + 呼吸微光 + 脉冲闪光
+    // ---- Particle Atelier 流体物理与旋涡聚拢更新 ----
+    let hasAtelierUpdates = false;
+    const isDark = state.theme === 'dark';
+    const bgR = isDark ? 13 / 255 : 244 / 255;
+    const bgG = isDark ? 14 / 255 : 243 / 255;
+    const bgB = isDark ? 18 / 255 : 239 / 255;
+
+    for (let i = 0; i < maxAtelierCount; i++) {
+      if (atelierLife[i] <= 0) continue;
+      hasAtelierUpdates = true;
+      const p3 = i * 3;
+      atelierLife[i] -= dt * (state.particleAtelier ? 1 : 2.8);
+      if (atelierLife[i] <= 0) {
+        atelierLife[i] = 0;
+        atelierPos[p3 + 2] = 9999;
+        continue;
+      }
+
+      if (vortexActive && state.particleAtelier) {
+        const dx = vortexWorld.x - atelierPos[p3];
+        const dy = vortexWorld.y - atelierPos[p3 + 1];
+        const dz = vortexWorld.z - atelierPos[p3 + 2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01;
+        if (dist < 8.5) {
+          const pull = 0.0032 * (1 + (8.5 - dist) * 0.22);
+          atelierVel[p3] += (dx / dist) * pull - (dy / dist) * 0.0042;
+          atelierVel[p3 + 1] += (dy / dist) * pull + (dx / dist) * 0.0042;
+          atelierVel[p3 + 2] += (dz / dist) * pull * 0.5;
+          atelierLife[i] = Math.min(atelierMaxLife[i], atelierLife[i] + dt * 0.65);
+        }
+      } else if (!prefersReduced) {
+        atelierVel[p3] += Math.sin(t * 1.8 + atelierPos[p3 + 1] * 1.4) * 0.00028;
+        atelierVel[p3 + 1] += Math.cos(t * 1.6 + atelierPos[p3] * 1.4) * 0.00028;
+      }
+
+      atelierPos[p3] += atelierVel[p3];
+      atelierPos[p3 + 1] += atelierVel[p3 + 1];
+      atelierPos[p3 + 2] += atelierVel[p3 + 2];
+      atelierVel[p3] *= 0.965;
+      atelierVel[p3 + 1] *= 0.965;
+      atelierVel[p3 + 2] *= 0.965;
+
+      const fade = Math.max(0, Math.min(1, atelierLife[i] / atelierMaxLife[i]));
+      if (isDark) {
+        atelierCol[p3] = atelierBaseCol[p3] * fade;
+        atelierCol[p3 + 1] = atelierBaseCol[p3 + 1] * fade;
+        atelierCol[p3 + 2] = atelierBaseCol[p3 + 2] * fade;
+      } else {
+        // 浅色模式用混合向背景淡出，确保无生硬黑边
+        atelierCol[p3] = bgR + (atelierBaseCol[p3] - bgR) * fade;
+        atelierCol[p3 + 1] = bgG + (atelierBaseCol[p3 + 1] - bgG) * fade;
+        atelierCol[p3 + 2] = bgB + (atelierBaseCol[p3 + 2] - bgB) * fade;
+      }
+    }
+
+    if (hasAtelierUpdates) {
+      atelierGeo.getAttribute('position').needsUpdate = true;
+      atelierGeo.getAttribute('color').needsUpdate = true;
+    }
+
     const hoverBoost = identityHover * 1.1;
-    identityGlow.intensity = (0.8 + Math.sin(t * 0.9) * 0.15) * fadeIn.value + hoverBoost + pulsePower * 2.2;
-    keyLight.intensity = 1.5 + Math.sin(t * 0.8) * 0.15;
-    fillLight.intensity = 0.8 + Math.sin(t * 0.6 + 2) * 0.12;
+    identityGlow.intensity = (isDark ? 0.85 : 0.55) * fadeIn.value + hoverBoost + pulsePower * 2.0 + portWeight * 0.65;
+    keyLight.intensity = (isDark ? 1.45 : 1.1) + (prefersReduced ? 0 : Math.sin(t * 0.8) * 0.12) + portWeight * 0.55;
+    fillLight.intensity = (isDark ? 0.8 : 0.7) + (prefersReduced ? 0 : Math.sin(t * 0.6 + 2) * 0.1);
 
     renderer.render(scene, camera);
   }
 
-  animate();
+  createSceneLoop('bg3d', 'bg', renderBgFrame, () => true);
 }
 
 /* ============================================================
  * 场景 2：Digital Creative Workspace（About 区域旁）
- * 低多边形极简工作台：显示器 / 键盘 / 鼠标 / 手机 / 数位板 /
- * 摄像机 / 耳机 / 硬盘 / 文件夹 / 台灯 / AI 悬浮体
- * 悬停设备 → 标签；点击设备 → 滚动到对应板块
+ * 彩蛋交互：
+ *  - 点击 显示器 / 屏幕 → 打开作品集弹窗 (#pfModal)
+ *  - 点击 简历笔记本 (Notebook) → 打开简历 PDF 弹窗 (#pdfModal)
+ *  - 点击 台灯 (Desk Lamp) → 切换 Light Gallery / Dark Exhibition 模式并联动 3D 光照
  * ============================================================ */
 function initWorkspaceScene() {
   const stage = document.getElementById('workspaceStage');
   const canvas = document.getElementById('wsCanvas');
   if (!stage || !canvas || !supports3D()) {
     const text = getText();
-    // 降级芯片：文字跟随语言，第 i 个对应第 i 个跳转目标
-    const chipTargets = ['#about', '#experience', '#projects', '#skills', '#skills'];
+    const chipTargets = ['#about', '#experience', '#projects', '#skills', '#contact'];
     const chips = (text.sceneText.screenWords || []).slice(0, chipTargets.length);
     showSceneFallback('workspaceStage', 'workspaceFallback', text.fallbackWorkspace,
       chips,
@@ -1345,8 +2310,6 @@ function initWorkspaceScene() {
     return;
   }
 
-  observeSceneActive('workspace', 'workspace');
-
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
 
@@ -1355,23 +2318,25 @@ function initWorkspaceScene() {
   camera.position.set(0, 3.1, 9.2);
   camera.lookAt(0, 0.7, 0);
 
-  scene.add(new THREE.AmbientLight(0xBFD4E2, 0.55));
-  const keyLight = new THREE.PointLight(0x7FD6F2, 1.1, 40);
+  const ambientLight = new THREE.AmbientLight(0xFFFBF2, 0.92);
+  scene.add(ambientLight);
+  const keyLight = new THREE.PointLight(0xFFF6E6, 1.05, 40);
   keyLight.position.set(4, 6, 7);
   scene.add(keyLight);
-  const fillLight = new THREE.PointLight(0x5B79A8, 0.5, 40);
+  const fillLight = new THREE.PointLight(0x7FA8BE, 0.45, 40);
   fillLight.position.set(-6, 2, 5);
   scene.add(fillLight);
 
   const world = new THREE.Group();
   scene.add(world);
 
-  // 材质库：极简深色 + 玻璃 + 少量金属
-  const darkMat = new THREE.MeshPhongMaterial({ color: 0x1A1F29, shininess: 30, flatShading: true });
-  const darkerMat = new THREE.MeshPhongMaterial({ color: 0x11151D, shininess: 20, flatShading: true });
-  const metalMat = new THREE.MeshPhongMaterial({ color: 0x9AA6B5, shininess: 110, specular: 0xD6DEE8 });
-  const glassMat = new THREE.MeshPhongMaterial({ color: 0x2C3A4C, transparent: true, opacity: 0.3, shininess: 80, flatShading: true });
-  const accentMat = new THREE.MeshBasicMaterial({ color: 0x7FD6F2, transparent: true, opacity: 0.9 });
+  // 材质库（支持 Light 画廊石材桌面 ↔ Dark 黑曜石工作台联动）
+  const deskMat = new THREE.MeshPhongMaterial({ color: 0xDDD8CE, shininess: 22, flatShading: true });
+  const deviceMat = new THREE.MeshPhongMaterial({ color: 0x2F3540, shininess: 35, flatShading: true });
+  const accentBodyMat = new THREE.MeshPhongMaterial({ color: 0x222730, shininess: 24, flatShading: true });
+  const metalMat = new THREE.MeshPhongMaterial({ color: 0x9AA6B5, shininess: 110, specular: 0xECEEF2 });
+  const glassMat = new THREE.MeshPhongMaterial({ color: 0x4E728A, transparent: true, opacity: 0.36, shininess: 90, flatShading: true });
+  const accentMat = new THREE.MeshBasicMaterial({ color: 0x1B6A82, transparent: true, opacity: 0.9 });
 
   function box(w, h, d, mat, x, y, z, ry) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -1381,32 +2346,32 @@ function initWorkspaceScene() {
     return mesh;
   }
 
-  // ---- 桌面（含桌腿，可整体点击） ----
+  // ---- 桌面 ----
   const deskGroup = new THREE.Group();
   world.add(deskGroup);
-  const desk = new THREE.Mesh(new THREE.BoxGeometry(9, 0.22, 3.6), darkMat);
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.22, 3.8), deskMat);
   deskGroup.add(desk);
-  // 桌腿（简化，只做暗示）
-  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), darkerMat);
-  legL.position.set(-4.1, -0.8, -1.4);
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), accentBodyMat);
+  legL.position.set(-4.2, -0.8, -1.5);
   deskGroup.add(legL);
-  const legR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), darkerMat);
-  legR.position.set(4.1, -0.8, -1.4);
+  const legR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), accentBodyMat);
+  legR.position.set(4.2, -0.8, -1.5);
   deskGroup.add(legR);
 
-  // ---- 显示器（屏幕内容：品牌关键词轮播） ----
+  // ---- 显示器（点击打开作品集弹窗 #pfModal） ----
   const monitorGroup = new THREE.Group();
-  monitorGroup.position.set(-0.8, 0, -0.5);
+  monitorGroup.position.set(-0.75, 0, -0.55);
   world.add(monitorGroup);
-  const monBase = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.62, 0.06, 24), darkerMat);
+  const monBase = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.62, 0.06, 24), accentBodyMat);
   monBase.position.set(0, 0.14, 0.2);
   monitorGroup.add(monBase);
-  const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.9, 0.1), darkMat);
+  const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.9, 0.1), deviceMat);
   stand.position.set(0, 0.6, 0.2);
   monitorGroup.add(stand);
-  const shell = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.05, 0.12), darkMat);
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.05, 0.12), deviceMat);
   shell.position.set(0, 1.55, 0.1);
   monitorGroup.add(shell);
+
   let monitorWords = getSceneText('screenWords', ['DIGITAL MEDIA', 'INTERACTIVE', 'DESIGN', 'AIGC', 'MOTION', 'VISUAL']);
   const screen = makeTextTexture(monitorWords, { width: 512, height: 288 });
   const screenMesh = new THREE.Mesh(
@@ -1418,44 +2383,106 @@ function initWorkspaceScene() {
 
   // ---- 键盘 ----
   const kbGroup = new THREE.Group();
-  kbGroup.position.set(-0.8, 0.13, 1.0);
+  kbGroup.position.set(-0.75, 0.13, 0.96);
   kbGroup.rotation.y = -0.04;
   world.add(kbGroup);
-  const kbBase = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.07, 0.64), darkerMat);
+  const kbBase = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.07, 0.62), accentBodyMat);
   kbGroup.add(kbBase);
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 10; c++) {
-      const key = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.03, 0.13), darkMat);
-      key.position.set(-0.8 + c * 0.165, 0.05, -0.2 + r * 0.19);
+      const key = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.03, 0.13), deviceMat);
+      key.position.set(-0.78 + c * 0.165, 0.05, -0.2 + r * 0.19);
       kbGroup.add(key);
     }
   }
 
   // ---- 鼠标 ----
-  const mouseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 18, 14), darkMat);
+  const mouseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.15, 18, 14), deviceMat);
   mouseMesh.scale.set(1, 0.55, 1.45);
-  mouseMesh.position.set(0.55, 0.16, 1.05);
+  mouseMesh.position.set(0.55, 0.16, 1.02);
   world.add(mouseMesh);
 
   // ---- 手机 ----
   const phoneGroup = new THREE.Group();
-  phoneGroup.position.set(1.35, 0.12, 0.55);
-  phoneGroup.rotation.y = -0.5;
+  phoneGroup.position.set(1.18, 0.12, 0.62);
+  phoneGroup.rotation.y = -0.45;
   world.add(phoneGroup);
-  const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.035, 0.66), darkerMat);
+  const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.035, 0.62), accentBodyMat);
   phoneGroup.add(phoneBody);
-  const phoneScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.6), accentMat.clone());
-  phoneScreen.material.opacity = 0.5;
+  const phoneScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.56), accentMat.clone());
+  phoneScreen.material.opacity = 0.55;
   phoneScreen.rotation.x = -Math.PI / 2;
   phoneScreen.position.y = 0.02;
   phoneGroup.add(phoneScreen);
 
-  // ---- 数位板（含小型屏幕） ----
+  // ---- 简历笔记本（Notebook / Resume Document：点击打开 #pdfModal） ----
+  const notebookGroup = new THREE.Group();
+  notebookGroup.position.set(2.38, 0.12, 0.92);
+  notebookGroup.rotation.y = 0.24;
+  world.add(notebookGroup);
+
+  const nbCover = new THREE.Mesh(
+    new THREE.BoxGeometry(1.18, 0.05, 1.48),
+    new THREE.MeshPhongMaterial({ color: 0x9A723E, shininess: 35, flatShading: true })
+  );
+  notebookGroup.add(nbCover);
+
+  const nbPages = new THREE.Mesh(
+    new THREE.BoxGeometry(1.08, 0.05, 1.38),
+    new THREE.MeshPhongMaterial({ color: 0xF8F5EE, shininess: 18 })
+  );
+  nbPages.position.y = 0.035;
+  notebookGroup.add(nbPages);
+
+  // 简历本页面纹理（绘制“CV / RESUME”字样与排版线）
+  const nbCanvas = document.createElement('canvas');
+  nbCanvas.width = 256;
+  nbCanvas.height = 320;
+  const nbCtx = nbCanvas.getContext('2d');
+  const nbTexture = new THREE.CanvasTexture(nbCanvas);
+  function drawNotebookPage() {
+    nbCtx.fillStyle = '#FAF8F3';
+    nbCtx.fillRect(0, 0, 256, 320);
+    nbCtx.strokeStyle = 'rgba(26, 26, 26, 0.15)';
+    nbCtx.lineWidth = 2;
+    nbCtx.strokeRect(12, 12, 232, 296);
+    nbCtx.fillStyle = '#1B6A82';
+    nbCtx.fillRect(26, 28, 68, 8);
+    nbCtx.fillStyle = '#1A1A1A';
+    nbCtx.font = '700 28px "JetBrains Mono", monospace';
+    nbCtx.fillText('RESUME', 26, 68);
+    nbCtx.fillStyle = 'rgba(26, 26, 26, 0.24)';
+    for (let y = 96; y < 275; y += 22) {
+      const w = (y % 44 === 0) ? 168 : 196;
+      nbCtx.fillRect(26, y, w, 6);
+    }
+    nbCtx.fillStyle = '#9A723E';
+    nbCtx.font = '600 14px "JetBrains Mono", monospace';
+    nbCtx.fillText('PDF · CLICK', 26, 292);
+    nbTexture.needsUpdate = true;
+  }
+  drawNotebookPage();
+
+  const nbSheet = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.04, 1.34),
+    new THREE.MeshBasicMaterial({ map: nbTexture })
+  );
+  nbSheet.rotation.x = -Math.PI / 2;
+  nbSheet.position.y = 0.063;
+  notebookGroup.add(nbSheet);
+
+  const nbPen = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.05, 10), metalMat);
+  nbPen.rotation.z = Math.PI / 2;
+  nbPen.rotation.y = 0.45;
+  nbPen.position.set(0.45, 0.09, 0.12);
+  notebookGroup.add(nbPen);
+
+  // ---- 数位板 ----
   const tabletGroup = new THREE.Group();
-  tabletGroup.position.set(-3.0, 0.13, 0.7);
+  tabletGroup.position.set(-2.95, 0.13, 0.72);
   tabletGroup.rotation.y = 0.35;
   world.add(tabletGroup);
-  const tabletBody = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.05, 0.8), darkMat);
+  const tabletBody = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.05, 0.8), deviceMat);
   tabletGroup.add(tabletBody);
   const tabletTex = makeTextTexture(getSceneText('tabletWords', ['VISUAL', 'DESIGN']), { width: 256, height: 160 });
   const tabletScreen = new THREE.Mesh(
@@ -1466,23 +2493,14 @@ function initWorkspaceScene() {
   tabletScreen.position.y = 0.03;
   tabletGroup.add(tabletScreen);
 
-  // 语言切换时重绘屏幕 / 数位板贴图
-  onSceneTextRefresh(() => {
-    monitorWords = getSceneText('screenWords', []);
-    wordIndex = 0;
-    lastWordSwap = 0;
-    drawTextTexture(screen, monitorWords.slice());
-    drawTextTexture(tabletTex, getSceneText('tabletWords', []));
-  });
-
-  // ---- 摄像机（机身 + 镜头） ----
+  // ---- 摄像机 ----
   const cameraGroup = new THREE.Group();
-  cameraGroup.position.set(2.55, 0.32, 0.35);
-  cameraGroup.rotation.y = -0.4;
+  cameraGroup.position.set(2.45, 0.32, -0.45);
+  cameraGroup.rotation.y = -0.42;
   world.add(cameraGroup);
-  const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.42, 0.34), darkerMat);
+  const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.42, 0.34), accentBodyMat);
   cameraGroup.add(camBody);
-  const lensOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.22, 20), darkMat);
+  const lensOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.22, 20), deviceMat);
   lensOuter.rotation.x = Math.PI / 2;
   lensOuter.position.set(0, 0.02, 0.26);
   cameraGroup.add(lensOuter);
@@ -1493,16 +2511,15 @@ function initWorkspaceScene() {
   recDot.position.set(0.28, 0.16, 0.18);
   cameraGroup.add(recDot);
 
-  // ---- 耳机（头梁 + 双耳罩，平放） ----
+  // ---- 耳机 ----
   const hpGroup = new THREE.Group();
-  hpGroup.position.set(3.3, 0.1, -0.9);
-  hpGroup.rotation.y = 0.6;
+  hpGroup.position.set(3.45, 0.1, -1.05);
+  hpGroup.rotation.y = 0.55;
   world.add(hpGroup);
-  const band = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.045, 12, 32, Math.PI), darkMat);
-  band.rotation.z = 0;
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.045, 12, 32, Math.PI), deviceMat);
   band.rotation.x = Math.PI / 2;
   hpGroup.add(band);
-  const cupL = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 20), darkMat);
+  const cupL = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 20), deviceMat);
   cupL.position.set(-0.34, 0.03, 0);
   cupL.rotation.z = Math.PI / 2;
   hpGroup.add(cupL);
@@ -1511,65 +2528,124 @@ function initWorkspaceScene() {
   hpGroup.add(cupR);
 
   // ---- 小型硬盘 ----
-  const hdd = box(0.6, 0.1, 0.42, darkerMat, 0.75, 0.11, -0.75, 0.3);
+  box(0.6, 0.1, 0.42, accentBodyMat, 0.78, 0.11, -0.82, 0.3);
   const hddLed = new THREE.Mesh(new THREE.CircleGeometry(0.025, 10), accentMat.clone());
   hddLed.rotation.x = -Math.PI / 2;
-  hddLed.position.set(0.9, 0.165, -0.66);
+  hddLed.position.set(0.92, 0.165, -0.73);
   world.add(hddLed);
-  void hdd;
 
-  // ---- 文件夹（两片薄板） ----
-  const folderA = box(0.72, 0.035, 0.52, darkMat, -1.85, 0.09, -1.0, -0.25);
-  const folderB = box(0.68, 0.03, 0.48, new THREE.MeshPhongMaterial({ color: 0x223042, shininess: 24, flatShading: true }), -1.85, 0.12, -1.0, -0.25);
+  // ---- 文件夹 ----
+  box(0.72, 0.035, 0.52, deviceMat, -1.85, 0.09, -1.0, -0.25);
+  const folderB = box(0.68, 0.03, 0.48, new THREE.MeshPhongMaterial({ color: 0x3A546A, shininess: 24, flatShading: true }), -1.85, 0.12, -1.0, -0.25);
   folderB.rotation.z = 0.02;
-  void folderA;
 
-  // ---- 台灯（底座 + 双臂 + 灯头 + 灯光） ----
+  // ---- 台灯（点击切换明暗主题：Light Gallery ↔ Dark Exhibition） ----
   const lampGroup = new THREE.Group();
-  lampGroup.position.set(-3.6, 0, -1.1);
+  lampGroup.position.set(-3.65, 0, -0.75);
   world.add(lampGroup);
-  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.05, 24), darkerMat);
+  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.06, 24), accentBodyMat);
   lampBase.position.set(0, 0.05, 0);
   lampGroup.add(lampBase);
-  const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.0, 10), metalMat);
-  arm1.position.set(0.12, 0.55, 0);
+  const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 1.02, 10), metalMat);
+  arm1.position.set(0.12, 0.56, 0);
   arm1.rotation.z = 0.25;
   lampGroup.add(arm1);
-  const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.8, 10), metalMat);
-  arm2.position.set(0.38, 1.12, 0);
+  const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.82, 10), metalMat);
+  arm2.position.set(0.38, 1.13, 0);
   arm2.rotation.z = 1.15;
   lampGroup.add(arm2);
-  const lampHead = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.26, 20), darkMat);
-  lampHead.position.set(0.72, 1.18, 0);
+  const lampHead = new THREE.Mesh(new THREE.ConeGeometry(0.21, 0.3, 20), deviceMat);
+  lampHead.position.set(0.74, 1.18, 0);
   lampHead.rotation.z = -1.9;
   lampGroup.add(lampHead);
-  const lampBulb = new THREE.Mesh(new THREE.CircleGeometry(0.1, 16), accentMat.clone());
-  lampBulb.material.opacity = 0.75;
-  lampBulb.position.set(0.82, 1.14, 0);
+  const lampBulb = new THREE.Mesh(
+    new THREE.CircleGeometry(0.12, 16),
+    new THREE.MeshBasicMaterial({ color: 0xFFE4B5, transparent: true, opacity: 0.75, side: THREE.DoubleSide })
+  );
+  lampBulb.position.set(0.84, 1.14, 0);
   lampBulb.rotation.z = -2.1;
   lampGroup.add(lampBulb);
-  const lampLight = new THREE.PointLight(0x9FD8EF, 0.9, 6);
-  lampLight.position.set(0.85, 1.1, 0.2);
+  const lampLight = new THREE.PointLight(0xFFD089, 0.45, 7.5);
+  lampLight.position.set(0.88, 1.08, 0.22);
   lampGroup.add(lampLight);
 
-  // ---- AI 悬浮体（AIGC 标识：小型发光十二面体） ----
-  function wireLike(color, opacity) {
-    return new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity });
-  }
+  // 隐形宽容度拾取球，方便点击台灯头部
+  const lampHitbox = new THREE.Mesh(
+    new THREE.SphereGeometry(0.58, 10, 10),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+  );
+  lampHitbox.position.set(0.74, 1.16, 0);
+  lampGroup.add(lampHitbox);
+
+  // ---- AI 悬浮体 ----
   const aiGroup = new THREE.Group();
   aiGroup.position.set(0.4, 2.6, -0.2);
   world.add(aiGroup);
-  const aiWire = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3, 0), wireLike(0x7FD6F2, 0.6));
+  const aiWire = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(0.3, 0),
+    new THREE.MeshBasicMaterial({ color: 0x1B6A82, wireframe: true, transparent: true, opacity: 0.65 })
+  );
   aiGroup.add(aiWire);
   const aiCore = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), accentMat.clone());
   aiGroup.add(aiCore);
-  const aiLight = new THREE.PointLight(0x7FD6F2, 0.7, 4);
+  const aiLight = new THREE.PointLight(0x7FD6F2, 0.55, 4);
   aiGroup.add(aiLight);
 
-  // ---- 可点击设备注册表（group → 标签 + 跳转目标） ----
+  let lampPulse = 0;
+
+  function applyWorkspaceTheme(theme) {
+    const isDark = theme === 'dark';
+    ambientLight.color.setHex(isDark ? 0x9BB7CC : 0xFFFBF2);
+    ambientLight.intensity = isDark ? 0.42 : 0.92;
+    keyLight.color.setHex(isDark ? 0x8ED8F0 : 0xFFF6E6);
+    keyLight.intensity = isDark ? 0.72 : 1.05;
+    fillLight.color.setHex(isDark ? 0x5B79A8 : 0x8FB4C9);
+    fillLight.intensity = isDark ? 0.48 : 0.42;
+
+    deskMat.color.setHex(isDark ? 0x1A1F29 : 0xDDD8CE);
+    deviceMat.color.setHex(isDark ? 0x202734 : 0x2F3540);
+    accentBodyMat.color.setHex(isDark ? 0x12161E : 0x222730);
+    aiWire.material.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    aiCore.material.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    aiLight.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    phoneScreen.material.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    recDot.material.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    hddLed.material.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+
+    // 暗色展厅模式下点亮暖金台灯，浅色画廊模式下呈现柔和自然光
+    lampLight.color.setHex(isDark ? 0xFFD089 : 0xFFF5E0);
+    lampBulb.material.color.setHex(isDark ? 0xFFE4B5 : 0xFFFFFF);
+    lampBulb.material.opacity = isDark ? 0.96 : 0.45;
+
+    screen.opts.bg = isDark ? '#0D1119' : '#F4F3EF';
+    screen.opts.accent = isDark ? '#8ED8F0' : '#1B6A82';
+    screen.opts.text = isDark ? 'rgba(242,244,246,0.88)' : '#1A1A1A';
+    screen.opts.grid = isDark ? 'rgba(142,216,240,0.08)' : 'rgba(27,106,130,0.09)';
+    screen.opts.glow = isDark ? 'rgba(142,216,240,0.55)' : 'transparent';
+
+    tabletTex.opts.bg = isDark ? '#0D1119' : '#EFECE4';
+    tabletTex.opts.accent = isDark ? '#8ED8F0' : '#1B6A82';
+    tabletTex.opts.text = isDark ? 'rgba(242,244,246,0.88)' : '#1A1A1A';
+    tabletTex.opts.grid = isDark ? 'rgba(142,216,240,0.08)' : 'rgba(27,106,130,0.09)';
+  }
+
+  onThemeChange(applyWorkspaceTheme);
+  applyWorkspaceTheme(state.theme);
+
+  onSceneTextRefresh(() => {
+    monitorWords = getSceneText('screenWords', []);
+    wordIndex = 0;
+    lastWordSwap = 0;
+    drawTextTexture(screen, monitorWords.slice());
+    drawTextTexture(tabletTex, getSceneText('tabletWords', []));
+  });
+
+  // ---- 可点击设备注册表（含三大真实功能彩蛋） ----
   const deviceMap = [
+    { key: 'monitor', group: monitorGroup, action: 'portfolio' },
+    { key: 'notebook', group: notebookGroup, action: 'pdf' },
+    { key: 'lamp', group: lampGroup, action: 'theme' },
     { key: 'desk', group: deskGroup, target: '#about' },
-    { key: 'monitor', group: monitorGroup, target: '#cube' },
     { key: 'camera', group: cameraGroup, target: '#experience' },
     { key: 'tablet', group: tabletGroup, target: '#projects' },
     { key: 'keyboard', group: kbGroup, target: '#skills' },
@@ -1578,47 +2654,34 @@ function initWorkspaceScene() {
   ];
   const pickables = [];
   deviceMap.forEach((d) => {
-    d.group.traverse((node) => { if (node.isMesh) { node.userData.deviceKey = d.key; pickables.push(node); } });
+    d.group.traverse((node) => {
+      if (node.isMesh) {
+        node.userData.deviceKey = d.key;
+        pickables.push(node);
+      }
+    });
   });
 
-  // ---- 沉浸模式（点击进入 3D 工作台空间） ----
   let immersive = false;
-  let immT = 0; // 0 = 常规视角, 1 = 沉浸视角（缓动过渡）
-  const camBase = {
-    pos: new THREE.Vector3(0, 3.1, 9.2),
-    look: new THREE.Vector3(0, 0.7, 0)
-  };
-  const camImm = {
-    pos: new THREE.Vector3(0.9, 2.4, 5.6),
-    look: new THREE.Vector3(-0.3, 0.9, -0.2)
-  };
-  // 360° 环视轨道：拖拽自由旋转（偏航无限、俯仰限位）+ 滚轮缩放 + 惯性
-  const orbit = { yaw: 0, pitch: 0, zoom: 1, active: false, lastX: 0, lastY: 0, velYaw: 0, velPitch: 0 };
-  // 显示器屏幕关键词 → 板块（屏幕内简单操作：悬停看词，点击行直接跳转）
-  const SCREEN_LINKS = [
-    { word: 'DIGITAL MEDIA', target: '#about' },
-    { word: 'INTERACTIVE', target: '#workspace' },
-    { word: 'DESIGN', target: '#projects' },
-    { word: 'AIGC', target: '#cube' },
-    { word: 'MOTION', target: '#experience' },
-    { word: 'VISUAL', target: '#skills' }
-  ];
+  let immT = 0;
+  const camBase = { pos: new THREE.Vector3(0, 3.1, 9.2), look: new THREE.Vector3(0, 0.7, 0) };
+  const camImm = { pos: new THREE.Vector3(0.9, 2.4, 5.6), look: new THREE.Vector3(-0.3, 0.9, -0.2) };
+  const orbit = { yaw: 0, pitch: 0, zoom: 1, active: false, lastX: 0, lastY: 0, velYaw: 0, velPitch: 0, moved: 0 };
+
   const enterBtn = document.getElementById('workspaceEnter');
   const exitBtn = document.getElementById('workspaceExit');
   const immHint = document.getElementById('workspaceImmersiveHint');
-  // 兜底：renderResume 之外也保证按钮有文案
   if (enterBtn && !enterBtn.textContent) enterBtn.textContent = getText().enterWorkspace;
   if (exitBtn && !exitBtn.textContent) exitBtn.textContent = getText().exitWorkspace;
   if (immHint && !immHint.textContent) immHint.textContent = getText().immersiveHint;
 
   const stageParent = stage.parentElement;
   const stageNext = stage.nextElementSibling;
+  let wsLoopCtrl = null;
 
   function enterImmersive() {
     if (immersive) return;
     immersive = true;
-    // 卡片的 backdrop-filter / 容器的 perspective 会让 fixed 相对卡片定位——
-    // 进入沉浸时把舞台挂到 body 下，彻底脱离这些祖先的影响
     document.body.appendChild(stage);
     stage.classList.add('immersive');
     document.body.classList.add('ws-immersive');
@@ -1627,6 +2690,7 @@ function initWorkspaceScene() {
     if (immHint) immHint.hidden = false;
     canvas.style.cursor = 'grab';
     resize();
+    if (wsLoopCtrl) wsLoopCtrl.sync();
   }
 
   function exitImmersive() {
@@ -1641,6 +2705,7 @@ function initWorkspaceScene() {
     canvas.style.cursor = 'default';
     hideTooltip();
     resize();
+    if (wsLoopCtrl) wsLoopCtrl.sync();
   }
 
   if (enterBtn) enterBtn.addEventListener('click', enterImmersive);
@@ -1649,10 +2714,10 @@ function initWorkspaceScene() {
     if (event.key === 'Escape' && immersive) exitImmersive();
   });
 
-  // ---- 尺寸 ----
   function resize() {
     const w = stage.clientWidth;
     const h = stage.clientHeight;
+    if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -1660,45 +2725,31 @@ function initWorkspaceScene() {
   resize();
   window.addEventListener('resize', resize);
 
-  // ---- 悬停 / 点击 ----
   const raycaster = new THREE.Raycaster();
   let hoveredKey = null;
-
-  /* 屏幕命中 → 关键词行（UV 映射到 6 行文案） */
-  function screenRowAt(hit) {
-    if (!hit || hit.object !== screenMesh || !hit.uv) return -1;
-    return Math.min(SCREEN_LINKS.length - 1, Math.max(0, Math.floor((1 - hit.uv.y) * SCREEN_LINKS.length)));
-  }
 
   canvas.addEventListener('pointermove', (event) => {
     if (orbit.active) { hoveredKey = null; hideTooltip(); return; }
     raycaster.setFromCamera(toNDC(event, canvas), camera);
     const hits = raycaster.intersectObjects(pickables, false);
-    const screenRow = hits.length ? screenRowAt(hits[0]) : -1;
     const key = hits.length ? hits[0].object.userData.deviceKey : null;
-    const screenWords = getSceneText('screenWords', []);
-    const label = screenRow >= 0
-      ? (screenWords[screenRow] || SCREEN_LINKS[screenRow].word)
-      : (key ? (getText().deviceLabels[key] || key.toUpperCase()) : null);
-    const effectiveKey = screenRow >= 0 ? 'screen' : key;
-    if (effectiveKey !== hoveredKey) {
-      hoveredKey = effectiveKey;
-      canvas.style.cursor = effectiveKey ? 'pointer' : 'default';
-      if (label) showTooltip(event.clientX, event.clientY, label);
-      else hideTooltip();
-    } else if (label) {
-      showTooltip(event.clientX, event.clientY, label);
+    const label = key ? (getText().deviceLabels[key] || key.toUpperCase()) : null;
+    if (key !== hoveredKey) {
+      hoveredKey = key;
+      canvas.style.cursor = key ? 'pointer' : (immersive ? 'grab' : 'default');
     }
+    if (label) showTooltip(event.clientX, event.clientY, label);
+    else hideTooltip();
   });
 
   canvas.addEventListener('pointerleave', () => {
     hoveredKey = null;
-    canvas.style.cursor = 'default';
+    canvas.style.cursor = immersive ? 'grab' : 'default';
     hideTooltip();
   });
 
-  // ---- 360° 环视拖拽（仅沉浸模式）+ 滚轮缩放 ----
   canvas.addEventListener('pointerdown', (event) => {
+    orbit.moved = 0;
     if (!immersive) return;
     orbit.active = true;
     orbit.lastX = event.clientX;
@@ -1716,6 +2767,7 @@ function initWorkspaceScene() {
     orbit.pitch = Math.max(-0.55, Math.min(0.5, orbit.pitch));
     orbit.velYaw = -dx * 0.005 * 0.4;
     orbit.velPitch = -dy * 0.004 * 0.4;
+    orbit.moved += Math.abs(dx) + Math.abs(dy);
     orbit.lastX = event.clientX;
     orbit.lastY = event.clientY;
   }, { passive: true });
@@ -1735,58 +2787,85 @@ function initWorkspaceScene() {
   }, { passive: false });
 
   canvas.addEventListener('click', (event) => {
+    if (orbit.moved > 6) return;
     raycaster.setFromCamera(toNDC(event, canvas), camera);
     const hits = raycaster.intersectObjects(pickables, false);
     if (!hits.length) return;
-    // 显示器屏幕：UV 定位关键词行，点击直接跳转（屏幕内简单操作）
-    const row = screenRowAt(hits[0]);
-    let device = null;
-    let destSelector = null;
-    if (row >= 0) {
-      destSelector = SCREEN_LINKS[row].target;
-    } else {
-      device = deviceMap.find((d) => d.key === hits[0].object.userData.deviceKey);
-      if (!device) return;
-      destSelector = device.target;
+    const key = hits[0].object.userData.deviceKey;
+    const device = deviceMap.find((d) => d.key === key);
+    if (!device) return;
+
+    if (device.action === 'theme') {
+      lampPulse = 1;
+      toggleTheme(false);
+      showTooltip(event.clientX, event.clientY, getText().deviceLabels.lamp);
+      setTimeout(hideTooltip, 1200);
+      return;
     }
-    const target = document.querySelector(destSelector);
-    const destName = getText().sectionTitles[destSelector.slice(1)] || destSelector;
+
+    if (device.action === 'portfolio') {
+      hideTooltip();
+      if (immersive) {
+        exitImmersive();
+        setTimeout(() => openPortfolio('dinuhua'), 320);
+      } else {
+        openPortfolio('dinuhua');
+      }
+      return;
+    }
+
+    if (device.action === 'pdf') {
+      hideTooltip();
+      if (immersive) {
+        exitImmersive();
+        setTimeout(() => openResumePdf(), 320);
+      } else {
+        openResumePdf();
+      }
+      return;
+    }
+
+    const target = document.querySelector(device.target);
+    const destName = getText().sectionTitles[device.target.slice(1)] || device.target;
     showTooltip(event.clientX, event.clientY, '→ ' + destName);
     setTimeout(hideTooltip, 1200);
     if (immersive) {
-      // 沉浸模式：先退出全屏视角，再平滑滚动到目标板块
       setTimeout(() => {
         exitImmersive();
-        setTimeout(() => { if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 380);
-      }, 420);
+        setTimeout(() => { if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 360);
+      }, 300);
     } else if (target) {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
 
-  // ---- 动画循环（离屏自动暂停） ----
   const clock = new THREE.Clock();
   const parallax = { x: 0, y: 0, tx: 0, ty: 0 };
   window.addEventListener('mousemove', (event) => {
     parallax.tx = (event.clientX / window.innerWidth) * 2 - 1;
     parallax.ty = (event.clientY / window.innerHeight) * 2 - 1;
   }, { passive: true });
+
   let wordIndex = 0;
   let lastWordSwap = 0;
 
-  function animate() {
-    requestAnimationFrame(animate);
-    if (!SCENE_ACTIVE.workspace) return;
+  function renderWorkspaceFrame() {
     const t = clock.getElapsedTime();
 
-    // 悬停设备轻微放大（缓动），增强"可点击"反馈
     deviceMap.forEach((d) => {
-      const target = d.key === hoveredKey ? 1.06 : 1;
-      const s = d.group.scale.x + (target - d.group.scale.x) * 0.12;
+      const targetScale = d.key === hoveredKey ? 1.06 : 1;
+      const s = d.group.scale.x + (targetScale - d.group.scale.x) * 0.14;
       d.group.scale.setScalar(s);
     });
 
-    // 显示器文字轮播（每 2.4s，重绘 canvas 纹理）
+    if (lampPulse > 0.001) {
+      lampPulse *= 0.88;
+      lampGroup.rotation.z = -Math.sin(lampPulse * Math.PI) * 0.08;
+    } else {
+      lampPulse = 0;
+      lampGroup.rotation.z = 0;
+    }
+
     if (t - lastWordSwap > 2.4 && monitorWords.length) {
       lastWordSwap = t;
       wordIndex = (wordIndex + 1) % monitorWords.length;
@@ -1794,17 +2873,17 @@ function initWorkspaceScene() {
       drawTextTexture(screen, ordered);
     }
 
-    // 相机：常规视角 ↔ 沉浸视角平滑过渡；拖拽 360° 环视 + 鼠标微视差 + 缩放
     immT += ((immersive ? 1 : 0) - immT) * 0.055;
     parallax.x += (parallax.tx - parallax.x) * 0.05;
     parallax.y += (parallax.ty - parallax.y) * 0.05;
-    // 惯性衰减
+
     if (!orbit.active) {
       orbit.yaw += orbit.velYaw;
       orbit.pitch = Math.max(-0.55, Math.min(0.5, orbit.pitch + orbit.velPitch));
       orbit.velYaw *= 0.93;
       orbit.velPitch *= 0.93;
     }
+
     const look = camBase.look.clone().lerp(camImm.look, immT);
     const desiredPos = camBase.pos.clone().lerp(camImm.pos, immT);
     const yaw = orbit.yaw * immT + parallax.x * (0.06 + immT * 0.2);
@@ -1813,72 +2892,52 @@ function initWorkspaceScene() {
     offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
     const rightAxis = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), offset).normalize();
     offset.applyAxisAngle(rightAxis, pitch);
-    // 滚轮缩放（仅沉浸时有意义，immT 保证平滑回位）
     offset.setLength(offset.length() * (1 + (orbit.zoom - 1) * immT));
     camera.position.copy(look.clone().add(offset));
     camera.lookAt(look);
-    // 沉浸模式视野稍广
+
     const targetFov = 42 + immT * 6;
     if (Math.abs(camera.fov - targetFov) > 0.05) {
       camera.fov = targetFov;
       camera.updateProjectionMatrix();
     }
 
-    // AI 悬浮体：缓慢自转 + 浮动 + 呼吸灯
-    aiGroup.rotation.y = t * 0.4;
-    aiGroup.position.y = 2.6 + Math.sin(t * 0.9) * 0.12;
-    aiCore.material.opacity = 0.6 + Math.sin(t * 2.2) * 0.25;
-    aiLight.intensity = 0.6 + Math.sin(t * 2.2) * 0.2;
+    if (!prefersReducedMotion()) {
+      aiGroup.rotation.y = t * 0.4;
+      aiGroup.position.y = 2.6 + Math.sin(t * 0.9) * 0.12;
+      aiCore.material.opacity = 0.6 + Math.sin(t * 2.2) * 0.25;
+      aiLight.intensity = 0.55 + Math.sin(t * 2.2) * 0.2;
+      phoneScreen.material.opacity = 0.45 + Math.sin(t * 1.4) * 0.12;
+      recDot.material.opacity = 0.5 + Math.sin(t * 3) * 0.4;
+    } else {
+      aiGroup.position.y = 2.6;
+    }
 
-    // 手机屏幕 / 硬盘指示灯呼吸
-    phoneScreen.material.opacity = 0.4 + Math.sin(t * 1.4) * 0.12;
-
-    // 台灯微闪（模拟真实灯泡，非常轻微）
-    lampLight.intensity = 0.85 + Math.sin(t * 7.3) * 0.03;
-
-    // 录制红点（此处为冷色）闪烁
-    recDot.material.opacity = 0.5 + Math.sin(t * 3) * 0.4;
+    const baseLampIntensity = state.theme === 'dark' ? 2.0 : 0.35;
+    lampLight.intensity = baseLampIntensity + (prefersReducedMotion() ? 0 : Math.sin(t * 7.3) * 0.03) + lampPulse * 1.1;
 
     renderer.render(scene, camera);
   }
 
-  animate();
+  wsLoopCtrl = createSceneLoop('wsCanvas', 'workspace', renderWorkspaceFrame, () => immersive);
 }
 
 /* ============================================================
- * 场景 3：AIGC Cube（Portfolio 区域）
- * 玻璃 + 半透明 + 金属边框立方体，六面标签
- * 拖动旋转 / 悬停放大 / 点击 → COMING SOON（暂无对应项目）
+ * 场景 3：AIGC Cube（交互能力控制器）
+ * 点击六面联动高亮 #skills 标签与筛选 #works 作品，并支持 Reset
  * ============================================================ */
 function initCubeScene() {
-  // 六个面 → 站内最相关板块（当前暂无独立 Portfolio 项目，跳到最相关内容）
-  const CUBE_FACE_SECTION = {
-    VISUAL: 'projects',
-    DESIGN: 'projects',
-    MOTION: 'experience',
-    VIDEO: 'experience',
-    AIGC: 'skills',
-    INTERACTIVE: 'workspace'
-  };
-
   const stage = document.getElementById('cubeStage');
   const canvas = document.getElementById('cubeCanvas');
   if (!stage || !canvas || !supports3D()) {
-    // 降级芯片：显示当前语言的面名，跳转仍按英文 key 映射
-    const faceKeys = Object.keys(CUBE_FACE_SECTION);
-    const faceChips = faceKeys.map((key) => getCubeFaceText(key));
+    const faceChips = CUBE_FACE_ORDER.map((key) => getCubeFaceText(key));
     showSceneFallback('cubeStage', 'cubeFallback', getText().fallbackCube, faceChips, (chip) => {
-      const faceKey = faceKeys[faceChips.indexOf(chip)] || 'AIGC';
-      if (faceKey === 'INTERACTIVE') { openPortfolio('dinuhua'); return; }
-      const target = document.getElementById(CUBE_FACE_SECTION[faceKey]);
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const faceKey = CUBE_FACE_ORDER[faceChips.indexOf(chip)] || 'AIGC';
+      setCubeFilter(faceKey);
     });
     return;
   }
 
-  observeSceneActive('cube', 'cube');
-
-  // ---- 沉浸模式（点击进入 AIGC Cube 空间） ----
   let immersive = false;
   let immT = 0;
   let zoom = 1;
@@ -1892,11 +2951,11 @@ function initCubeScene() {
   if (immHint && !immHint.textContent) immHint.textContent = getText().cubeImmersiveHint;
   const stageParent = stage.parentElement;
   const stageNext = stage.nextElementSibling;
+  let cubeLoopCtrl = null;
 
   function enterImmersive() {
     if (immersive) return;
     immersive = true;
-    // 祖先的 backdrop-filter / perspective 会劫持 fixed 定位——挂到 body 下
     document.body.appendChild(stage);
     stage.classList.add('immersive');
     document.body.classList.add('cube-immersive');
@@ -1905,6 +2964,7 @@ function initCubeScene() {
     if (immHint) immHint.hidden = false;
     canvas.style.cursor = 'grab';
     resize();
+    if (cubeLoopCtrl) cubeLoopCtrl.sync();
   }
 
   function exitImmersive() {
@@ -1919,6 +2979,7 @@ function initCubeScene() {
     canvas.style.cursor = 'default';
     hideTooltip();
     resize();
+    if (cubeLoopCtrl) cubeLoopCtrl.sync();
   }
 
   if (enterBtn) enterBtn.addEventListener('click', enterImmersive);
@@ -1941,45 +3002,42 @@ function initCubeScene() {
   camera.position.set(0, 0.4, 7.6);
   camera.lookAt(0, 0, 0);
 
-  scene.add(new THREE.AmbientLight(0xBFD4E2, 0.6));
-  const keyLight = new THREE.PointLight(0x7FD6F2, 1.2, 40);
+  const ambientLight = new THREE.AmbientLight(0xFFFDF8, 0.88);
+  scene.add(ambientLight);
+  const keyLight = new THREE.PointLight(0x5BBAD5, 1.15, 40);
   keyLight.position.set(4, 5, 6);
   scene.add(keyLight);
-  const rimLight = new THREE.PointLight(0x5B79A8, 0.7, 40);
+  const rimLight = new THREE.PointLight(0xC29A63, 0.65, 40);
   rimLight.position.set(-5, -3, -4);
   scene.add(rimLight);
-  const centerGlow = new THREE.PointLight(0x7FD6F2, 0.5, 10);
-  centerGlow.position.set(0, 0, 0);
+  const centerGlow = new THREE.PointLight(0x1B6A82, 0.45, 10);
   scene.add(centerGlow);
 
   const cubeGroup = new THREE.Group();
   scene.add(cubeGroup);
 
-  // 玻璃立方体本体
   const size = 2.5;
   const glass = new THREE.Mesh(
     new THREE.BoxGeometry(size, size, size),
     new THREE.MeshPhongMaterial({
-      color: 0x1B2836,
+      color: 0xD3E3EA,
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.24,
       shininess: 90,
-      specular: 0x9FD8EF,
+      specular: 0xFFFFFF,
       side: THREE.DoubleSide,
       depthWrite: false
     })
   );
   cubeGroup.add(glass);
 
-  // 金属边框（12 条棱）
   const edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.BoxGeometry(size, size, size)),
-    new THREE.LineBasicMaterial({ color: 0xC9D6E3, transparent: true, opacity: 0.85 })
+    new THREE.LineBasicMaterial({ color: 0x1B6A82, transparent: true, opacity: 0.78 })
   );
   cubeGroup.add(edges);
 
-  // 角落金属节点
-  const cornerMat = new THREE.MeshPhongMaterial({ color: 0x9AA6B5, shininess: 110, specular: 0xD6DEE8 });
+  const cornerMat = new THREE.MeshPhongMaterial({ color: 0x9A723E, shininess: 110, specular: 0xF5E7CE });
   const cornerGeo = new THREE.SphereGeometry(0.07, 12, 10);
   const hs = size / 2;
   [[-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1], [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]].forEach((s) => {
@@ -1988,7 +3046,6 @@ function initCubeScene() {
     cubeGroup.add(node);
   });
 
-  // 六面标签（略浮于玻璃表面，双层文字：大字 + 小字方向词）
   const faceDefs = [
     { key: 'VISUAL', dir: [0, 0, 1] },
     { key: 'AIGC', dir: [0, 0, -1] },
@@ -1998,52 +3055,36 @@ function initCubeScene() {
     { key: 'DESIGN', dir: [-1, 0, 0] }
   ];
   const faceMeshes = [];
-  const faceTextures = []; // 与 faceMeshes 同序，语言切换时重绘
+  const faceTextures = [];
   const off = hs + 0.02;
 
-  faceDefs.forEach((def, index) => {
-    const tex = makeFaceTexture(getCubeFaceText(def.key), index);
-    const plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(size * 0.82, size * 0.82),
-      new THREE.MeshBasicMaterial({ map: tex.texture, transparent: true, opacity: 0.92, depthWrite: false })
-    );
-    plane.position.set(def.dir[0] * off, def.dir[1] * off, def.dir[2] * off);
-    if (def.dir[2] === -1) plane.rotation.y = Math.PI;
-    if (def.dir[1] === 1) plane.rotation.x = -Math.PI / 2;
-    if (def.dir[1] === -1) plane.rotation.x = Math.PI / 2;
-    if (def.dir[0] === 1) plane.rotation.y = Math.PI / 2;
-    if (def.dir[0] === -1) plane.rotation.y = -Math.PI / 2;
-    plane.userData.baseScale = 1;
-    cubeGroup.add(plane);
-    faceMeshes.push(plane);
-    faceTextures.push(tex);
-  });
-
-  // 语言切换：按当前语言重绘六个面
-  onSceneTextRefresh(() => {
-    faceDefs.forEach((def, index) => {
-      drawFaceTexture(faceTextures[index], getCubeFaceText(def.key), index);
-    });
-  });
-
-  function makeFaceTexture(text, index) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-    const texture = new THREE.CanvasTexture(canvas);
-    const target = { canvas, ctx, texture };
-    drawFaceTexture(target, text, index);
+  function makeFaceTexture(text, index, isSelected) {
+    const canvas2d = document.createElement('canvas');
+    canvas2d.width = 256;
+    canvas2d.height = 256;
+    const ctx = canvas2d.getContext('2d');
+    const texture = new THREE.CanvasTexture(canvas2d);
+    const target = { canvas: canvas2d, ctx, texture };
+    drawFaceTexture(target, text, index, isSelected);
     return target;
   }
 
-  function drawFaceTexture(target, text, index) {
+  function drawFaceTexture(target, text, index, isSelected) {
     const { ctx } = target;
     if (!ctx) return;
+    const isDark = state.theme === 'dark';
+    const accentColor = isDark ? '#8ED8F0' : '#1B6A82';
+    const textColor = isDark ? '#F5F4F0' : '#1A1A1A';
+
     ctx.clearRect(0, 0, 256, 256);
-    // 角标记
-    ctx.strokeStyle = 'rgba(127, 214, 242, 0.35)';
-    ctx.lineWidth = 3;
+
+    if (isSelected) {
+      ctx.fillStyle = isDark ? 'rgba(142, 216, 240, 0.18)' : 'rgba(27, 106, 130, 0.14)';
+      ctx.fillRect(10, 10, 236, 236);
+    }
+
+    ctx.strokeStyle = isSelected ? accentColor : (isDark ? 'rgba(142, 216, 240, 0.35)' : 'rgba(27, 106, 130, 0.45)');
+    ctx.lineWidth = isSelected ? 4 : 3;
     const m = 18, l = 26;
     ctx.beginPath();
     ctx.moveTo(m, m + l); ctx.lineTo(m, m); ctx.lineTo(m + l, m);
@@ -2051,35 +3092,75 @@ function initCubeScene() {
     ctx.moveTo(m, 256 - m - l); ctx.lineTo(m, 256 - m); ctx.lineTo(m + l, 256 - m);
     ctx.moveTo(256 - m - l, 256 - m); ctx.lineTo(256 - m, 256 - m); ctx.lineTo(256 - m, 256 - m - l);
     ctx.stroke();
-    // 文字
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.shadowColor = 'rgba(127, 214, 242, 0.7)';
-    ctx.shadowBlur = 16;
-    let fontSize = 46;
+    ctx.fillStyle = isSelected ? accentColor : textColor;
+    ctx.shadowColor = isDark ? 'rgba(142, 216, 240, 0.65)' : 'rgba(27, 106, 130, 0.16)';
+    ctx.shadowBlur = isDark ? 16 : 6;
+    let fontSize = 44;
     ctx.font = '700 ' + fontSize + 'px ' + SCENE_FONT_STACK;
-    while (ctx.measureText(text).width > 200 && fontSize > 20) {
+    while (ctx.measureText(text).width > 196 && fontSize > 20) {
       fontSize -= 3;
       ctx.font = '700 ' + fontSize + 'px ' + SCENE_FONT_STACK;
     }
-    ctx.fillText(text, 128, 128);
+    ctx.fillText(text, 128, 126);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(127, 214, 242, 0.7)';
-    ctx.font = '500 15px ' + SCENE_FONT_STACK;
+    ctx.fillStyle = accentColor;
+    ctx.font = '600 15px ' + SCENE_FONT_STACK;
     ctx.fillText('0' + (index + 1), 128, 176);
     if (target.texture) target.texture.needsUpdate = true;
   }
 
-  // ---- 拖动旋转 ----
-  const drag = { active: false, lastX: 0, lastY: 0, velX: 0.0035, velY: 0.0012 };
-  const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
-  // 沉浸模式专属：相机绕立方体 360° 环视轨道（偏航无限 + 俯仰限位 + 惯性）
-  const orbit = { yaw: 0, pitch: 0, active: false, lastX: 0, lastY: 0, velYaw: 0, velPitch: 0 };
+  faceDefs.forEach((def, index) => {
+    const tex = makeFaceTexture(getCubeFaceText(def.key), index, state.activeCubeFace === def.key);
+    const plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(size * 0.82, size * 0.82),
+      new THREE.MeshBasicMaterial({ map: tex.texture, transparent: true, opacity: 0.94, depthWrite: false })
+    );
+    plane.position.set(def.dir[0] * off, def.dir[1] * off, def.dir[2] * off);
+    if (def.dir[2] === -1) plane.rotation.y = Math.PI;
+    if (def.dir[1] === 1) plane.rotation.x = -Math.PI / 2;
+    if (def.dir[1] === -1) plane.rotation.x = Math.PI / 2;
+    if (def.dir[0] === 1) plane.rotation.y = Math.PI / 2;
+    if (def.dir[0] === -1) plane.rotation.y = -Math.PI / 2;
+    cubeGroup.add(plane);
+    faceMeshes.push(plane);
+    faceTextures.push(tex);
+  });
+
+  function redrawAllFaces() {
+    faceDefs.forEach((def, index) => {
+      drawFaceTexture(faceTextures[index], getCubeFaceText(def.key), index, state.activeCubeFace === def.key);
+    });
+  }
+
+  function applyCubeTheme(theme) {
+    const isDark = theme === 'dark';
+    ambientLight.color.setHex(isDark ? 0xBFD4E2 : 0xFFFDF8);
+    ambientLight.intensity = isDark ? 0.6 : 0.88;
+    keyLight.color.setHex(isDark ? 0x8ED8F0 : 0x5BBAD5);
+    rimLight.color.setHex(isDark ? 0x5B79A8 : 0xC29A63);
+    centerGlow.color.setHex(isDark ? 0x8ED8F0 : 0x1B6A82);
+    glass.material.color.setHex(isDark ? 0x1B2836 : 0xD3E3EA);
+    glass.material.opacity = isDark ? 0.18 : 0.24;
+    edges.material.color.setHex(isDark ? 0xC9D6E3 : 0x1B6A82);
+    cornerMat.color.setHex(isDark ? 0xD8B986 : 0x9A723E);
+    redrawAllFaces();
+  }
+
+  onThemeChange(applyCubeTheme);
+  onSceneTextRefresh(redrawAllFaces);
+  onCubeVisualRefresh(redrawAllFaces);
+  applyCubeTheme(state.theme);
+
+  const drag = { active: false, lastX: 0, lastY: 0, velX: 0.0032, velY: 0.0012, moved: 0 };
+  const orbit = { yaw: 0, pitch: 0, active: false, lastX: 0, lastY: 0, velYaw: 0, velPitch: 0, moved: 0 };
 
   canvas.addEventListener('pointerdown', (event) => {
+    drag.moved = 0;
+    orbit.moved = 0;
     if (immersive) {
-      // 沉浸模式：拖拽 = 环绕立方体环视（相机移动，立方体不动）
       orbit.active = true;
       orbit.lastX = event.clientX;
       orbit.lastY = event.clientY;
@@ -2095,8 +3176,6 @@ function initCubeScene() {
   });
 
   window.addEventListener('pointermove', (event) => {
-    pointer.tx = (event.clientX / window.innerWidth) * 2 - 1;
-    pointer.ty = (event.clientY / window.innerHeight) * 2 - 1;
     if (orbit.active) {
       const dx = event.clientX - orbit.lastX;
       const dy = event.clientY - orbit.lastY;
@@ -2105,6 +3184,7 @@ function initCubeScene() {
       orbit.pitch = Math.max(-1.1, Math.min(1.1, orbit.pitch));
       orbit.velYaw = -dx * 0.005 * 0.4;
       orbit.velPitch = -dy * 0.004 * 0.4;
+      orbit.moved += Math.abs(dx) + Math.abs(dy);
       orbit.lastX = event.clientX;
       orbit.lastY = event.clientY;
       return;
@@ -2117,6 +3197,7 @@ function initCubeScene() {
     cubeGroup.rotation.x = Math.max(-1.2, Math.min(1.2, cubeGroup.rotation.x));
     drag.velY = dx * 0.006;
     drag.velX = dy * 0.005;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
     drag.lastX = event.clientX;
     drag.lastY = event.clientY;
   }, { passive: true });
@@ -2124,10 +3205,9 @@ function initCubeScene() {
   window.addEventListener('pointerup', () => {
     drag.active = false;
     orbit.active = false;
-    canvas.style.cursor = immersive ? 'grab' : 'grab';
+    canvas.style.cursor = immersive ? 'grab' : 'default';
   });
 
-  // ---- 悬停放大 + 点击 ----
   const raycaster = new THREE.Raycaster();
   let hoveredFace = null;
 
@@ -2138,73 +3218,40 @@ function initCubeScene() {
     const face = hits.length ? hits[0].object : null;
     if (face !== hoveredFace) {
       hoveredFace = face;
-      if (face) {
-        showTooltip(event.clientX, event.clientY, getCubeFaceText(faceDefs[faceMeshes.indexOf(face)].key));
-      } else {
-        hideTooltip();
-      }
-    } else if (face) {
+      canvas.style.cursor = face ? 'pointer' : (immersive ? 'grab' : 'default');
+    }
+    if (face) {
       showTooltip(event.clientX, event.clientY, getCubeFaceText(faceDefs[faceMeshes.indexOf(face)].key));
+    } else {
+      hideTooltip();
     }
   });
 
   canvas.addEventListener('pointerleave', () => {
     hoveredFace = null;
+    canvas.style.cursor = immersive ? 'grab' : 'default';
     hideTooltip();
   });
 
-  function showComingSoon(x, y) {
-    showTooltip(
-      typeof x === 'number' ? x : window.innerWidth / 2,
-      typeof y === 'number' ? y : window.innerHeight / 2,
-      getText().comingSoon
-    );
-    setTimeout(hideTooltip, 1800);
-  }
-
   canvas.addEventListener('click', (event) => {
-    if (drag.active) return;
+    if (drag.moved > 6 || orbit.moved > 6) return;
     raycaster.setFromCamera(toNDC(event, canvas), camera);
     const hits = raycaster.intersectObjects(faceMeshes, false);
     if (!hits.length) return;
-    // 点击面 → 前往站内最相关板块（悬停标签已显示面名称，这里提示去向）
     const faceIndex = faceMeshes.indexOf(hits[0].object);
     const faceKey = faceDefs[faceIndex].key;
-    // 互动叙事面 → 打开帝女花作品集（沉浸模式下先退出，再打开浮层）
-    if (faceKey === 'INTERACTIVE') {
-      if (immersive) {
-        setTimeout(() => { exitImmersive(); setTimeout(() => openPortfolio('dinuhua'), 380); }, 180);
-        return;
-      }
-      const featured = getWork('dinuhua');
-      showTooltip(event.clientX, event.clientY, featured ? featured.title : '');
-      setTimeout(hideTooltip, 1400);
-      setTimeout(() => openPortfolio('dinuhua'), 220);
-      return;
-    }
-    const sectionKey = CUBE_FACE_SECTION[faceKey];
-    const target = document.getElementById(sectionKey);
-    if (!target) {
-      showComingSoon(event.clientX, event.clientY);
-      return;
-    }
-    showTooltip(event.clientX, event.clientY, '→ ' + (getText().sectionTitles[sectionKey] || faceKey));
-    setTimeout(hideTooltip, 1600);
+    setCubeFilter(faceKey);
+    showTooltip(event.clientX, event.clientY, getCubeFaceText(faceKey));
+    setTimeout(hideTooltip, 1300);
     if (immersive) {
-      // 沉浸模式：先退出全屏，再平滑滚动到目标板块
-      setTimeout(() => {
-        exitImmersive();
-        setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 380);
-      }, 420);
-      return;
+      setTimeout(() => exitImmersive(), 260);
     }
-    setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
   });
 
-  // ---- 尺寸 ----
   function resize() {
     const w = stage.clientWidth;
     const h = stage.clientHeight;
+    if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -2212,17 +3259,12 @@ function initCubeScene() {
   resize();
   window.addEventListener('resize', resize);
 
-  // ---- 动画循环 ----
   const clock = new THREE.Clock();
 
-  function animate() {
-    requestAnimationFrame(animate);
-    if (!SCENE_ACTIVE.cube) return;
+  function renderCubeFrame() {
     const t = clock.getElapsedTime();
 
-    // 相机：常规 ↔ 沉浸视角平滑过渡 + 滚轮缩放 + 沉浸 360° 环视轨道
     immT += ((immersive ? 1 : 0) - immT) * 0.06;
-    // 环视惯性衰减
     if (!orbit.active) {
       orbit.yaw += orbit.velYaw;
       orbit.pitch = Math.max(-1.1, Math.min(1.1, orbit.pitch + orbit.velPitch));
@@ -2241,8 +3283,7 @@ function initCubeScene() {
     camera.position.copy(camLook.clone().add(camOffset));
     camera.lookAt(camLook);
 
-    // 未拖动时：极缓慢自转 + 惯性衰减
-    if (!drag.active) {
+    if (!drag.active && !prefersReducedMotion()) {
       cubeGroup.rotation.y += drag.velY;
       cubeGroup.rotation.x += drag.velX;
       cubeGroup.rotation.x = Math.max(-1.2, Math.min(1.2, cubeGroup.rotation.x));
@@ -2250,38 +3291,217 @@ function initCubeScene() {
       drag.velY += (0.0032 - drag.velY) * 0.02;
     }
 
-    // 悬停面放大（缓动）
-    faceMeshes.forEach((face) => {
-      const target = face === hoveredFace ? 1.14 : 1;
-      face.scale.x += (target - face.scale.x) * 0.12;
-      face.scale.y += (target - face.scale.y) * 0.12;
+    faceMeshes.forEach((face, idx) => {
+      const isSelected = state.activeCubeFace === faceDefs[idx].key;
+      const targetScale = face === hoveredFace ? 1.14 : (isSelected ? 1.07 : 1);
+      face.scale.x += (targetScale - face.scale.x) * 0.12;
+      face.scale.y += (targetScale - face.scale.y) * 0.12;
     });
 
-    // 悬停时边框与中心光增强
     const hoverBoost = hoveredFace ? 0.5 : 0;
-    centerGlow.intensity = 0.45 + Math.sin(t * 1.1) * 0.1 + hoverBoost;
-    edges.material.opacity = 0.75 + Math.sin(t * 1.4) * 0.08 + hoverBoost * 0.2;
-
-    // 轻微呼吸浮动
-    cubeGroup.position.y = Math.sin(t * 0.8) * 0.08;
+    centerGlow.intensity = 0.45 + (prefersReducedMotion() ? 0 : Math.sin(t * 1.1) * 0.1) + hoverBoost;
+    edges.material.opacity = 0.72 + (prefersReducedMotion() ? 0 : Math.sin(t * 1.4) * 0.08) + hoverBoost * 0.2;
+    cubeGroup.position.y = prefersReducedMotion() ? 0 : Math.sin(t * 0.8) * 0.08;
 
     renderer.render(scene, camera);
   }
 
-  animate();
+  cubeLoopCtrl = createSceneLoop('cubeCanvas', 'cube', renderCubeFrame, () => immersive);
 }
 
 /* ============================================================
- * 全屏翻页：滚轮/键盘逐页切换 + 激活转场动画
- * - 桌面精确指针：wheel 驱动整页翻动（带锁），高内容页先内部滚动
- * - 触屏 / reduced-motion：原生滚动 + CSS snap，不劫持
- * - 沉浸模式 / PDF 弹窗打开时自动禁用
+ * 360° 轨道日晷滚动进度盘（等比章节节点 + 弧线进度 + 悬浮详情）与页面聚焦
  * ============================================================ */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const ORBITAL_RADIUS = 40;
+const ORBITAL_CIRCUMFERENCE = 2 * Math.PI * ORBITAL_RADIUS;
+const ORBITAL_SECTIONS = ['about', 'education', 'experience', 'projects', 'works', 'skills', 'contact'];
+let orbitalNodeEls = [];
+let orbitalRatios = [];
+let orbitalLayoutRaf = 0;
+let lastOrbitalProgress = 0;
+let mobileScrollTimer = 0;
+
+function scheduleOrbitalLayout() {
+  if (orbitalLayoutRaf) return;
+  orbitalLayoutRaf = requestAnimationFrame(() => {
+    orbitalLayoutRaf = 0;
+    layoutOrbitalNodes();
+    updateOrbitalDial();
+  });
+}
+
+function layoutOrbitalNodes() {
+  const container = document.getElementById('orbitalNodes');
+  if (!container) return;
+
+  const text = getText();
+  const labels = text.railNav || text.nav;
+  const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+
+  const rawRatios = ORBITAL_SECTIONS.map((secId) => {
+    const sec = document.getElementById(secId);
+    if (!sec) return 0;
+    const top = Math.max(0, sec.getBoundingClientRect().top + window.scrollY - 76);
+    return Math.max(0.02, Math.min(0.96, top / maxScroll));
+  });
+
+  // 保持真实位置比例的同时防止极窄视口下相邻圆点视觉重叠
+  const minGap = 0.032;
+  for (let i = 1; i < rawRatios.length; i++) {
+    if (rawRatios[i] - rawRatios[i - 1] < minGap) {
+      rawRatios[i] = Math.min(0.98, rawRatios[i - 1] + minGap);
+    }
+  }
+  orbitalRatios = rawRatios;
+
+  container.textContent = '';
+  orbitalNodeEls = ORBITAL_SECTIONS.map((secId, index) => {
+    const ratio = rawRatios[index];
+    const angle = ratio * Math.PI * 2 - Math.PI / 2;
+    const cx = 50 + ORBITAL_RADIUS * Math.cos(angle);
+    const cy = 50 + ORBITAL_RADIUS * Math.sin(angle);
+    const label = `0${index + 1} / ${labels[index] || secId}`;
+
+    const g = document.createElementNS(SVG_NS, 'g');
+    g.setAttribute('class', 'orbital-node');
+    g.setAttribute('role', 'button');
+    g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', label);
+    g.dataset.section = secId;
+    g.dataset.index = String(index);
+
+    const hit = document.createElementNS(SVG_NS, 'circle');
+    hit.setAttribute('class', 'orbital-node-hit');
+    hit.setAttribute('cx', cx.toFixed(2));
+    hit.setAttribute('cy', cy.toFixed(2));
+    hit.setAttribute('r', '6.5');
+
+    const dot = document.createElementNS(SVG_NS, 'circle');
+    dot.setAttribute('class', 'orbital-node-dot');
+    dot.setAttribute('cx', cx.toFixed(2));
+    dot.setAttribute('cy', cy.toFixed(2));
+    dot.setAttribute('r', '2.1');
+
+    g.appendChild(hit);
+    g.appendChild(dot);
+
+    const jumpToSection = (event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      hideTooltip();
+      const target = document.getElementById(secId);
+      if (target) {
+        if (target.classList.contains('card')) target.classList.add('revealed');
+        target.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+      }
+    };
+
+    g.addEventListener('click', jumpToSection);
+    g.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') jumpToSection(event);
+    });
+    g.addEventListener('mouseenter', () => {
+      const rect = g.getBoundingClientRect();
+      showTooltip(rect.left + rect.width / 2, rect.top, label);
+    });
+    g.addEventListener('mouseleave', hideTooltip);
+
+    container.appendChild(g);
+    return g;
+  });
+}
+
+function getActiveOrbitalSectionIndex() {
+  const focusY = window.scrollY + window.innerHeight * 0.35;
+  let activeIdx = -1;
+  ORBITAL_SECTIONS.forEach((id, idx) => {
+    const sec = document.getElementById(id);
+    if (!sec) return;
+    const top = sec.getBoundingClientRect().top + window.scrollY;
+    if (focusY >= top - 40) activeIdx = idx;
+  });
+  return activeIdx;
+}
+
+function updateOrbitalDial() {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = max > 0 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0;
+  lastOrbitalProgress = progress;
+
+  const arc = document.getElementById('orbitalArc');
+  if (arc) {
+    arc.style.strokeDasharray = ORBITAL_CIRCUMFERENCE.toFixed(4);
+    arc.style.strokeDashoffset = (ORBITAL_CIRCUMFERENCE * (1 - progress)).toFixed(4);
+  }
+
+  const bead = document.getElementById('orbitalBead');
+  if (bead) {
+    const angle = progress * Math.PI * 2 - Math.PI / 2;
+    bead.setAttribute('cx', (50 + ORBITAL_RADIUS * Math.cos(angle)).toFixed(2));
+    bead.setAttribute('cy', (50 + ORBITAL_RADIUS * Math.sin(angle)).toFixed(2));
+  }
+
+  const pctNum = Math.round(progress * 100);
+  const pctEl = document.getElementById('orbitalPct');
+  if (pctEl) pctEl.textContent = (pctNum < 10 ? '0' : '') + pctNum + '%';
+
+  const activeIdx = getActiveOrbitalSectionIndex();
+  const text = getText();
+  const navLabels = text.nav || [];
+  const secEl = document.getElementById('orbitalSec');
+  if (secEl) {
+    secEl.textContent = activeIdx >= 0 ? (navLabels[activeIdx] || ORBITAL_SECTIONS[activeIdx]) : text.orbitalHero;
+  }
+
+  const topBtn = document.getElementById('orbitalTopBtn');
+  if (topBtn) {
+    topBtn.textContent = text.orbitalTop;
+    topBtn.hidden = window.scrollY < window.innerHeight * 0.45;
+  }
+
+  orbitalNodeEls.forEach((node, idx) => {
+    const isActive = idx === activeIdx;
+    node.classList.toggle('active', isActive);
+    const dot = node.querySelector('.orbital-node-dot');
+    if (dot) dot.setAttribute('r', isActive ? '3.1' : '2.1');
+  });
+
+  document.querySelectorAll('.quick a').forEach((link, j) => {
+    link.classList.toggle('active', j === activeIdx);
+  });
+}
+
+function bindOrbitalDial() {
+  const topBtn = document.getElementById('orbitalTopBtn');
+  if (topBtn) {
+    topBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    });
+  }
+
+  const container = document.querySelector('.container');
+  if (container && 'ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => scheduleOrbitalLayout());
+    ro.observe(container);
+  }
+
+  const expList = document.getElementById('experienceList');
+  if (expList) {
+    expList.addEventListener('toggle', () => scheduleOrbitalLayout(), true);
+  }
+
+  window.addEventListener('load', scheduleOrbitalLayout);
+  window.addEventListener('resize', scheduleOrbitalLayout, { passive: true });
+  scheduleOrbitalLayout();
+}
+
 function initPageFlow() {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const hero = document.querySelector('section.hero');
-  const cards = Array.from(document.querySelectorAll('.container > section.card'));
+  const cards = Array.from(document.querySelectorAll('.container section.card'));
   const pages = hero ? [hero].concat(cards) : cards;
   if (pages.length < 2) return;
 
@@ -2292,15 +3512,16 @@ function initPageFlow() {
   function blocked() {
     return document.body.classList.contains('ws-immersive') ||
       document.body.classList.contains('cube-immersive') ||
-      document.body.classList.contains('is-pdf-open');
+      document.body.classList.contains('is-pdf-open') ||
+      document.body.classList.contains('is-pf-open');
   }
 
   function pageTop(i) {
-    return pages[i].getBoundingClientRect().top + window.scrollY - 10;
+    return pages[i].getBoundingClientRect().top + window.scrollY - 76;
   }
 
   function currentPageIndex() {
-    const center = window.scrollY + window.innerHeight * 0.5;
+    const center = window.scrollY + window.innerHeight * 0.45;
     let best = 0;
     let bestDist = Infinity;
     pages.forEach((sec, i) => {
@@ -2315,52 +3536,39 @@ function initPageFlow() {
     i = Math.max(0, Math.min(pages.length - 1, i));
     locked = true;
     clearTimeout(lockTimer);
-    lockTimer = setTimeout(() => { locked = false; }, 1000);
+    lockTimer = setTimeout(() => { locked = false; }, 900);
     window.scrollTo({ top: pageTop(i), behavior: 'smooth' });
     applyActive(i);
   }
 
-  /* 右侧页码指示点（桌面端） */
-  let dotBtns = [];
-  if (finePointer && !reduced) {
-    const dotsNav = document.createElement('nav');
-    dotsNav.className = 'page-dots';
-    dotsNav.setAttribute('aria-label', '页面导航');
-    dotBtns = pages.map((sec, i) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      const h2 = sec.querySelector('h2, h1');
-      b.setAttribute('aria-label', h2 ? h2.textContent : 'Page ' + (i + 1));
-      b.addEventListener('click', () => goToPage(i));
-      dotsNav.appendChild(b);
-      return b;
-    });
-    document.body.appendChild(dotsNav);
-  }
-
   function applyActive(i) {
-    if (i === current) return;
-    current = i;
-    pages.forEach((sec, j) => sec.classList.toggle('page-active', j === i));
-    dotBtns.forEach((d, j) => d.classList.toggle('active', j === i));
+    if (i !== current) {
+      current = i;
+      pages.forEach((sec, j) => sec.classList.toggle('page-active', j === i));
+    }
+    updateOrbitalDial();
   }
 
-  /* 滚动位置 → 激活页（rAF 节流） */
   let ticking = false;
   function onScroll() {
+    document.body.classList.add('is-scrolling');
+    clearTimeout(mobileScrollTimer);
+    mobileScrollTimer = setTimeout(() => document.body.classList.remove('is-scrolling'), 850);
+
     if (ticking) return;
     ticking = true;
-    requestAnimationFrame(() => { ticking = false; applyActive(currentPageIndex()); });
+    requestAnimationFrame(() => {
+      ticking = false;
+      applyActive(currentPageIndex());
+    });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  /* 滚轮：只劫持「首页 → 下一页」这一次翻页转场，其余保持原生滚动 */
   window.addEventListener('wheel', (event) => {
     if (reduced || !finePointer || blocked()) return;
     if (locked) { event.preventDefault(); return; }
     if (event.deltaY <= 24) return;
     if (currentPageIndex() !== 0) return;
-    // 已在首页底部（用户可能想先看完整 Hero）→ 翻页进入下一屏
     if (window.scrollY > 40) return;
     event.preventDefault();
     goToPage(1);
@@ -2370,24 +3578,290 @@ function initPageFlow() {
   applyActive(0);
   pages[0].classList.add('page-active');
   current = 0;
-  if (dotBtns[0]) dotBtns[0].classList.add('active');
 }
 
 /* ============================================================
- * 启动
+ * Phase 2：策展式 Preloader / ATB 视角聚焦 / Particle Atelier
+ * ============================================================ */
+function initPreloader(readyPromise) {
+  const preloader = document.getElementById('atelierPreloader');
+  const countEl = document.getElementById('preloaderCount');
+  const barEl = document.getElementById('preloaderBarFill');
+  if (!preloader) {
+    document.body.classList.remove('is-preloading');
+    return;
+  }
+
+  const dismiss = () => {
+    if (countEl) countEl.textContent = '100%';
+    if (barEl) barEl.style.width = '100%';
+    preloader.classList.add('is-done');
+    document.body.classList.remove('is-preloading');
+    setTimeout(() => { preloader.hidden = true; }, prefersReducedMotion() ? 220 : 760);
+  };
+
+  if (prefersReducedMotion()) {
+    dismiss();
+    return;
+  }
+
+  const start = performance.now();
+  let readyResolved = false;
+  let closed = false;
+
+  const waitReady = readyPromise && typeof readyPromise.then === 'function'
+    ? readyPromise.then(() => { readyResolved = true; }).catch(() => { readyResolved = true; })
+    : Promise.resolve().then(() => { readyResolved = true; });
+  void waitReady;
+
+  function step(now) {
+    if (closed) return;
+    const elapsed = now - start;
+    const timePct = Math.min(96, Math.round((elapsed / 900) * 100));
+    const pct = readyResolved && elapsed >= 480 ? 100 : timePct;
+    if (countEl) countEl.textContent = (pct < 10 ? '0' : '') + pct + '%';
+    if (barEl) barEl.style.width = pct + '%';
+
+    if ((readyResolved && elapsed >= 520) || elapsed >= 1000) {
+      closed = true;
+      dismiss();
+      return;
+    }
+    requestAnimationFrame(step);
+  }
+
+  requestAnimationFrame(step);
+}
+
+/* ATB 双重视角聚焦控制器 */
+function renderFocusLensUI() {
+  const text = getText();
+  const caption = document.getElementById('focusLensCaption');
+  if (caption) caption.textContent = text.focusLensCaption || 'ATB Focus Lens';
+
+  const opts = text.focusLensOptions || {};
+  document.querySelectorAll('.focus-lens-btn').forEach((btn) => {
+    const mode = btn.dataset.lens;
+    if (opts[mode]) btn.textContent = opts[mode];
+    const active = state.focusLens === mode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function applyLensGroup(selector, attrName, mapObj, mode) {
+  document.querySelectorAll(selector).forEach((node) => {
+    if (mode === 'all') {
+      node.classList.remove('lens-match', 'lens-dim');
+      return;
+    }
+    const key = node.getAttribute(attrName);
+    const roles = mapObj[key] || [];
+    const matched = roles.includes(mode);
+    node.classList.toggle('lens-match', matched);
+    node.classList.toggle('lens-dim', !matched);
+  });
+}
+
+function applyFocusLensUI() {
+  const mode = state.focusLens;
+  applyLensGroup('#aboutHighlights .highlight-item', 'data-highlight-index', FOCUS_LENS_MAP.highlights, mode);
+  applyLensGroup('#educationList .list-item', 'data-edu-index', FOCUS_LENS_MAP.education, mode);
+  applyLensGroup('#experienceList .article', 'data-exp-index', FOCUS_LENS_MAP.experience, mode);
+  applyLensGroup('#projectsList .list-item', 'data-proj-index', FOCUS_LENS_MAP.projects, mode);
+  applyLensGroup('#worksList .work-card', 'data-work-id', FOCUS_LENS_MAP.works, mode);
+  applyLensGroup('#skillsGrid .skill-pill', 'data-skill-index', FOCUS_LENS_MAP.skills, mode);
+}
+
+function setFocusLens(mode) {
+  const valid = ['all', 'design-tech', 'ops-business'].includes(mode) ? mode : 'all';
+  state.focusLens = valid;
+  renderFocusLensUI();
+  applyFocusLensUI();
+  scheduleOrbitalLayout();
+}
+
+function bindFocusLens() {
+  const bar = document.getElementById('focusLensBar');
+  if (!bar) return;
+  bar.addEventListener('click', (event) => {
+    const btn = event.target.closest('.focus-lens-btn');
+    if (!btn) return;
+    setFocusLens(btn.dataset.lens);
+  });
+}
+
+/* Particle Atelier 隐藏微光彩蛋与星核路标 */
+function updateParticleTriggerUI() {
+  const btn = document.getElementById('particleTrigger');
+  const layer = document.getElementById('starCoresLayer');
+  const text = getText();
+  const active = state.particleAtelier;
+  const tip = active ? text.particleTooltipOn : text.particleTooltipOff;
+  if (btn) {
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
+    btn.setAttribute('aria-label', tip);
+    btn.dataset.tooltip = tip;
+  }
+  if (layer) {
+    layer.classList.toggle('active', active);
+    layer.setAttribute('aria-hidden', String(!active));
+  }
+}
+
+function renderStarCores() {
+  const layer = document.getElementById('starCoresLayer');
+  if (!layer) return;
+  const cores = getText().starCores || [];
+  layer.textContent = '';
+
+  cores.forEach((core, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'star-core-btn';
+    btn.dataset.core = String(idx);
+    btn.dataset.target = core.id;
+    btn.setAttribute('aria-label', core.label);
+
+    const orb = el('span', 'star-core-orb');
+    orb.setAttribute('aria-hidden', 'true');
+    const label = el('span', 'star-core-label', core.label);
+    btn.appendChild(orb);
+    btn.appendChild(label);
+
+    btn.addEventListener('click', () => {
+      const rect = btn.getBoundingClientRect();
+      if (particleAtelierBridge && typeof particleAtelierBridge.emitRipple === 'function') {
+        particleAtelierBridge.emitRipple(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }
+      const target = document.getElementById(core.id);
+      if (target) {
+        if (target.classList.contains('card')) target.classList.add('revealed');
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        target.classList.remove('card--star-glow');
+        void target.offsetWidth;
+        target.classList.add('card--star-glow');
+        setTimeout(() => target.classList.remove('card--star-glow'), 2050);
+      }
+    });
+
+    layer.appendChild(btn);
+  });
+}
+
+function toggleParticleAtelier(forceState) {
+  const next = typeof forceState === 'boolean' ? forceState : !state.particleAtelier;
+  if (next === state.particleAtelier) return;
+  state.particleAtelier = next;
+  updateParticleTriggerUI();
+  if (particleAtelierBridge && typeof particleAtelierBridge.setActive === 'function') {
+    particleAtelierBridge.setActive(next);
+  }
+  const text = getText();
+  showToast(next ? text.toastParticleOn : text.toastParticleOff, next ? 4200 : 2200);
+}
+
+function bindParticleAtelier() {
+  const triggerBtn = document.getElementById('particleTrigger');
+  if (triggerBtn) {
+    triggerBtn.addEventListener('click', () => toggleParticleAtelier());
+  }
+
+  // 隐秘触发 A1：连击 3 次品牌图标 DA
+  const brandMark = document.getElementById('brandMark');
+  if (brandMark) {
+    let clicks = 0;
+    let clickTimer = 0;
+    brandMark.addEventListener('click', () => {
+      clicks += 1;
+      clearTimeout(clickTimer);
+      if (clicks >= 3) {
+        clicks = 0;
+        toggleParticleAtelier();
+      } else {
+        clickTimer = setTimeout(() => { clicks = 0; }, 650);
+      }
+    });
+  }
+
+  // 隐秘触发 A2：双击空白背景区域
+  document.addEventListener('dblclick', (event) => {
+    if (event.target.closest && event.target.closest('a, button, summary, details, input, textarea, select, .card, .top-bar, .pdf-modal, .pf-modal, .orbital-dial, .focus-lens-bar, .star-cores-layer, canvas#wsCanvas, canvas#cubeCanvas')) {
+      return;
+    }
+    toggleParticleAtelier();
+  });
+
+  // ESC 退出（仅当无弹窗或 3D 全屏沉浸占用时生效）
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !state.particleAtelier) return;
+    if (document.body.classList.contains('is-pdf-open') ||
+      document.body.classList.contains('is-pf-open') ||
+      document.body.classList.contains('ws-immersive') ||
+      document.body.classList.contains('cube-immersive')) {
+      return;
+    }
+    toggleParticleAtelier(false);
+  });
+}
+
+/* ============================================================
+ * 启动入口
  * ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+  applyTheme('light', { silent: true });
   renderResume();
   bindLanguageToggle();
+  bindThemeToggle();
+  bindFocusLens();
+  bindParticleAtelier();
+  bindOrbitalDial();
   bindCopyEmail();
   bindPdfModal();
   bindPortfolioModal();
   bindTilt();
   bindReveal();
-  init3DScene();
-  initWorkspaceScene();
-  initCubeScene();
+  bindMagneticButtons();
+  bindCustomCursor();
   initPageFlow();
-  // 滚动时收起 3D 悬停标签，避免残留
+
   window.addEventListener('scroll', hideTooltip, { passive: true });
+
+  const start3D = () => {
+    init3DScene();
+    initWorkspaceScene();
+    initCubeScene();
+  };
+
+  const readyPromise = window.THREE
+    ? Promise.resolve(true).then(start3D)
+    : (window.__threeReady && typeof window.__threeReady.then === 'function'
+      ? window.__threeReady.then(start3D)
+      : Promise.resolve().then(start3D));
+
+  initPreloader(readyPromise);
 });
+
+window.__atelier = {
+  getState: () => ({
+    language: state.language,
+    theme: state.theme,
+    focusLens: state.focusLens,
+    particleAtelier: state.particleAtelier,
+    activeCubeFace: state.activeCubeFace,
+    orbitalProgress: Number(lastOrbitalProgress.toFixed(4)),
+    orbitalNodeCount: orbitalNodeEls.length,
+    orbitalRatios: orbitalRatios.map((r) => Number(r.toFixed(4))),
+    loops: Object.fromEntries(
+      Object.entries(SCENE_LOOPS).map(([k, ctrl]) => [k, { running: ctrl.isRunning(), visible: ctrl.isVisible() }])
+    )
+  }),
+  toggleTheme,
+  setFocusLens,
+  toggleParticleAtelier,
+  setCubeFilter,
+  resetCubeFilter,
+  openPortfolio,
+  openResumePdf
+};
